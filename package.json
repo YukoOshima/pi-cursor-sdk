@@ -187,5 +187,8 @@
     "typebox": {
       "optional": true
     }
+  },
+  "overrides": {
+    "linkedom": "0.18.12"
   }
 }

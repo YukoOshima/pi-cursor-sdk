@@ -71,7 +71,8 @@ describe("package metadata cutover baselines", () => {
 	it("leaves the Cursor SDK transport dependency tree to npm resolution", () => {
 		expect(packageJson.dependencies.undici).toBeUndefined();
 		expect(packageJson.bundledDependencies).toBeUndefined();
-		expect(packageJson.overrides).toBeUndefined();
+		// bnpm linkedom ceiling is 0.18.12; pin via overrides for @oh-my-pi installs
+		expect(packageJson.overrides).toEqual({ linkedom: "0.18.12" });
 		expect(packageLock.packages["node_modules/@connectrpc/connect-node/node_modules/undici"]?.version).toBe("5.29.0");
 	});
 
