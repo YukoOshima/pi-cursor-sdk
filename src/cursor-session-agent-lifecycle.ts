@@ -4,7 +4,7 @@ import type {
 	SessionCompactEvent,
 	SessionShutdownEvent,
 	SessionTreeEvent,
-} from "@earendil-works/pi-coding-agent";
+} from "@oh-my-pi/pi-coding-agent";
 import { onCursorSessionScopeKeyChange } from "./cursor-session-scope.js";
 
 export interface CursorSessionAgentLifecycleExtensionApi {

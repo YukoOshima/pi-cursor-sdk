@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createAssistantMessageEventStream } from "@earendil-works/pi-ai";
+import { AssistantMessageEventStream } from "@oh-my-pi/pi-ai";
 import type { SDKAgent } from "@cursor/sdk";
 import { buildIncompleteCursorToolRunOutcome } from "../src/cursor-incomplete-tool-visibility.js";
 import { CursorRunFinalizer } from "../src/cursor-provider-run-finalizer.js";
@@ -19,8 +19,7 @@ const { mockAwaitFinalizeCursorRunOutcome } = vi.hoisted(() => {
 
 vi.mock("../src/cursor-provider-turn-finalize.js", () => ({
 	awaitFinalizeCursorRunOutcome: mockAwaitFinalizeCursorRunOutcome,
-	cacheSdkContextWindow: vi.fn(),
-}));
+	cacheSdkContextWindow: vi.fn() }));
 
 describe("CursorRunFinalizer", () => {
 	it("settles live-run ownership before best-effort debug writes after wait failure", async () => {
@@ -40,8 +39,7 @@ describe("CursorRunFinalizer", () => {
 				bridgeEnabled: false,
 				nativeReplayId: "replay-1",
 				agentMode: "agent",
-				modelSelection: { id: "composer-2.5" },
-			},
+				modelSelection: { id: "composer-2.5" } },
 			localForce: { value: false, source: "builtin", trustLevel: "builtin" },
 			contextWindowAgentId: "agent-1",
 			textDeltas: [],
@@ -54,15 +52,13 @@ describe("CursorRunFinalizer", () => {
 				sendState: { bootstrapped: false, contextFingerprint: "", incrementalSendCount: 0 },
 				created: false,
 				commitSend: () => {},
-				trackRunCompletion,
-			} satisfies SessionCursorAgentLease,
+				trackRunCompletion } satisfies SessionCursorAgentLease,
 			restoreCursorSdkOutputFilter: () => {},
 			lifecycle: {
 				commitSend: () => {},
 				trackRunCompletion,
 				abandon: async () => {},
-				dispose: async () => {},
-			},
+				dispose: async () => {} },
 			runtime: {
 				kind: "live",
 				liveRun: {
@@ -77,37 +73,30 @@ describe("CursorRunFinalizer", () => {
 					done: false,
 					cancelled: false,
 					disposed: false,
-					chainUserInputAfterCompletion: false,
-				},
+					chainUserInputAfterCompletion: false },
 				turnCoordinator: new CursorSdkTurnCoordinator({
-					stream: createAssistantMessageEventStream(),
+					stream: new AssistantMessageEventStream(),
 					partial: makeAssistantMessage(""),
 					cwd: process.cwd(),
 					useNativeToolReplay: true,
 					nativeReplayId: "replay-1",
-					textDeltas: [],
-				}),
-			},
-		};
+					textDeltas: [] }) } };
 		const captureRunArtifacts = vi.fn(() => new Promise<void>(() => {}));
 		const debugSink = {
 			recordWaitResult: () => { throw new Error("debug wait write failed"); },
 			recordError: () => { throw new Error("debug error write failed"); },
-			captureRunArtifacts,
-		} as unknown as CursorSdkEventDebugSink;
+			captureRunArtifacts } as unknown as CursorSdkEventDebugSink;
 		const sdkProcessErrorGuard = installCursorSdkProcessErrorGuard();
 		const finalizer = new CursorRunFinalizer({
 			runnerParams: {
 				model: makeModel(),
 				context: makeContext(),
-				stream: createAssistantMessageEventStream(),
+				stream: new AssistantMessageEventStream(),
 				partial: makeAssistantMessage(""),
-				sdkEventDebugRef: {},
-			},
+				sdkEventDebugRef: {} },
 			sdkEventDebug: () => debugSink,
 			sdkProcessErrorGuard,
-			resolvedApiKey: () => "test-key",
-		});
+			resolvedApiKey: () => "test-key" });
 		finalizer.startLiveRunCompletion({
 			send: {
 				run: asMockCursorRun({
@@ -115,14 +104,11 @@ describe("CursorRunFinalizer", () => {
 					agentId: "agent-1",
 					status: "running",
 					wait: vi.fn(),
-					cancel: vi.fn(),
-				}),
-				cursorAgentMessageOffset: 0,
-			},
+					cancel: vi.fn() }),
+				cursorAgentMessageOffset: 0 },
 			prepared,
 			modelId: "composer-2.5",
-			discardIncompleteTools: () => {},
-		});
+			discardIncompleteTools: () => {} });
 
 		expect(mockAwaitFinalizeCursorRunOutcome).toHaveBeenCalledTimes(1);
 		expect(trackRunCompletion).toHaveBeenCalledTimes(1);
@@ -133,7 +119,7 @@ describe("CursorRunFinalizer", () => {
 	});
 
 	it("allows the error terminal path after direct terminal handling throws before emitting", async () => {
-		const stream = createAssistantMessageEventStream();
+		const stream = new AssistantMessageEventStream();
 		const partial = makeAssistantMessage("");
 		const context = makeContext();
 		const model = makeModel();
@@ -144,8 +130,7 @@ describe("CursorRunFinalizer", () => {
 			cwd: process.cwd(),
 			useNativeToolReplay: false,
 			nativeReplayId: "replay-1",
-			textDeltas: [],
-		});
+			textDeltas: [] });
 		const prepared: CursorProviderTurnPrepareResult = {
 			runtimeTarget: "local",
 			agent: { agentId: "agent-1" } as SDKAgent,
@@ -160,8 +145,7 @@ describe("CursorRunFinalizer", () => {
 				bridgeEnabled: false,
 				nativeReplayId: "replay-1",
 				agentMode: "agent",
-				modelSelection: { id: "composer-2.5" },
-			},
+				modelSelection: { id: "composer-2.5" } },
 			localForce: { value: false, source: "builtin", trustLevel: "builtin" },
 			contextWindowAgentId: "agent-1",
 			textDeltas: [],
@@ -176,8 +160,7 @@ describe("CursorRunFinalizer", () => {
 				commitSend: () => {
 					throw new Error("commit failed before terminal event");
 				},
-				trackRunCompletion: () => {},
-			} satisfies SessionCursorAgentLease,
+				trackRunCompletion: () => {} } satisfies SessionCursorAgentLease,
 			restoreCursorSdkOutputFilter: () => {},
 			lifecycle: {
 				commitSend: () => {
@@ -185,25 +168,20 @@ describe("CursorRunFinalizer", () => {
 				},
 				trackRunCompletion: () => {},
 				abandon: async () => {},
-				dispose: async () => {},
-			},
-			runtime: { kind: "direct", turnCoordinator },
-		};
+				dispose: async () => {} },
+			runtime: { kind: "direct", turnCoordinator } };
 		const debugSink = {
-			recordError: () => { throw new Error("debug provider error write failed"); },
-		} as unknown as CursorSdkEventDebugSink;
+			recordError: () => { throw new Error("debug provider error write failed"); } } as unknown as CursorSdkEventDebugSink;
 		const finalizer = new CursorRunFinalizer({
 			runnerParams: {
 				model,
 				context,
 				stream,
 				partial,
-				sdkEventDebugRef: {},
-			},
+				sdkEventDebugRef: {} },
 			sdkEventDebug: () => debugSink,
 			sdkProcessErrorGuard,
-			resolvedApiKey: () => undefined,
-		});
+			resolvedApiKey: () => undefined });
 
 		await expect(
 			finalizer.applyTerminalEvent({
@@ -216,20 +194,16 @@ describe("CursorRunFinalizer", () => {
 						status: "finished",
 						result: "ok",
 						durationMs: 1,
-						model: { id: "composer-2.5" },
-					},
+						model: { id: "composer-2.5" } },
 					finalText: "ok",
 					incompleteTools: buildIncompleteCursorToolRunOutcome({ status: "finished", assistantTextProduced: true }),
-					assistantTextProduced: true,
-				},
-			}),
+					assistantTextProduced: true } }),
 		).rejects.toThrow("commit failed before terminal event");
 
 		await finalizer.applyTerminalEvent({
 			kind: "error",
 			prepared,
-			error: new Error("commit failed before terminal event"),
-		});
+			error: new Error("commit failed before terminal event") });
 
 		stream.end();
 		const events = await collectAssistantEvents(stream);
@@ -238,7 +212,7 @@ describe("CursorRunFinalizer", () => {
 	});
 
 	it("does not reclassify a completed direct turn when debug cleanup fails", async () => {
-		const stream = createAssistantMessageEventStream();
+		const stream = new AssistantMessageEventStream();
 		const partial = makeAssistantMessage("");
 		const context = makeContext();
 		const model = makeModel();
@@ -249,8 +223,7 @@ describe("CursorRunFinalizer", () => {
 			cwd: process.cwd(),
 			useNativeToolReplay: false,
 			nativeReplayId: "replay-1",
-			textDeltas: [],
-		});
+			textDeltas: [] });
 		const prepared: CursorProviderTurnPrepareResult = {
 			runtimeTarget: "local",
 			agent: { agentId: "agent-1" } as SDKAgent,
@@ -265,8 +238,7 @@ describe("CursorRunFinalizer", () => {
 				bridgeEnabled: false,
 				nativeReplayId: "replay-1",
 				agentMode: "agent",
-				modelSelection: { id: "composer-2.5" },
-			},
+				modelSelection: { id: "composer-2.5" } },
 			localForce: { value: false, source: "builtin", trustLevel: "builtin" },
 			contextWindowAgentId: "agent-1",
 			textDeltas: [],
@@ -279,35 +251,29 @@ describe("CursorRunFinalizer", () => {
 				sendState: { bootstrapped: false, contextFingerprint: "", incrementalSendCount: 0 },
 				created: true,
 				commitSend: () => {},
-				trackRunCompletion: () => {},
-			} satisfies SessionCursorAgentLease,
+				trackRunCompletion: () => {} } satisfies SessionCursorAgentLease,
 			restoreCursorSdkOutputFilter: () => {},
 			lifecycle: {
 				commitSend: () => {},
 				trackRunCompletion: () => {},
 				abandon: async () => {},
-				dispose: async () => {},
-			},
-			runtime: { kind: "direct", turnCoordinator },
-		};
+				dispose: async () => {} },
+			runtime: { kind: "direct", turnCoordinator } };
 		const debugSink = {
 			recordFinalPartial: () => {},
 			finalize: async () => {
 				throw new Error("debug finalize failed");
-			},
-		} as unknown as CursorSdkEventDebugSink;
+			} } as unknown as CursorSdkEventDebugSink;
 		const finalizer = new CursorRunFinalizer({
 			runnerParams: {
 				model,
 				context,
 				stream,
 				partial,
-				sdkEventDebugRef: {},
-			},
+				sdkEventDebugRef: {} },
 			sdkEventDebug: () => debugSink,
 			sdkProcessErrorGuard,
-			resolvedApiKey: () => undefined,
-		});
+			resolvedApiKey: () => undefined });
 
 		await finalizer.applyTerminalEvent({
 			kind: "direct",
@@ -319,13 +285,10 @@ describe("CursorRunFinalizer", () => {
 					status: "finished",
 					result: "ok",
 					durationMs: 1,
-					model: { id: "composer-2.5" },
-				},
+					model: { id: "composer-2.5" } },
 				finalText: "ok",
 				incompleteTools: buildIncompleteCursorToolRunOutcome({ status: "finished", assistantTextProduced: true }),
-				assistantTextProduced: true,
-			},
-		});
+				assistantTextProduced: true } });
 		await expect(finalizer.cleanup(prepared, undefined, undefined)).resolves.toBeUndefined();
 
 		stream.end();

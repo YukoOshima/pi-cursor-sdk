@@ -1,7 +1,7 @@
 import { readFileSync, statSync } from "node:fs";
 import { basename } from "node:path";
-import { getLanguageFromPath, highlightCode, keyHint, type ToolDefinition } from "@earendil-works/pi-coding-agent";
-import { Image, Text, type Component } from "@earendil-works/pi-tui";
+import { getLanguageFromPath, highlightCode, keyHint, type ToolDefinition } from "@oh-my-pi/pi-coding-agent";
+import { Image, Text, type Component } from "@oh-my-pi/pi-tui";
 import { Type } from "typebox";
 import { resolveCursorEditDiff } from "./cursor-edit-diff.js";
 import { inferImageMimeType } from "./cursor-tool-result-display-readers.js";

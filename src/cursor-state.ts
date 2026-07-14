@@ -1,5 +1,5 @@
 import type { AgentModeOption } from "@cursor/sdk";
-import type { ExtensionAPI, ExtensionContext, SessionEntry } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI, ExtensionContext, SessionEntry } from "@oh-my-pi/pi-coding-agent";
 import {
 	buildCursorToolManifestText,
 	CURSOR_TOOL_MANIFEST_ENV,

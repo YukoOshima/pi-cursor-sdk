@@ -1,7 +1,7 @@
 import path from "node:path";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@earendil-works/pi-coding-agent", () => ({
+vi.mock("@oh-my-pi/pi-coding-agent", () => ({
 	getAgentDir: () => path.join("/tmp/fake-home", ".omp", "agent"),
 }));
 

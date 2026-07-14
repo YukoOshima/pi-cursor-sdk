@@ -1,5 +1,5 @@
 import path from "node:path";
-import { getAgentDir as getHostAgentDir } from "@earendil-works/pi-coding-agent";
+import { getAgentDir as getHostAgentDir } from "@oh-my-pi/pi-coding-agent";
 
 function deriveConfigDirName(agentDir: string): string {
 	const parent = path.basename(path.dirname(path.resolve(agentDir)));

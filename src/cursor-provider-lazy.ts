@@ -1,12 +1,11 @@
 import {
-	createAssistantMessageEventStream,
 	type Api,
 	type AssistantMessage,
-	type AssistantMessageEventStream,
+	AssistantMessageEventStream,
 	type Context,
 	type Model,
 	type SimpleStreamOptions,
-} from "@earendil-works/pi-ai";
+} from "@oh-my-pi/pi-ai";
 
 function makeProviderLoadErrorMessage(model: Model<Api>, error: unknown): AssistantMessage {
 	return {
@@ -21,12 +20,10 @@ function makeProviderLoadErrorMessage(model: Model<Api>, error: unknown): Assist
 			cacheRead: 0,
 			cacheWrite: 0,
 			totalTokens: 0,
-			cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
-		},
+			cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 } },
 		stopReason: "error",
 		timestamp: Date.now(),
-		errorMessage: `Failed to load Cursor provider runtime: ${error instanceof Error ? error.message : String(error)}`,
-	};
+		errorMessage: `Failed to load Cursor provider runtime: ${error instanceof Error ? error.message : String(error)}` };
 }
 
 export function streamCursorLazy(
@@ -34,7 +31,7 @@ export function streamCursorLazy(
 	context: Context,
 	options?: SimpleStreamOptions,
 ): AssistantMessageEventStream {
-	const outer = createAssistantMessageEventStream();
+	const outer = new AssistantMessageEventStream();
 	queueMicrotask(async () => {
 		try {
 			const { streamCursor } = await import("./cursor-provider.js");

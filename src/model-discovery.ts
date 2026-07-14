@@ -4,8 +4,8 @@ import type {
 	ModelParameterValue,
 	ModelSelection,
 } from "@cursor/sdk";
-import type { ProviderModelConfig } from "@earendil-works/pi-coding-agent";
-import type { ModelThinkingLevel, ThinkingLevelMap } from "@earendil-works/pi-ai";
+import type { ProviderModelConfig } from "@oh-my-pi/pi-coding-agent";
+import type { ModelThinkingLevel, ThinkingLevelMap } from "@oh-my-pi/pi-ai";
 import { loadContextWindowCache } from "./context-window-cache.js";
 import { loadCursorSdk } from "./cursor-sdk-runtime.js";
 import { resolveCursorApiKey, resolveCursorRuntimeApiKey } from "./cursor-api-key.js";

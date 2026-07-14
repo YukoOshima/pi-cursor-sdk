@@ -1,12 +1,11 @@
 import {
 	type Api,
 	type AssistantMessage,
-	type AssistantMessageEventStream,
+	AssistantMessageEventStream,
 	type Context,
-	createAssistantMessageEventStream,
 	type Model,
 	type SimpleStreamOptions,
-} from "@earendil-works/pi-ai";
+} from "@oh-my-pi/pi-ai";
 import {
 	cursorLiveRuns,
 	DEFAULT_CURSOR_NATIVE_REPLAY_IDLE_DISPOSE_MS,
@@ -38,11 +37,9 @@ function makeInitialMessage(model: Model<Api>): AssistantMessage {
 			cacheRead: 0,
 			cacheWrite: 0,
 			totalTokens: 0,
-			cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
-		},
+			cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 } },
 		stopReason: "stop",
-		timestamp: Date.now(),
-	};
+		timestamp: Date.now() };
 }
 
 export function streamCursor(
@@ -50,7 +47,7 @@ export function streamCursor(
 	context: Context,
 	options?: SimpleStreamOptions,
 ): AssistantMessageEventStream {
-	const stream = createAssistantMessageEventStream();
+	const stream = new AssistantMessageEventStream();
 	const sdkEventDebugRef: { current?: CursorSdkEventDebugSink } = {};
 	attachCursorSdkEventDebugPiStreamTap(stream, sdkEventDebugRef);
 
@@ -63,8 +60,7 @@ export function streamCursor(
 			stream,
 			partial,
 			options,
-			sdkEventDebugRef,
-		});
+			sdkEventDebugRef });
 
 		try {
 			stream.push({ type: "start", partial });
@@ -99,5 +95,4 @@ export const __testUtils = {
 	resetCursorNativeReplayIdleDisposeMs,
 	releaseAllPendingCursorLiveRunsForTests,
 	resetSessionCursorAgents: () => disposeAllSessionCursorAgents(),
-	resetSessionTurnQueue: cursorSessionTurnQueueTestUtils.reset,
-};
+	resetSessionTurnQueue: cursorSessionTurnQueueTestUtils.reset };

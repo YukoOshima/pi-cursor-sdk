@@ -1,5 +1,5 @@
 import { vi } from "vitest";
-import type { ExtensionAPI, ProviderConfig, ToolInfo } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI, ProviderConfig, ToolInfo } from "@oh-my-pi/pi-coding-agent";
 import type { CursorNativeToolDisplayExtensionApi } from "../../src/cursor-native-tool-display-registration.js";
 import type cursorExtensionFactory from "../../src/index.js";
 import { createExtensionCommandContext } from "./context-fixtures.js";

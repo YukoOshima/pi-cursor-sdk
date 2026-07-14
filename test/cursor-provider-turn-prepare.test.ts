@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createAssistantMessageEventStream } from "@earendil-works/pi-ai";
+import { AssistantMessageEventStream } from "@oh-my-pi/pi-ai";
 import type { CursorResolvedSdkConfig } from "../src/cursor-config.js";
 import { installCursorSdkProcessErrorGuard } from "../src/cursor-sdk-process-error-guard.js";
 import { makeAssistantMessage, makeContext, makeModel } from "./helpers/pi-harness.js";
@@ -16,29 +16,24 @@ function makeResolvedConfig(runtime: "local" | "cloud"): CursorResolvedSdkConfig
 			envNames: { value: [], source: "builtin", trustLevel: "builtin" },
 			envFromFiles: { value: false, source: "builtin", trustLevel: "builtin" },
 			environment: { value: undefined, source: "builtin", trustLevel: "builtin" },
-			acknowledged: { value: false, source: "builtin", trustLevel: "builtin" },
-		},
+			acknowledged: { value: false, source: "builtin", trustLevel: "builtin" } },
 		local: {
 			autoReview: { value: false, source: "builtin", trustLevel: "builtin" },
 			sandboxEnabled: { value: false, source: "builtin", trustLevel: "builtin" },
 			force: { value: false, source: "builtin", trustLevel: "builtin" },
-			resume: { value: false, source: "builtin", trustLevel: "builtin" },
-		},
-	} as CursorResolvedSdkConfig;
+			resume: { value: false, source: "builtin", trustLevel: "builtin" } } } as CursorResolvedSdkConfig;
 }
 
 const { mockResolveCursorProviderTurnConfig, mockPrepareCursorProviderTurn } = vi.hoisted(() => ({
 	mockResolveCursorProviderTurnConfig: vi.fn(),
-	mockPrepareCursorProviderTurn: vi.fn(),
-}));
+	mockPrepareCursorProviderTurn: vi.fn() }));
 
 vi.mock("../src/cursor-provider-turn-prepare.js", async (importOriginal) => {
 	const actual = await importOriginal<typeof import("../src/cursor-provider-turn-prepare.js")>();
 	return {
 		...actual,
 		resolveCursorProviderTurnConfig: mockResolveCursorProviderTurnConfig,
-		prepareCursorProviderTurn: mockPrepareCursorProviderTurn,
-	};
+		prepareCursorProviderTurn: mockPrepareCursorProviderTurn };
 });
 
 vi.mock("../src/cursor-provider-live-run-drain.js", async (importOriginal) => {
@@ -49,8 +44,7 @@ vi.mock("../src/cursor-provider-live-run-drain.js", async (importOriginal) => {
 			// Simulate the config changing underneath the turn while the drain await is in flight.
 			mockResolveCursorProviderTurnConfig.mockReturnValue(makeResolvedConfig("cloud"));
 			return "continue_send";
-		}),
-	};
+		}) };
 });
 
 describe("CursorProviderTurnRunner config snapshotting (F3)", () => {
@@ -67,11 +61,10 @@ describe("CursorProviderTurnRunner config snapshotting (F3)", () => {
 		const runner = new CursorProviderTurnRunner({
 			model: makeModel(),
 			context: makeContext(),
-			stream: createAssistantMessageEventStream(),
+			stream: new AssistantMessageEventStream(),
 			partial: makeAssistantMessage(""),
 			options: { apiKey: "test-key" },
-			sdkEventDebugRef: {},
-		});
+			sdkEventDebugRef: {} });
 
 		await runner.run(installCursorSdkProcessErrorGuard());
 

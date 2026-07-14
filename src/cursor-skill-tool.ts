@@ -6,7 +6,7 @@ import type {
 	ExtensionAPI,
 	ExtensionContext,
 	Skill,
-} from "@earendil-works/pi-coding-agent";
+} from "@oh-my-pi/pi-coding-agent";
 import { Type } from "typebox";
 import { arePiToolsDisabled } from "./cursor-active-tools.js";
 import type { CursorRuntime } from "./cursor-config.js";

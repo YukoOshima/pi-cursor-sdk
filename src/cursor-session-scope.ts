@@ -1,4 +1,4 @@
-import type { ExtensionHandler, SessionInfoChangedEvent, SessionStartEvent } from "@earendil-works/pi-coding-agent";
+import type { ExtensionHandler, SessionInfoChangedEvent, SessionStartEvent } from "@oh-my-pi/pi-coding-agent";
 import { truncateCursorDisplayLine } from "./cursor-display-text.js";
 
 interface CursorSessionScopeExtensionApi {

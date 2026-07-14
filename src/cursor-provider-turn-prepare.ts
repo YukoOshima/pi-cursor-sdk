@@ -1,4 +1,4 @@
-import type { Context, SimpleStreamOptions } from "@earendil-works/pi-ai";
+import type { Context, SimpleStreamOptions } from "@oh-my-pi/pi-ai";
 import type { AgentModeOption, ModelSelection, SDKAgent } from "@cursor/sdk";
 import { installCursorMcpToolTimeoutOverride } from "./cursor-mcp-timeout-override.js";
 import { installCursorSdkOutputFilter, suppressCursorSdkOutput } from "./cursor-sdk-output-filter.js";

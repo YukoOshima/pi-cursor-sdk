@@ -14,7 +14,7 @@ import {
 } from "../src/cursor-state.js";
 import { __testUtils as modelDiscoveryTestUtils } from "../src/model-discovery.js";
 import type { ModelListItem } from "@cursor/sdk";
-import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
+import type { ExtensionContext } from "@oh-my-pi/pi-coding-agent";
 import {
 	createExtensionCommandContext,
 	createExtensionTestContext,
@@ -23,7 +23,7 @@ import {
 	makeModel,
 } from "./helpers/pi-harness.js";
 import { createTestToolInfo } from "./helpers/tool-fixtures.js";
-import type { SessionEntry } from "@earendil-works/pi-coding-agent";
+import type { SessionEntry } from "@oh-my-pi/pi-coding-agent";
 
 const modelItems: ModelListItem[] = [
 	{

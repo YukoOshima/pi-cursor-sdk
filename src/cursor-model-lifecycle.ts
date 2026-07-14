@@ -5,7 +5,7 @@ import type {
 	ExtensionHandler,
 	SessionStartEvent,
 	TurnStartEvent,
-} from "@earendil-works/pi-coding-agent";
+} from "@oh-my-pi/pi-coding-agent";
 
 export type CursorModelLifecycleContext = ExtensionContext;
 

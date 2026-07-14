@@ -1,4 +1,4 @@
-import type { ExtensionAPI, ExtensionCommandContext, SessionEntry } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI, ExtensionCommandContext, SessionEntry } from "@oh-my-pi/pi-coding-agent";
 import { asRecord, getString } from "./cursor-record-utils.js";
 import { fsyncExistingRegularFile } from "./cursor-durable-fs.js";
 import { scrubSensitiveText } from "./cursor-sensitive-text.js";

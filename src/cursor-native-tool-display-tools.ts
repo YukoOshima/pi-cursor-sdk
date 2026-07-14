@@ -7,8 +7,8 @@ import {
 	createReadToolDefinition,
 	createWriteToolDefinition,
 	type ToolDefinition,
-} from "@earendil-works/pi-coding-agent";
-import { Text } from "@earendil-works/pi-tui";
+} from "@oh-my-pi/pi-coding-agent";
+import { Text } from "@oh-my-pi/pi-tui";
 import type { TSchema } from "typebox";
 import { getCursorSessionCwd } from "./cursor-session-scope.js";
 import {
@@ -212,7 +212,7 @@ export function createNativeCursorToolDefinition(toolName: NativeCursorToolName,
 }
 
 export function registerNativeCursorTool(
-	pi: Pick<import("@earendil-works/pi-coding-agent").ExtensionAPI, "registerTool">,
+	pi: Pick<import("@oh-my-pi/pi-coding-agent").ExtensionAPI, "registerTool">,
 	toolName: NativeCursorToolName,
 ): void {
 	const definition = createNativeCursorToolDefinition(toolName, getCursorSessionCwd());

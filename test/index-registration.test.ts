@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createAssistantMessageEventStream } from "@earendil-works/pi-ai";
+import { AssistantMessageEventStream } from "@oh-my-pi/pi-ai";
 import {
 	createExtensionCommandContext,
 	createExtensionRegistrationPi,
@@ -8,22 +8,18 @@ import {
 	makeContext,
 	makeHarnessModel,
 	makeModel,
-	makeProviderModelConfig,
-} from "./helpers/pi-harness.js";
+	makeProviderModelConfig } from "./helpers/pi-harness.js";
 import {
 	createExtensionPi,
 	resetIndexExtensionTestState,
-	cursorPiToolBridgeTestUtils,
-} from "./helpers/index-extension-test-kit.js";
+	cursorPiToolBridgeTestUtils } from "./helpers/index-extension-test-kit.js";
 
 vi.mock("../src/model-discovery.js", () => ({
 	discoverModels: vi.fn(),
-	getCursorModelMetadata: vi.fn(),
-}));
+	getCursorModelMetadata: vi.fn() }));
 
 vi.mock("../src/cursor-provider.js", () => ({
-	streamCursor: vi.fn(),
-}));
+	streamCursor: vi.fn() }));
 
 import extensionFactory from "../src/index.js";
 import { discoverModels } from "../src/model-discovery.js";
@@ -220,7 +216,7 @@ describe("extension registration and discovery", () => {
 	it("registers a lazy Cursor stream wrapper that delegates only when invoked", async () => {
 		const mockModels = [makeProviderModelConfig("composer-2", { name: "Cursor Composer 2" })];
 		mockedDiscover.mockResolvedValueOnce(mockModels);
-		const inner = createAssistantMessageEventStream();
+		const inner = new AssistantMessageEventStream();
 		mockedStreamCursor.mockImplementationOnce(() => inner);
 		const pi = createExtensionPi();
 		await extensionFactory(pi);
@@ -377,8 +373,7 @@ describe("extension registration and discovery", () => {
 					{ label: "Web app", value: "web" },
 					{ label: "CLI", value: "cli" },
 				],
-				allowCustom: false,
-			},
+				allowCustom: false },
 			undefined,
 			undefined,
 			createExtensionTestContext({ ui: { notify: vi.fn(), setStatus: vi.fn(), select, input } }),
@@ -390,8 +385,7 @@ describe("extension registration and discovery", () => {
 		expect(result.details).toMatchObject({
 			uiAvailable: true,
 			cancelled: false,
-			answers: [{ id: "question_1", answer: "Web app", value: "web", cancelled: false }],
-		});
+			answers: [{ id: "question_1", answer: "Web app", value: "web", cancelled: false }] });
 	});
 
 	it("registers Cursor pi tool bridge state and activates the Cursor question tool", async () => {
@@ -430,8 +424,7 @@ describe("extension registration and discovery", () => {
 			makeProviderModelConfig("gpt-5.5@1m", {
 				name: "GPT-5.5 @ 1m",
 				reasoning: true,
-				contextWindow: 1_000_000,
-			}),
+				contextWindow: 1_000_000 }),
 		]);
 
 		const pi = createExtensionPi();
@@ -448,8 +441,7 @@ describe("extension registration and discovery", () => {
 			makeProviderModelConfig("gpt-5.5@1m", {
 				name: "GPT-5.5 @ 1m",
 				reasoning: true,
-				contextWindow: 1_000_000,
-			}),
+				contextWindow: 1_000_000 }),
 		];
 		mockedDiscover.mockResolvedValueOnce(startupModels).mockResolvedValueOnce(refreshedModels);
 		const pi = createExtensionPi();
@@ -464,8 +456,7 @@ describe("extension registration and discovery", () => {
 				hasUI: true,
 				model: undefined,
 				modelRegistry: { getApiKeyForProvider } as never,
-				ui: { notify },
-			}),
+				ui: { notify } }),
 		);
 
 		expect(getApiKeyForProvider).toHaveBeenCalledWith("cursor");
@@ -493,9 +484,7 @@ describe("extension registration and discovery", () => {
 			createAgent: vi.fn().mockResolvedValue({
 				agentId: "agent-refresh-config",
 				reload,
-				[Symbol.asyncDispose]: vi.fn().mockResolvedValue(undefined),
-			}),
-		});
+				[Symbol.asyncDispose]: vi.fn().mockResolvedValue(undefined) }) });
 		const notify = vi.fn();
 
 		await pi.runCommand("cursor-refresh-config", "", createExtensionCommandContext({ model: makeModel("composer-2.5"), ui: { notify } }));
@@ -548,8 +537,7 @@ describe("extension registration and discovery", () => {
 			createExtensionCommandContext({
 				hasUI: true,
 				model: undefined,
-				ui: { notify },
-			}),
+				ui: { notify } }),
 		);
 
 		expect(pi.registerProvider).toHaveBeenCalledTimes(2);
@@ -564,8 +552,7 @@ describe("extension registration and discovery", () => {
 			options?.onFallback?.({
 				reason: "missing-api-key",
 				message:
-					"Cursor model discovery needs an API key from /login (Use an API key -> Cursor) or CURSOR_API_KEY; startup discovery does not parse Pi CLI arguments, and Cursor Agent CLI/Desktop login is not reused. Using fallback Cursor models so /login and model selection still work; fallback models can run once auth exists. After adding auth to an already-started pi session, run /cursor-refresh-models to refresh the full live Cursor model catalog without restarting pi.",
-			});
+					"Cursor model discovery needs an API key from /login (Use an API key -> Cursor) or CURSOR_API_KEY; startup discovery does not parse Pi CLI arguments, and Cursor Agent CLI/Desktop login is not reused. Using fallback Cursor models so /login and model selection still work; fallback models can run once auth exists. After adding auth to an already-started pi session, run /cursor-refresh-models to refresh the full live Cursor model catalog without restarting pi." });
 			return [makeProviderModelConfig("composer-2", { name: "Cursor Composer 2" })];
 		});
 
@@ -577,8 +564,7 @@ describe("extension registration and discovery", () => {
 			hasUI: true,
 			model: makeHarnessModel("cursor", "cursor-sdk", "composer-2"),
 			ui: { notify, setStatus: vi.fn() },
-			sessionManager: { getBranch: vi.fn(() => []) },
-		});
+			sessionManager: { getBranch: vi.fn(() => []) } });
 
 		expect(notify).toHaveBeenCalledWith(
 			"Cursor model discovery needs an API key from /login (Use an API key -> Cursor) or CURSOR_API_KEY; startup discovery does not parse Pi CLI arguments, and Cursor Agent CLI/Desktop login is not reused. Using fallback Cursor models so /login and model selection still work; fallback models can run once auth exists. After adding auth to an already-started pi session, run /cursor-refresh-models to refresh the full live Cursor model catalog without restarting pi.",
@@ -590,8 +576,7 @@ describe("extension registration and discovery", () => {
 		mockedDiscover.mockImplementationOnce(async (options: DiscoverOptions) => {
 			options?.onFallback?.({
 				reason: "empty-model-list",
-				message: "Cursor model discovery returned no models; using fallback Cursor model list.",
-			});
+				message: "Cursor model discovery returned no models; using fallback Cursor model list." });
 			return [];
 		});
 
@@ -603,8 +588,7 @@ describe("extension registration and discovery", () => {
 			hasUI: true,
 			model: makeHarnessModel("anthropic", "anthropic-messages", "claude-sonnet-4-5"),
 			ui: { notify, setStatus: vi.fn() },
-			sessionManager: { getBranch: vi.fn(() => []) },
-		});
+			sessionManager: { getBranch: vi.fn(() => []) } });
 
 		expect(notify).not.toHaveBeenCalled();
 	});
@@ -613,8 +597,7 @@ describe("extension registration and discovery", () => {
 		mockedDiscover.mockImplementationOnce(async (options: DiscoverOptions) => {
 			options?.onFallback?.({
 				reason: "missing-api-key",
-				message: "missing key; using fallback models",
-			});
+				message: "missing key; using fallback models" });
 			return [makeProviderModelConfig("composer-2", { name: "Cursor Composer 2" })];
 		});
 
@@ -626,14 +609,12 @@ describe("extension registration and discovery", () => {
 			hasUI: true,
 			model: makeHarnessModel("anthropic", "anthropic-messages", "claude-sonnet-4-5"),
 			ui: { notify, setStatus: vi.fn() },
-			sessionManager: { getBranch: vi.fn(() => []) },
-		});
+			sessionManager: { getBranch: vi.fn(() => []) } });
 		expect(notify).not.toHaveBeenCalled();
 
 		await pi.runModelSelect(makeHarnessModel("cursor", "cursor-sdk", "composer-2"), {
 			hasUI: true,
-			ui: { notify, setStatus: vi.fn() },
-		});
+			ui: { notify, setStatus: vi.fn() } });
 
 		expect(notify).toHaveBeenCalledWith("missing key; using fallback models", "warning");
 	});
@@ -642,8 +623,7 @@ describe("extension registration and discovery", () => {
 		mockedDiscover.mockImplementationOnce(async (options: DiscoverOptions) => {
 			options?.onFallback?.({
 				reason: "missing-api-key",
-				message: "missing key; using fallback models",
-			});
+				message: "missing key; using fallback models" });
 			return [makeProviderModelConfig("composer-2", { name: "Cursor Composer 2" })];
 		});
 
@@ -656,20 +636,17 @@ describe("extension registration and discovery", () => {
 			hasUI: true,
 			model: cursorModel,
 			ui: { notify, setStatus: vi.fn() },
-			sessionManager: { getSessionFile: vi.fn(() => "/tmp/session-one.jsonl"), getBranch: vi.fn(() => []) },
-		});
+			sessionManager: { getSessionFile: vi.fn(() => "/tmp/session-one.jsonl"), getBranch: vi.fn(() => []) } });
 		await pi.runTurnStart({
 			hasUI: true,
 			model: cursorModel,
 			ui: { notify, setStatus: vi.fn() },
-			sessionManager: { getSessionFile: vi.fn(() => "/tmp/session-one.jsonl"), getBranch: vi.fn(() => []) },
-		});
+			sessionManager: { getSessionFile: vi.fn(() => "/tmp/session-one.jsonl"), getBranch: vi.fn(() => []) } });
 		await pi.runSessionStart({
 			hasUI: true,
 			model: cursorModel,
 			ui: { notify, setStatus: vi.fn() },
-			sessionManager: { getSessionFile: vi.fn(() => "/tmp/session-two.jsonl"), getBranch: vi.fn(() => []) },
-		});
+			sessionManager: { getSessionFile: vi.fn(() => "/tmp/session-two.jsonl"), getBranch: vi.fn(() => []) } });
 
 		expect(notify).toHaveBeenCalledTimes(2);
 		expect(notify).toHaveBeenNthCalledWith(1, "missing key; using fallback models", "warning");
@@ -680,8 +657,7 @@ describe("extension registration and discovery", () => {
 		mockedDiscover.mockImplementationOnce(async (options: DiscoverOptions) => {
 			options?.onFallback?.({
 				reason: "empty-model-list",
-				message: "Cursor model discovery returned no models; using fallback Cursor model list.",
-			});
+				message: "Cursor model discovery returned no models; using fallback Cursor model list." });
 			return [];
 		});
 
@@ -692,8 +668,7 @@ describe("extension registration and discovery", () => {
 		await pi.runSessionStart({
 			hasUI: false,
 			ui: { notify, setStatus: vi.fn() },
-			sessionManager: { getBranch: vi.fn(() => []) },
-		});
+			sessionManager: { getBranch: vi.fn(() => []) } });
 
 		expect(notify).not.toHaveBeenCalled();
 	});

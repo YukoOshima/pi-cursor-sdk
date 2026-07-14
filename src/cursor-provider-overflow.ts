@@ -1,5 +1,5 @@
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import type { AssistantMessage } from "@earendil-works/pi-ai";
+import type { ExtensionAPI } from "@oh-my-pi/pi-coding-agent";
+import type { AssistantMessage } from "@oh-my-pi/pi-ai";
 import { CURSOR_PROVIDER } from "./cursor-model.js";
 
 /**

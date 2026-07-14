@@ -1,7 +1,6 @@
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { join } from "node:path";
-import { OPENAI_CODEX_MODELS } from "@earendil-works/pi-ai/providers/openai-codex.models";
 import { describe, expect, it } from "vitest";
 import { FALLBACK_MODEL_ITEMS } from "../src/cursor-fallback-models.generated.js";
 
@@ -20,9 +19,9 @@ const packageLock = require("../package-lock.json") as {
 };
 
 const PI_PACKAGES = [
-	"@earendil-works/pi-ai",
-	"@earendil-works/pi-coding-agent",
-	"@earendil-works/pi-tui",
+	"@oh-my-pi/pi-ai",
+	"@oh-my-pi/pi-coding-agent",
+	"@oh-my-pi/pi-tui",
 ] as const;
 
 function lockPackageVersion(packageName: string): string | undefined {
@@ -80,18 +79,17 @@ describe("package metadata cutover baselines", () => {
 
 	it("pins pi validation baselines", () => {
 		for (const packageName of PI_PACKAGES) {
-			expect(packageJson.devDependencies[packageName]).toBe("0.80.5");
-			expect(lockPackageVersion(packageName)).toBe("0.80.5");
+			expect(packageJson.devDependencies[packageName]).toBe("16.5.0");
+			expect(lockPackageVersion(packageName)).toBe("16.5.0");
 		}
 	});
 
-	it("tracks Pi 0.80.5 GPT-5.6 Codex metadata", () => {
-		for (const modelId of ["gpt-5.6-luna", "gpt-5.6-sol", "gpt-5.6-terra"] as const) {
-			expect(OPENAI_CODEX_MODELS[modelId]).toMatchObject({
-				contextWindow: 272000,
-				maxTokens: 128000,
-			});
-		}
+	it("resolves @oh-my-pi/pi-ai package root for omp", () => {
+		const aiPkgPath = join(process.cwd(), "node_modules/@oh-my-pi/pi-ai/package.json");
+		const aiPkg = JSON.parse(readFileSync(aiPkgPath, "utf8")) as { name: string; version: string };
+		expect(aiPkg.name).toBe("@oh-my-pi/pi-ai");
+		expect(aiPkg.version).toBe("16.5.0");
+		expect(lockPackageVersion("@oh-my-pi/pi-ai")).toBe("16.5.0");
 	});
 
 	it("keeps Grok UX examples aligned with the generated Cursor catalog", () => {
@@ -104,7 +102,7 @@ describe("package metadata cutover baselines", () => {
 		expect(spec).not.toContain("grok-4.3");
 	});
 
-	it("keeps @earendil-works peer dependency ranges unpinned per pi package guidance", () => {
+	it("keeps @oh-my-pi peer dependency ranges unpinned per omp package guidance", () => {
 		for (const packageName of PI_PACKAGES) {
 			expect(packageJson.peerDependencies[packageName]).toBe("*");
 		}

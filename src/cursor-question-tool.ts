@@ -1,5 +1,5 @@
-import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
-import { Text } from "@earendil-works/pi-tui";
+import type { ExtensionAPI, ExtensionContext } from "@oh-my-pi/pi-coding-agent";
+import { Text } from "@oh-my-pi/pi-tui";
 import { Type } from "typebox";
 import { arePiToolsDisabled } from "./cursor-active-tools.js";
 import { isCursorModel } from "./cursor-model.js";
