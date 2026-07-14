@@ -14,6 +14,7 @@ import { registerCursorFallbackIssueWarning } from "./cursor-fallback-warning.js
 import { registerCursorAgentsContextDedup } from "./cursor-agents-context-registration.js";
 import { registerCursorOverflowNormalization } from "./cursor-provider-overflow.js";
 import { registerCursorSdkSessionProcessErrorGuard } from "./cursor-sdk-process-error-guard.js";
+import { registerCursorBuiltinModelRemap } from "./cursor-builtin-model-remap.js";
 
 type CursorExtensionApi =
 	& Pick<ExtensionAPI, "registerProvider" | "registerCommand" | "on">
@@ -28,7 +29,8 @@ type CursorExtensionApi =
 	& Parameters<typeof registerCursorFallbackIssueWarning>[0]
 	& Parameters<typeof registerCursorAgentsContextDedup>[0]
 	& Parameters<typeof registerCursorOverflowNormalization>[0]
-	& Parameters<typeof registerCursorSdkSessionProcessErrorGuard>[0];
+	& Parameters<typeof registerCursorSdkSessionProcessErrorGuard>[0]
+	& Parameters<typeof registerCursorBuiltinModelRemap>[0];
 
 function createCursorProviderConfig(models: ProviderModelConfig[]): ProviderConfig {
 	return {
@@ -47,6 +49,9 @@ function registerCursorProvider(pi: Pick<ExtensionAPI, "registerProvider">, mode
 export default async function (pi: CursorExtensionApi) {
 	// Session cwd must register before other session_start listeners that depend on it.
 	registerCursorSessionScope(pi);
+	// Rebind omp's early-resolved built-in cursor-agent models onto this extension's
+	// cursor-sdk catalog before other Cursor lifecycle handlers observe ctx.model.
+	registerCursorBuiltinModelRemap(pi);
 	registerCursorSessionAgentLifecycle(pi);
 	registerCursorSessionAgentResume(pi);
 	pi.on("session_before_compact", async () => {

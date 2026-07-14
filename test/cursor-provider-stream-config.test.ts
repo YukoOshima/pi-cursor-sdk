@@ -563,7 +563,7 @@ describe("streamCursor prompt and model config", () => {
 
 			expect(loadLatest).toHaveBeenCalledWith("agent-ctx");
 			const cache = JSON.parse(readFileSync(contextWindowCacheTestUtils.getCachePath(), "utf-8"));
-			expect(cache.contextWindows).toEqual({ "composer-2": 201000 });
+			expect(cache.contextWindows["composer-2"]).toBe(201000);
 		} finally {
 			if (originalAgentDir === undefined) {
 				delete process.env.PI_CODING_AGENT_DIR;

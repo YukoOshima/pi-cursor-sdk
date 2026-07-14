@@ -442,6 +442,12 @@ Actual Cursor runs still need a key from `/login`, `CURSOR_API_KEY`, or `--api-k
 
 ## Troubleshooting
 
+### `Connect error unauthenticated` on `cursor/grok-4.5` (or similar)
+
+omp can resolve a model against its **built-in** Cursor Agent catalog (`cursor-agent`, ids like `cursor-grok-4.5-high`) before this extension replaces provider `cursor` with Cursor-SDK models. That stale selection then fails auth because built-in Cursor Agent login is not the same as a Cursor SDK API key.
+
+This extension rebinds those dangling built-in selections onto the SDK catalog (for example `cursor-grok-4.5-high-fast` → `grok-4.5:fast`) on session/model lifecycle. Prefer SDK ids such as `cursor/composer-2-5` or `cursor/grok-4.5`, and use `/cursor-fast` (or session fast state) instead of relying on CLI-only `:fast` / `:slow` suffixes when omp says the model was not found.
+
 ### I can see Cursor models, but runs fail
 
 You may be seeing fallback startup models or a missing/invalid Cursor SDK API key. Cursor Agent CLI/Desktop login is not reused by this extension. In interactive omp, run `/login`, choose `Use an API key`, choose `Cursor`, paste the key, then run `/cursor-refresh-models`.
