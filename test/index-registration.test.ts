@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { AssistantMessageEventStream } from "@oh-my-pi/pi-ai";
+import { AssistantMessageEventStream } from "@oh-my-pi/pi-ai/utils/event-stream";
 import {
-	createExtensionCommandContext,
 	createExtensionRegistrationPi,
 	createExtensionTestContext,
 	makeAssistantMessage,
@@ -50,12 +49,12 @@ describe("extension registration and discovery", () => {
 		await pi.runSessionStart();
 		expect(cursorSdkProcessErrorGuardTestUtils.activeSessionCount()).toBe(1);
 		expect(process.emit).not.toBe(originalEmit);
-		await pi.runSessionStart({}, { reason: "reload" });
+		await pi.runSessionStart({}, {});
 		expect(cursorSdkProcessErrorGuardTestUtils.activeSessionCount()).toBe(1);
-		await pi.runSessionShutdown({ reason: "reload" });
+		await pi.runSessionShutdown({});
 		expect(cursorSdkProcessErrorGuardTestUtils.activeSessionCount()).toBe(0);
 		expect(process.emit).toBe(originalEmit);
-		await pi.runSessionShutdown({ reason: "quit" });
+		await pi.runSessionShutdown({});
 		expect(cursorSdkProcessErrorGuardTestUtils.activeSessionCount()).toBe(0);
 	});
 
@@ -181,11 +180,11 @@ describe("extension registration and discovery", () => {
 			"edit",
 			"write",
 		]);
-		expect(pi._tools.find((tool) => tool.name === CURSOR_ASK_QUESTION_TOOL_NAME)?.promptSnippet).toContain("clarifying question");
-		expect(pi._tools.find((tool) => tool.name === CURSOR_ACTIVATE_SKILL_TOOL_NAME)?.promptSnippet).toContain("Agent Skill");
+		expect(pi._tools.find((tool) => tool.name === CURSOR_ASK_QUESTION_TOOL_NAME)?.description).toContain("clarifying question");
+		expect(pi._tools.find((tool) => tool.name === CURSOR_ACTIVATE_SKILL_TOOL_NAME)?.description).toMatch(/Agent Skill|skill/i);
 		const replayTool = pi._tools.find((tool) => tool.name === "cursor");
-		expect(replayTool?.promptSnippet).toBeUndefined();
-		expect(replayTool?.promptGuidelines).toBeUndefined();
+		expect((replayTool as { promptSnippet?: string } | undefined)?.promptSnippet).toBeUndefined();
+		expect((replayTool as { promptGuidelines?: string[] } | undefined)?.promptGuidelines).toBeUndefined();
 		expect(pi.setActiveTools).toHaveBeenCalledWith([
 			"read",
 			"bash",
@@ -206,7 +205,7 @@ describe("extension registration and discovery", () => {
 
 		const [call] = pi._registered;
 		expect(call.name).toBe("cursor");
-		expect(call.config.name).toBe("Cursor");
+		expect((call.config as any).name).toBeUndefined();
 		expect(call.config.apiKey).toBe("pi-cursor-sdk-cursor-api-key-placeholder");
 		expect(call.config.api).toBe("cursor-sdk");
 		expect(call.config.models).toBe(mockModels);
@@ -452,11 +451,12 @@ describe("extension registration and discovery", () => {
 		await pi.runCommand(
 			"cursor-refresh-models",
 			"",
-			createExtensionCommandContext({
+			{
 				hasUI: true,
 				model: undefined,
 				modelRegistry: { getApiKeyForProvider } as never,
-				ui: { notify } }),
+				ui: { notify },
+			},
 		);
 
 		expect(getApiKeyForProvider).toHaveBeenCalledWith("cursor");
@@ -487,7 +487,7 @@ describe("extension registration and discovery", () => {
 				[Symbol.asyncDispose]: vi.fn().mockResolvedValue(undefined) }) });
 		const notify = vi.fn();
 
-		await pi.runCommand("cursor-refresh-config", "", createExtensionCommandContext({ model: makeModel("composer-2.5"), ui: { notify } }));
+		await pi.runCommand("cursor-refresh-config", "", { model: makeModel("composer-2.5"), ui: { notify } });
 
 		expect(reload).toHaveBeenCalledTimes(1);
 		expect(notify).toHaveBeenCalledWith("Cursor SDK agent config refreshed.", "info");
@@ -500,7 +500,7 @@ describe("extension registration and discovery", () => {
 		await extensionFactory(pi);
 		const notify = vi.fn();
 
-		await pi.runCommand("cursor-refresh-config", "", createExtensionCommandContext({ model: makeModel("composer-2.5"), ui: { notify } }));
+		await pi.runCommand("cursor-refresh-config", "", { model: makeModel("composer-2.5"), ui: { notify } });
 
 		expect(notify).toHaveBeenCalledWith("No Cursor SDK agent exists yet; config will load on the next Cursor run.", "warning");
 	});
@@ -514,7 +514,7 @@ describe("extension registration and discovery", () => {
 		await pi.runCommand(
 			"cursor-refresh-config",
 			"",
-			createExtensionCommandContext({ model: makeHarnessModel("openai", "openai-chat", "gpt-test"), ui: { notify } }),
+			{ model: makeHarnessModel("openai", "openai-chat", "gpt-test"), ui: { notify } },
 		);
 
 		expect(notify).toHaveBeenCalledWith("Cursor config refresh is available only for Cursor models.", "info");
@@ -534,10 +534,11 @@ describe("extension registration and discovery", () => {
 		await pi.runCommand(
 			"cursor-refresh-models",
 			"",
-			createExtensionCommandContext({
+			{
 				hasUI: true,
 				model: undefined,
-				ui: { notify } }),
+				ui: { notify },
+			},
 		);
 
 		expect(pi.registerProvider).toHaveBeenCalledTimes(2);

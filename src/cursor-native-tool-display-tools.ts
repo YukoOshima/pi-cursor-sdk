@@ -9,14 +9,10 @@ import {
 	createWriteToolDefinition,
 } from "./host-tool-definitions.js";
 import { Text } from "@oh-my-pi/pi-tui";
-import type { TSchema } from "typebox";
 import { getCursorSessionCwd } from "./cursor-session-scope.js";
 import {
-	BUILTIN_NATIVE_CURSOR_TOOL_NAMES,
 	CURSOR_MODEL_ACTIVE_REPLAY_TOOL_NAMES,
 	CURSOR_REPLAY_TOOL_NAMES,
-	isNativeCursorToolName,
-	NATIVE_CURSOR_TOOL_NAMES,
 	type BuiltinNativeCursorToolName,
 	type NativeCursorToolName,
 } from "./cursor-native-tool-names.js";
@@ -36,7 +32,8 @@ import {
 } from "./cursor-native-tool-display-state.js";
 
 
-type AnyToolDefinition = ToolDefinition<TSchema, unknown>;
+/** Prefer `any` params to avoid typebox vs pi-ai TSchema mismatch under omp. */
+type AnyToolDefinition = ToolDefinition<any, unknown>;
 type RenderCall = NonNullable<AnyToolDefinition["renderCall"]>;
 type RenderResult = NonNullable<AnyToolDefinition["renderResult"]>;
 
@@ -45,15 +42,15 @@ type NativeReplayStrategy = {
 	missingReplayPolicy?: "block-file-mutation";
 	renderReplayCall?: (
 		args: Parameters<RenderCall>[0],
-		theme: Parameters<RenderCall>[1],
-		context: Parameters<RenderCall>[2],
+		options: Parameters<RenderCall>[1],
+		theme: Parameters<RenderCall>[2],
 		renderBase: () => ReturnType<RenderCall>,
 	) => ReturnType<RenderCall>;
 	renderReplayResult?: (
 		result: Parameters<RenderResult>[0],
 		options: Parameters<RenderResult>[1],
 		theme: Parameters<RenderResult>[2],
-		context: Parameters<RenderResult>[3],
+		args: Parameters<RenderResult>[3],
 		renderBase: () => ReturnType<RenderResult>,
 	) => ReturnType<RenderResult>;
 };
@@ -64,12 +61,12 @@ function emptyText(): Text {
 
 function renderReadReplayCall(
 	args: Parameters<RenderCall>[0],
-	theme: Parameters<RenderCall>[1],
-	context: Parameters<RenderCall>[2],
+	options: Parameters<RenderCall>[1],
+	theme: Parameters<RenderCall>[2],
 	renderBase: () => ReturnType<RenderCall>,
 ): ReturnType<RenderCall> {
 	const rendered = renderBase();
-	if ((args as Record<string, unknown>).localReadPreview !== true || context.expanded) return rendered;
+	if ((args as Record<string, unknown>).localReadPreview !== true || options.expanded) return rendered;
 	const baseText = rendered.render(120).join("\n").trimEnd();
 	const labeled = `${baseText}${theme.fg("muted", " · local file preview")}`;
 	if (rendered instanceof Text) {
@@ -83,28 +80,22 @@ function renderReadReplayResult(
 	result: Parameters<RenderResult>[0],
 	options: Parameters<RenderResult>[1],
 	theme: Parameters<RenderResult>[2],
-	context: Parameters<RenderResult>[3],
+	args: Parameters<RenderResult>[3],
 	renderBase: () => ReturnType<RenderResult>,
 ): ReturnType<RenderResult> {
-	return renderNativeLookingCursorReadReplayResult(
-		result,
-		options,
-		theme,
-		context as Parameters<typeof renderNativeLookingCursorReadReplayResult>[3],
-		renderBase,
-	);
+	return renderNativeLookingCursorReadReplayResult(result, options, theme, args, renderBase);
 }
 
 function renderEditReplayResult(
 	result: Parameters<RenderResult>[0],
 	options: Parameters<RenderResult>[1],
 	theme: Parameters<RenderResult>[2],
-	context: Parameters<RenderResult>[3],
+	args: Parameters<RenderResult>[3],
 	renderBase: () => ReturnType<RenderResult>,
 ): ReturnType<RenderResult> {
 	const details = parseCursorReplayToolDetails(result.details);
 	return details && isCursorReplayNativeEditDetails(details)
-		? renderCursorReplayResult(result, options, theme, context as Parameters<typeof renderCursorReplayResult>[3], context.isError)
+		? renderCursorReplayResult(result, options, theme, Boolean(result.isError))
 		: renderBase();
 }
 
@@ -112,12 +103,12 @@ function renderWriteReplayResult(
 	result: Parameters<RenderResult>[0],
 	options: Parameters<RenderResult>[1],
 	theme: Parameters<RenderResult>[2],
-	context: Parameters<RenderResult>[3],
+	args: Parameters<RenderResult>[3],
 	renderBase: () => ReturnType<RenderResult>,
 ): ReturnType<RenderResult> {
 	const details = parseCursorReplayToolDetails(result.details);
 	return details && isCursorReplayNativeWriteDetails(details)
-		? renderCursorReplayResult(result, options, theme, context as Parameters<typeof renderCursorReplayResult>[3], context.isError)
+		? renderCursorReplayResult(result, options, theme, Boolean(result.isError))
 		: renderBase();
 }
 
@@ -131,15 +122,19 @@ const NATIVE_CURSOR_TOOL_STRATEGIES: Record<BuiltinNativeCursorToolName, NativeR
 	edit: {
 		createDefinition: (cwd) => createEditToolDefinition(cwd) as AnyToolDefinition,
 		missingReplayPolicy: "block-file-mutation",
-		renderReplayCall: (args, theme, context) =>
-			renderNativeLookingCursorFileMutationCall("edit", args as Record<string, unknown>, theme, context.isPartial),
+		renderReplayCall: (args, options, theme, renderBase) =>
+			options.isPartial
+				? renderNativeLookingCursorFileMutationCall("edit", args as Record<string, unknown>, theme, true)
+				: renderBase(),
 		renderReplayResult: renderEditReplayResult,
 	},
 	write: {
 		createDefinition: (cwd) => createWriteToolDefinition(cwd) as AnyToolDefinition,
 		missingReplayPolicy: "block-file-mutation",
-		renderReplayCall: (args, theme, context) =>
-			renderNativeLookingCursorFileMutationCall("write", args as Record<string, unknown>, theme, context.isPartial),
+		renderReplayCall: (args, options, theme, renderBase) =>
+			options.isPartial
+				? renderNativeLookingCursorFileMutationCall("write", args as Record<string, unknown>, theme, true)
+				: renderBase(),
 		renderReplayResult: renderWriteReplayResult,
 	},
 	grep: { createDefinition: (cwd) => createGrepToolDefinition(cwd) as AnyToolDefinition },
@@ -155,10 +150,7 @@ function getNativeReplayStrategy(toolName: string): NativeReplayStrategy | undef
 }
 
 
-export function wrapNativeCursorTool<TParams extends TSchema, TDetails>(
-	definition: ToolDefinition<TParams, TDetails>,
-	getCurrentDefinition: () => ToolDefinition<TParams, TDetails>,
-): ToolDefinition<TParams, TDetails> {
+export function wrapNativeCursorTool(definition: AnyToolDefinition, getCurrentDefinition: () => AnyToolDefinition): AnyToolDefinition {
 	const strategy = getNativeReplayStrategy(definition.name);
 	return {
 		...definition,
@@ -174,7 +166,7 @@ export function wrapNativeCursorTool<TParams extends TSchema, TDetails>(
 				}
 				return {
 					content: cursorDisplay.result.content,
-					details: cursorDisplay.result.details as TDetails,
+					details: cursorDisplay.result.details,
 					terminate: cursorDisplay.terminate ?? true,
 				};
 			}
@@ -183,31 +175,29 @@ export function wrapNativeCursorTool<TParams extends TSchema, TDetails>(
 			}
 			return getCurrentDefinition().execute(toolCallId, params, signal, onUpdate, ctx);
 		},
-		renderCall(args, theme, context) {
+		renderCall(args, options, theme) {
 			const currentRenderCall = getCurrentDefinition().renderCall;
-			const renderBase = () => currentRenderCall?.(args, theme, context) ?? emptyText();
-			const isReplayCall = typeof context.toolCallId === "string" && isCursorReplayToolCallId(context.toolCallId);
-			if (isReplayCall && strategy?.renderReplayCall) {
-				return strategy.renderReplayCall(args, theme, context, renderBase) as ReturnType<NonNullable<ToolDefinition<TParams, TDetails>["renderCall"]>>;
+			const renderBase = () => currentRenderCall?.(args, options, theme) ?? emptyText();
+			if (strategy?.renderReplayCall) {
+				return strategy.renderReplayCall(args, options, theme, renderBase);
 			}
 			return renderBase();
 		},
-		renderResult(result, options, theme, context) {
+		renderResult(result, options, theme, args) {
 			const currentRenderResult = getCurrentDefinition().renderResult;
-			const renderBase = () => currentRenderResult?.(result, options, theme, context) ?? emptyText();
-			const isReplayCall = typeof context.toolCallId === "string" && isCursorReplayToolCallId(context.toolCallId);
-			if (isReplayCall && strategy?.renderReplayResult) {
-				return strategy.renderReplayResult(result, options, theme, context, renderBase) as ReturnType<NonNullable<ToolDefinition<TParams, TDetails>["renderResult"]>>;
+			const renderBase = () => currentRenderResult?.(result, options, theme, args) ?? emptyText();
+			if (strategy?.renderReplayResult) {
+				return strategy.renderReplayResult(result, options, theme, args, renderBase);
 			}
 			return renderBase();
 		},
 	};
 }
 
-export function createNativeCursorToolDefinition(toolName: NativeCursorToolName, cwd: string): ToolDefinition<TSchema, unknown> {
+export function createNativeCursorToolDefinition(toolName: NativeCursorToolName, cwd: string): AnyToolDefinition {
 	const strategy = getNativeReplayStrategy(toolName);
 	if (strategy) return strategy.createDefinition(cwd);
-	if (isCursorReplayToolName(toolName)) return createCursorReplayOnlyToolDefinition(toolName) as ToolDefinition<TSchema, unknown>;
+	if (isCursorReplayToolName(toolName)) return createCursorReplayOnlyToolDefinition(toolName);
 	throw new Error(`Unsupported Cursor native replay tool: ${toolName}`);
 }
 

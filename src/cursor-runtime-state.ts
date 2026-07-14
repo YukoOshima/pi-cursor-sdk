@@ -57,7 +57,7 @@ export type CursorRuntimeStateExtensionApi = Pick<
 	"appendEntry" | "getFlag" | "registerFlag" | "registerCommand" | "on"
 >;
 
-type CursorRuntimeContext = Pick<ExtensionContext, "cwd"> & Partial<Pick<ExtensionContext, "isProjectTrusted">>;
+type CursorRuntimeContext = Pick<ExtensionContext, "cwd">;
 
 type CursorStatusRefresh = (ctx: ExtensionContext) => void;
 
@@ -147,7 +147,8 @@ export function resolveEffectiveCursorConfig(options: {
 }
 
 export function resolveEffectiveCursorConfigForContext(ctx: CursorRuntimeContext): CursorResolvedSdkConfig {
-	return resolveEffectiveCursorConfig({ cwd: ctx.cwd, projectTrusted: ctx.isProjectTrusted?.() === true });
+	// omp ExtensionContext has no isProjectTrusted; default untrusted (skip project config).
+	return resolveEffectiveCursorConfig({ cwd: ctx.cwd, projectTrusted: false });
 }
 
 export type CursorRuntimeResolution =

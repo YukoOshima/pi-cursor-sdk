@@ -97,7 +97,7 @@ describe("native replay stress", () => {
 		});
 
 		const context = makeContext();
-		context.tools = pi.getActiveTools().map((name) => ({ name, description: name, parameters: Type.Object({}) }));
+		context.tools = pi.getActiveTools().map((name) => ({ name, description: name, parameters: Type.Object({}) as any }));
 		const events = await collectEvents(streamCursor(CURSOR_MODEL, context, { apiKey: "test-key" }));
 		expect(hasEventType(events, "toolcall_start")).toBe(true);
 	});
@@ -116,7 +116,7 @@ describe("native replay stress", () => {
 		});
 
 		const context = makeContext();
-		context.tools = pi.getActiveTools().map((name) => ({ name, description: name, parameters: Type.Object({}) }));
+		context.tools = pi.getActiveTools().map((name) => ({ name, description: name, parameters: Type.Object({}) as any }));
 		const events = await collectEvents(streamCursor(CURSOR_MODEL, context, { apiKey: "test-key" }));
 		expect(hasEventType(events, "toolcall_start")).toBe(true);
 	});
@@ -152,7 +152,7 @@ describe("native replay stress", () => {
 		});
 
 		const context = makeContext();
-		context.tools = [{ name: "read", description: "Read", parameters: Type.Object({}) }];
+		context.tools = [{ name: "read", description: "Read", parameters: Type.Object({}) as any }];
 		const events = await collectEvents(streamCursor(makeModel(), context, { apiKey: "test-key" }));
 		expect(hasEventType(events, "toolcall_start")).toBe(false);
 		expect(collectThinkingDeltas(events)).toMatch(/grep|sidebar/i);
@@ -189,7 +189,7 @@ describe("native replay stress", () => {
 		});
 
 		const context = makeContext();
-		context.tools = [{ name: "read", description: "Read", parameters: Type.Object({}) }];
+		context.tools = [{ name: "read", description: "Read", parameters: Type.Object({}) as any }];
 		const events = await collectEvents(streamCursor(makeModel(), context, { apiKey: "test-key" }));
 		expect(hasEventType(events, "toolcall_start")).toBe(false);
 		expect(collectThinkingDeltas(events)).toMatch(/Cursor edit:|edit.*completed/i);
@@ -222,7 +222,7 @@ describe("native replay stress", () => {
 		});
 
 		const context = makeContext();
-		context.tools = [{ name: "read", description: "Read", parameters: Type.Object({}) }];
+		context.tools = [{ name: "read", description: "Read", parameters: Type.Object({}) as any }];
 		const events = await collectEvents(streamCursor(makeModel(), context, { apiKey: "test-key" }));
 		expect(hasEventType(events, "toolcall_start")).toBe(false);
 		expect(collectThinkingDeltas(events)).toMatch(/find/i);
@@ -265,7 +265,7 @@ describe("native replay stress", () => {
 		});
 
 		const context = makeContext();
-		context.tools = [{ name: "read", description: "Read", parameters: Type.Object({}) }];
+		context.tools = [{ name: "read", description: "Read", parameters: Type.Object({}) as any }];
 		const events = await collectEvents(streamCursor(makeModel(), context, { apiKey: secret }));
 		const trace = collectThinkingDeltas(events);
 
@@ -303,7 +303,7 @@ describe("native replay stress", () => {
 		});
 
 		const context = makeContext();
-		context.tools = [{ name: "read", description: "Read", parameters: Type.Object({}) }];
+		context.tools = [{ name: "read", description: "Read", parameters: Type.Object({}) as any }];
 		const events = await collectEvents(streamCursor(makeModel(), context, { apiKey: "test-key" }));
 		const trace = collectThinkingDeltas(events);
 

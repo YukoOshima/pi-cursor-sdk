@@ -48,7 +48,7 @@ import {
 } from "./cursor-cloud-lifecycle.js";
 import { MISSING_CURSOR_API_KEY_MESSAGE } from "./cursor-provider-errors.js";
 import { CursorSdkTurnCoordinator } from "./cursor-provider-turn-coordinator.js";
-import { resolveCursorApiKey } from "./cursor-api-key.js";
+import { coerceApiKeyString, resolveCursorApiKey } from "./cursor-api-key.js";
 import { loadCursorSdk } from "./cursor-sdk-runtime.js";
 import type {
 	CloudCursorProviderTurnPrepareResult,
@@ -441,7 +441,7 @@ export async function prepareCursorProviderTurn(
 }
 
 export function requireCursorApiKey(options: SimpleStreamOptions | undefined): string {
-	const apiKey = resolveCursorApiKey(options?.apiKey);
+	const apiKey = resolveCursorApiKey(coerceApiKeyString(options?.apiKey));
 	if (!apiKey) throw new Error(MISSING_CURSOR_API_KEY_MESSAGE);
 	return apiKey;
 }

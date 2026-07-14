@@ -1,9 +1,8 @@
-import type { ExtensionHandler, SessionInfoChangedEvent, SessionStartEvent } from "@oh-my-pi/pi-coding-agent";
+import type { ExtensionHandler, SessionStartEvent } from "@oh-my-pi/pi-coding-agent";
 import { truncateCursorDisplayLine } from "./cursor-display-text.js";
 
 interface CursorSessionScopeExtensionApi {
 	on(event: "session_start", handler: ExtensionHandler<SessionStartEvent>): void;
-	on(event: "session_info_changed", handler: ExtensionHandler<SessionInfoChangedEvent>): void;
 }
 
 const ANONYMOUS_SESSION_SCOPE_KEY = "__anonymous__";
@@ -108,15 +107,12 @@ export function registerCursorSessionScope(pi: CursorSessionScopeExtensionApi): 
 			ctx.cwd,
 			ctx.sessionManager?.getSessionFile?.() ?? undefined,
 			ctx.sessionManager?.getSessionId?.() ?? undefined,
-			ctx.isProjectTrusted?.() === true,
+			false, // omp ExtensionContext has no isProjectTrusted; default untrusted
 			ctx.sessionManager?.getSessionName?.() ?? undefined,
 		);
 		if (previousScopeKey !== getCursorSessionScopeKey()) {
 			await scopeChangeHandler?.(previousScopeKey);
 		}
-	});
-	pi.on("session_info_changed", (event) => {
-		state.sessionName = normalizeCursorSessionName(event.name);
 	});
 }
 

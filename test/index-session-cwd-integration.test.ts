@@ -37,6 +37,7 @@ function createMockAgent(): SDKAgent {
 	};
 }
 
+import { setCursorSdkModuleForTests } from "../src/cursor-sdk-runtime.js";
 vi.mock("@cursor/sdk", () => ({
 	Agent: {
 		create: vi.fn().mockResolvedValue(createMockAgent()),
@@ -47,6 +48,7 @@ vi.mock("@cursor/sdk", () => ({
 }));
 
 import { Agent, type SDKAgent } from "@cursor/sdk";
+setCursorSdkModuleForTests({ Agent } as never);
 import extensionFactory from "../src/index.js";
 import { discoverModels } from "../src/model-discovery.js";
 import { __testUtils as cursorProviderTestUtils } from "../src/cursor-provider.js";

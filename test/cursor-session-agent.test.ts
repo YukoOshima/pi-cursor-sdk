@@ -582,7 +582,7 @@ describe("cursor-session-agent", () => {
 		});
 
 		expect(sessionAgentTestUtils.sessionAgentsByScope.has("/tmp/sessions/test.jsonl")).toBe(true);
-		await pi.runSessionShutdown({ reason: "quit" });
+		await pi.runSessionShutdown({});
 		expect(sessionAgentTestUtils.sessionAgentsByScope.has("/tmp/sessions/test.jsonl")).toBe(false);
 		expect(mockDispose).toHaveBeenCalledTimes(1);
 	});
@@ -642,7 +642,7 @@ describe("cursor-session-agent", () => {
 		const first = await acquireSessionCursorAgent(params);
 		expect(first.scopeKey).toBe(`${cursorSessionScopeTestUtils.EPHEMERAL_SESSION_SCOPE_PREFIX}ephemeral-a`);
 
-		await pi.runSessionShutdown({ reason: "new" });
+		await pi.runSessionShutdown({});
 		await pi.runSessionStart({
 			cwd: "/tmp/project",
 			sessionManager: {
@@ -684,7 +684,7 @@ describe("cursor-session-agent", () => {
 		});
 		const first = await acquireSessionCursorAgent(params);
 
-		await pi.runSessionShutdown({ reason: "resume" });
+		await pi.runSessionShutdown({});
 		await pi.runSessionStart({
 			cwd: "/tmp/project",
 			sessionManager: {
@@ -693,7 +693,7 @@ describe("cursor-session-agent", () => {
 		});
 		const second = await acquireSessionCursorAgent(params);
 
-		await pi.runSessionShutdown({ reason: "resume" });
+		await pi.runSessionShutdown({});
 		await pi.runSessionStart({
 			cwd: "/tmp/project",
 			sessionManager: {
@@ -731,7 +731,7 @@ describe("cursor-session-agent", () => {
 
 		await pi.invokeEventWithContext(
 			"session_start",
-			{ type: "session_start", reason: "startup" },
+			{ type: "session_start" },
 			createExtensionTestContext({
 				cwd: "/tmp/project",
 				sessionManager: {

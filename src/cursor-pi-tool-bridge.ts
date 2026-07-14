@@ -94,7 +94,8 @@ export function registerCursorPiToolBridge(pi: CursorPiToolBridgeExtensionApi): 
 		if (!bridge.hasPendingPiToolCallId(event.toolCallId)) return undefined;
 		const windowsAbortMarker = installWindowsBridgeBashAbortMarker(event);
 		const trackingStarted = bridgeToolExecutionAbortTracker.track(event.toolCallId, {
-			signal: ctx.signal,
+			// omp removed ExtensionContext.signal; harness may still attach AbortSignal.
+			signal: (ctx as { signal?: AbortSignal }).signal,
 			abort: () => {
 				ctx.abort();
 				killWindowsBridgeBashMarkerTree(windowsAbortMarker);
@@ -109,8 +110,8 @@ export function registerCursorPiToolBridge(pi: CursorPiToolBridgeExtensionApi): 
 	pi.on("tool_result", (event) => {
 		bridgeToolExecutionAbortTracker.finish(event.toolCallId);
 	});
-	pi.on("session_shutdown", async (event) => {
-		const reason = `Cursor pi tool bridge session shutdown: ${event.reason}`;
+	pi.on("session_shutdown", async () => {
+		const reason = "Cursor pi tool bridge session shutdown";
 		bridgeToolExecutionAbortTracker.abortAll(reason);
 		await bridge.disposeAll(reason);
 	});

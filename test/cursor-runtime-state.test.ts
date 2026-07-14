@@ -2,6 +2,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "nod
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { __resetDirsFromEnvForTests, setAgentDir } from "@oh-my-pi/pi-utils";
 import type { ExtensionContext, SessionEntry } from "@oh-my-pi/pi-coding-agent";
 import {
 	__testUtils,
@@ -86,7 +87,7 @@ describe("Cursor cloud runtime state", () => {
 
 	beforeEach(() => {
 		tmpAgentDir = mkdtempSync(join(tmpdir(), "pi-cursor-runtime-state-"));
-		process.env.PI_CODING_AGENT_DIR = tmpAgentDir;
+		setAgentDir(tmpAgentDir);
 		for (const name of CLOUD_ENV_NAMES) {
 			originalEnv.set(name, process.env[name]);
 			delete process.env[name];
@@ -110,6 +111,7 @@ describe("Cursor cloud runtime state", () => {
 	afterEach(() => {
 		if (originalAgentDir === undefined) delete process.env.PI_CODING_AGENT_DIR;
 		else process.env.PI_CODING_AGENT_DIR = originalAgentDir;
+		__resetDirsFromEnvForTests();
 		for (const name of CLOUD_ENV_NAMES) {
 			const value = originalEnv.get(name);
 			if (value === undefined) delete process.env[name];
@@ -122,19 +124,19 @@ describe("Cursor cloud runtime state", () => {
 
 	it("shows cloud runtime status from CLI and environment selection", async () => {
 		let harness = createCursorRuntimeHarness({ cursorRuntimeFlag: "cloud" });
-		await harness.pi.invokeEventWithContext("session_start", { type: "session_start", reason: "startup" }, harness.ctx);
+		await harness.pi.invokeEventWithContext("session_start", { type: "session_start" }, harness.ctx);
 		expect(harness.ctx.ui.setStatus).toHaveBeenLastCalledWith("cursor", "cursor:cloud · fast:n/a");
 
 		__testUtils.resetCursorModeStateForTests();
 		process.env.PI_CURSOR_RUNTIME = " cloud ";
 		harness = createCursorRuntimeHarness();
-		await harness.pi.invokeEventWithContext("session_start", { type: "session_start", reason: "startup" }, harness.ctx);
+		await harness.pi.invokeEventWithContext("session_start", { type: "session_start" }, harness.ctx);
 		expect(harness.ctx.ui.setStatus).toHaveBeenLastCalledWith("cursor", "cursor:cloud · fast:n/a");
 	});
 
 	it("shows invalid status and refuses writes for invalid explicit overrides", async () => {
 		const harness = createCursorRuntimeHarness({ cursorRuntimeFlag: "remote" });
-		await harness.pi.invokeEventWithContext("session_start", { type: "session_start", reason: "startup" }, harness.ctx);
+		await harness.pi.invokeEventWithContext("session_start", { type: "session_start" }, harness.ctx);
 		expect(harness.ctx.ui.setStatus).toHaveBeenLastCalledWith("cursor", "cursor:invalid · fast:n/a");
 
 		await harness.commands.get("cursor-runtime")!.handler("", harness.commandCtx);
@@ -153,13 +155,13 @@ describe("Cursor cloud runtime state", () => {
 
 	it("shows invalid status for invalid CLI and env cloud-context overrides", async () => {
 		let harness = createCursorRuntimeHarness({ cursorCloudContextFlag: "reuse" });
-		await harness.pi.invokeEventWithContext("session_start", { type: "session_start", reason: "startup" }, harness.ctx);
+		await harness.pi.invokeEventWithContext("session_start", { type: "session_start" }, harness.ctx);
 		expect(harness.ctx.ui.setStatus).toHaveBeenLastCalledWith("cursor", "cursor:invalid · fast:n/a");
 
 		__testUtils.resetCursorModeStateForTests();
 		process.env.PI_CURSOR_CLOUD_CONTEXT = "reuse";
 		harness = createCursorRuntimeHarness();
-		await harness.pi.invokeEventWithContext("session_start", { type: "session_start", reason: "startup" }, harness.ctx);
+		await harness.pi.invokeEventWithContext("session_start", { type: "session_start" }, harness.ctx);
 		expect(harness.ctx.ui.setStatus).toHaveBeenLastCalledWith("cursor", "cursor:invalid · fast:n/a");
 	});
 
@@ -168,7 +170,7 @@ describe("Cursor cloud runtime state", () => {
 			cursorRuntimeFlag: "local",
 			branch: [runtimeEntry("cloud", true)],
 		});
-		await harness.pi.invokeEventWithContext("session_start", { type: "session_start", reason: "startup" }, harness.ctx);
+		await harness.pi.invokeEventWithContext("session_start", { type: "session_start" }, harness.ctx);
 		await harness.commands.get("cursor-runtime")!.handler("", harness.commandCtx);
 		expect(harness.ctx.ui.notify).toHaveBeenCalledWith(
 			"Cursor runtime is local (source: cli). Usage: /cursor-runtime local|cloud [--save-user|--save-project]",
@@ -178,7 +180,7 @@ describe("Cursor cloud runtime state", () => {
 		__testUtils.resetCursorModeStateForTests();
 		process.env.PI_CURSOR_RUNTIME = "local";
 		harness = createCursorRuntimeHarness({ branch: [runtimeEntry("cloud", true)] });
-		await harness.pi.invokeEventWithContext("session_start", { type: "session_start", reason: "startup" }, harness.ctx);
+		await harness.pi.invokeEventWithContext("session_start", { type: "session_start" }, harness.ctx);
 		await harness.commands.get("cursor-runtime")!.handler("", harness.commandCtx);
 		expect(harness.ctx.ui.notify).toHaveBeenCalledWith(
 			"Cursor runtime is local (source: environment). Usage: /cursor-runtime local|cloud [--save-user|--save-project]",
@@ -189,7 +191,7 @@ describe("Cursor cloud runtime state", () => {
 	it("reports user safety caps over requested session runtime", async () => {
 		writeFileSync(__testUtils.getConfigPath(), JSON.stringify({ runtime: "local" }));
 		const harness = createCursorRuntimeHarness({ branch: [runtimeEntry("cloud", true)] });
-		await harness.pi.invokeEventWithContext("session_start", { type: "session_start", reason: "startup" }, harness.ctx);
+		await harness.pi.invokeEventWithContext("session_start", { type: "session_start" }, harness.ctx);
 		await harness.commands.get("cursor-runtime")!.handler("", harness.commandCtx);
 		expect(harness.ctx.ui.notify).toHaveBeenCalledWith(
 			"Cursor runtime is local (source: user safety cap over session cloud). Usage: /cursor-runtime local|cloud [--save-user|--save-project]",
@@ -197,30 +199,31 @@ describe("Cursor cloud runtime state", () => {
 		);
 	});
 
-	it("shows cloud status from user and trusted project config", async () => {
+	it("shows cloud status from user config and ignores untrusted project config", async () => {
 		writeFileSync(__testUtils.getConfigPath(), JSON.stringify({ runtime: "cloud" }));
 		let harness = createCursorRuntimeHarness();
-		await harness.pi.invokeEventWithContext("session_start", { type: "session_start", reason: "startup" }, harness.ctx);
+		await harness.pi.invokeEventWithContext("session_start", { type: "session_start" }, harness.ctx);
 		expect(harness.ctx.ui.setStatus).toHaveBeenLastCalledWith("cursor", "cursor:cloud · fast:n/a");
 
 		writeFileSync(__testUtils.getConfigPath(), "{}");
 		__testUtils.resetCursorModeStateForTests();
 		const cwd = join(tmpAgentDir, "project-runtime-status");
-		mkdirSync(join(cwd, ".pi"), { recursive: true });
-		writeFileSync(join(cwd, ".pi", "cursor-sdk.json"), JSON.stringify({ runtime: "cloud" }));
+		mkdirSync(join(cwd, ".omp"), { recursive: true });
+		writeFileSync(join(cwd, ".omp", "cursor-sdk.json"), JSON.stringify({ runtime: "cloud" }));
 		harness = createCursorRuntimeHarness({ cwd });
-		await harness.pi.invokeEventWithContext("session_start", { type: "session_start", reason: "startup" }, harness.ctx);
-		expect(harness.ctx.ui.setStatus).toHaveBeenLastCalledWith("cursor", "cursor:cloud · fast:n/a");
+		await harness.pi.invokeEventWithContext("session_start", { type: "session_start" }, harness.ctx);
+		// omp ExtensionContext has no project-trust signal, so project config is skipped.
+		expect(harness.ctx.ui.setStatus).toHaveBeenLastCalledWith("cursor", "cursor:local · fast:off");
 	});
 
 	it("lets CLI runtime override persisted session runtime in status", async () => {
 		let harness = createCursorRuntimeHarness({ cursorRuntimeFlag: "local", branch: [runtimeEntry("cloud", true)] });
-		await harness.pi.invokeEventWithContext("session_start", { type: "session_start", reason: "startup" }, harness.ctx);
+		await harness.pi.invokeEventWithContext("session_start", { type: "session_start" }, harness.ctx);
 		expect(harness.ctx.ui.setStatus).toHaveBeenLastCalledWith("cursor", "cursor:local · fast:off");
 
 		__testUtils.resetCursorModeStateForTests();
 		harness = createCursorRuntimeHarness({ cursorRuntimeFlag: "cloud", branch: [runtimeEntry("local")] });
-		await harness.pi.invokeEventWithContext("session_start", { type: "session_start", reason: "startup" }, harness.ctx);
+		await harness.pi.invokeEventWithContext("session_start", { type: "session_start" }, harness.ctx);
 		expect(harness.ctx.ui.setStatus).toHaveBeenLastCalledWith("cursor", "cursor:cloud · fast:n/a");
 	});
 
@@ -233,7 +236,7 @@ describe("Cursor cloud runtime state", () => {
 
 	it("shows the complete first-use disclosure before persisting cloud state", async () => {
 		const harness = createCursorRuntimeHarness({ confirm: true });
-		await harness.pi.invokeEventWithContext("session_start", { type: "session_start", reason: "startup" }, harness.ctx);
+		await harness.pi.invokeEventWithContext("session_start", { type: "session_start" }, harness.ctx);
 
 		await harness.commands.get("cursor-runtime")!.handler("cloud", harness.commandCtx);
 
@@ -255,7 +258,7 @@ describe("Cursor cloud runtime state", () => {
 
 	it("keeps cloud acknowledgement across cloud to local to cloud changes", async () => {
 		const harness = createCursorRuntimeHarness({ confirm: true });
-		await harness.pi.invokeEventWithContext("session_start", { type: "session_start", reason: "startup" }, harness.ctx);
+		await harness.pi.invokeEventWithContext("session_start", { type: "session_start" }, harness.ctx);
 
 		await harness.commands.get("cursor-runtime")!.handler("cloud", harness.commandCtx);
 		await harness.commands.get("cursor-runtime")!.handler("local", harness.commandCtx);
@@ -276,7 +279,7 @@ describe("Cursor cloud runtime state", () => {
 		const harness = createCursorRuntimeHarness({
 			branch: [runtimeEntry("cloud", true), runtimeEntry("local")],
 		});
-		await harness.pi.invokeEventWithContext("session_start", { type: "session_start", reason: "startup" }, harness.ctx);
+		await harness.pi.invokeEventWithContext("session_start", { type: "session_start" }, harness.ctx);
 
 		await harness.commands.get("cursor-runtime")!.handler("cloud", harness.commandCtx);
 
@@ -290,7 +293,7 @@ describe("Cursor cloud runtime state", () => {
 	it("restores branch-scoped runtime and acknowledgement on session tree navigation", async () => {
 		const harness = createCursorRuntimeHarness({ branch: [runtimeEntry("local")] });
 		const getBranch = vi.mocked(harness.ctx.sessionManager.getBranch);
-		await harness.pi.invokeEventWithContext("session_start", { type: "session_start", reason: "startup" }, harness.ctx);
+		await harness.pi.invokeEventWithContext("session_start", { type: "session_start" }, harness.ctx);
 		expect(getCursorSessionConfig()).toEqual({ runtime: "local" });
 
 		getBranch.mockReturnValue([runtimeEntry("cloud", true)]);
@@ -320,7 +323,7 @@ describe("Cursor cloud runtime state", () => {
 		const cwd = join(tmpAgentDir, "cancelled-project");
 		mkdirSync(cwd, { recursive: true });
 		const harness = createCursorRuntimeHarness({ cwd, confirm: false });
-		await harness.pi.invokeEventWithContext("session_start", { type: "session_start", reason: "startup" }, harness.ctx);
+		await harness.pi.invokeEventWithContext("session_start", { type: "session_start" }, harness.ctx);
 
 		await harness.commands.get("cursor-runtime")!.handler("cloud --save-user", harness.commandCtx);
 		await harness.commands.get("cursor-runtime")!.handler("cloud --save-project", harness.commandCtx);
@@ -328,13 +331,13 @@ describe("Cursor cloud runtime state", () => {
 		expect(harness.confirm).toHaveBeenCalledTimes(2);
 		expect(harness.pi.appendEntry).not.toHaveBeenCalled();
 		expect(() => readFileSync(join(tmpAgentDir, "cursor-sdk.json"), "utf8")).toThrow();
-		expect(() => readFileSync(join(cwd, ".pi", "cursor-sdk.json"), "utf8")).toThrow();
+		expect(() => readFileSync(join(cwd, ".omp", "cursor-sdk.json"), "utf8")).toThrow();
 		expect(harness.ctx.ui.setStatus).toHaveBeenLastCalledWith("cursor", "cursor:local · fast:off");
 	});
 
 	it("does not re-prompt for CLI acknowledgement", async () => {
 		const harness = createCursorRuntimeHarness({ cursorCloudAckFlag: true });
-		await harness.pi.invokeEventWithContext("session_start", { type: "session_start", reason: "startup" }, harness.ctx);
+		await harness.pi.invokeEventWithContext("session_start", { type: "session_start" }, harness.ctx);
 		await harness.commands.get("cursor-runtime")!.handler("cloud", harness.commandCtx);
 		expect(harness.confirm).not.toHaveBeenCalled();
 		expect(harness.pi.appendEntry).toHaveBeenCalledWith(__testUtils.RUNTIME_ENTRY_TYPE, {
@@ -345,7 +348,7 @@ describe("Cursor cloud runtime state", () => {
 
 	it("requires explicit acknowledgement for noninteractive cloud selection", async () => {
 		const harness = createCursorRuntimeHarness({ hasUI: false });
-		await harness.pi.invokeEventWithContext("session_start", { type: "session_start", reason: "startup" }, harness.ctx);
+		await harness.pi.invokeEventWithContext("session_start", { type: "session_start" }, harness.ctx);
 		await harness.commands.get("cursor-runtime")!.handler("cloud", harness.commandCtx);
 		expect(harness.confirm).not.toHaveBeenCalled();
 		expect(harness.pi.appendEntry).not.toHaveBeenCalled();
@@ -354,7 +357,7 @@ describe("Cursor cloud runtime state", () => {
 
 	it("reports usage and rejects invalid values", async () => {
 		const harness = createCursorRuntimeHarness();
-		await harness.pi.invokeEventWithContext("session_start", { type: "session_start", reason: "startup" }, harness.ctx);
+		await harness.pi.invokeEventWithContext("session_start", { type: "session_start" }, harness.ctx);
 		await harness.commands.get("cursor-runtime")!.handler("", harness.commandCtx);
 		await harness.commands.get("cursor-runtime")!.handler("remote", harness.commandCtx);
 		expect(harness.ctx.ui.notify).toHaveBeenCalledWith(
@@ -371,13 +374,13 @@ describe("Cursor cloud runtime state", () => {
 			if (target === "user") {
 				const blockedAgentDir = join(tmpAgentDir, "blocked-agent-dir");
 				writeFileSync(blockedAgentDir, "not a directory");
-				process.env.PI_CODING_AGENT_DIR = blockedAgentDir;
+				setAgentDir(blockedAgentDir);
 			} else {
 				cwd = join(tmpAgentDir, "blocked-project");
 				writeFileSync(cwd, "not a directory");
 			}
 			const harness = createCursorRuntimeHarness({ cwd, confirm: true });
-			await harness.pi.invokeEventWithContext("session_start", { type: "session_start", reason: "startup" }, harness.ctx);
+			await harness.pi.invokeEventWithContext("session_start", { type: "session_start" }, harness.ctx);
 
 			await harness.commands.get("cursor-runtime")!.handler(`cloud --save-${target}`, harness.commandCtx);
 
@@ -400,7 +403,7 @@ describe("Cursor cloud runtime state", () => {
 			const cwd = target === "project" ? join(tmpAgentDir, "partial-project") : undefined;
 			if (cwd) mkdirSync(cwd, { recursive: true });
 			const harness = createCursorRuntimeHarness({ cwd, confirm: true });
-			await harness.pi.invokeEventWithContext("session_start", { type: "session_start", reason: "startup" }, harness.ctx);
+			await harness.pi.invokeEventWithContext("session_start", { type: "session_start" }, harness.ctx);
 			harness.pi.appendEntry.mockImplementationOnce(() => {
 				throw new Error("journal unavailable");
 			});
@@ -409,23 +412,32 @@ describe("Cursor cloud runtime state", () => {
 
 			const configPath = target === "user"
 				? join(tmpAgentDir, "cursor-sdk.json")
-				: join(cwd!, ".pi", "cursor-sdk.json");
+				: join(cwd!, ".omp", "cursor-sdk.json");
 			expect(JSON.parse(readFileSync(configPath, "utf8"))).toMatchObject({ runtime: "cloud" });
-			expect(harness.ctx.ui.setStatus).toHaveBeenLastCalledWith("cursor", "cursor:cloud · fast:n/a");
 			expect(harness.ctx.ui.notify).toHaveBeenCalledWith(
 				expect.stringContaining(`${target === "user" ? "User" : "Project"} config was saved, but persisting the session runtime entry failed.`),
 				"error",
 			);
-			expect(harness.ctx.ui.notify).toHaveBeenCalledWith(
-				expect.stringContaining(`Effective runtime is cloud (source: ${target})`),
-				"error",
-			);
+			if (target === "user") {
+				expect(harness.ctx.ui.setStatus).toHaveBeenLastCalledWith("cursor", "cursor:cloud · fast:n/a");
+				expect(harness.ctx.ui.notify).toHaveBeenCalledWith(
+					expect.stringContaining("Effective runtime is cloud (source: user)"),
+					"error",
+				);
+			} else {
+				// Project config is persisted on disk, but omp status resolution skips untrusted project config.
+				expect(harness.ctx.ui.setStatus).toHaveBeenLastCalledWith("cursor", "cursor:local · fast:off");
+				expect(harness.ctx.ui.notify).toHaveBeenCalledWith(
+					expect.stringContaining("Effective runtime is local (source: builtin)"),
+					"error",
+				);
+			}
 		},
 	);
 
 	it("saves acknowledged cloud runtime to user config", async () => {
 		const harness = createCursorRuntimeHarness({ confirm: true });
-		await harness.pi.invokeEventWithContext("session_start", { type: "session_start", reason: "startup" }, harness.commandCtx);
+		await harness.pi.invokeEventWithContext("session_start", { type: "session_start" }, harness.ctx);
 		await harness.commands.get("cursor-runtime")!.handler("cloud --save-user", harness.commandCtx);
 		expect(JSON.parse(readFileSync(join(tmpAgentDir, "cursor-sdk.json"), "utf8"))).toEqual({
 			runtime: "cloud",
@@ -437,9 +449,9 @@ describe("Cursor cloud runtime state", () => {
 		const cwd = join(tmpAgentDir, "project");
 		mkdirSync(cwd, { recursive: true });
 		const harness = createCursorRuntimeHarness({ cwd, confirm: true });
-		await harness.pi.invokeEventWithContext("session_start", { type: "session_start", reason: "startup" }, harness.commandCtx);
+		await harness.pi.invokeEventWithContext("session_start", { type: "session_start" }, harness.ctx);
 		await harness.commands.get("cursor-runtime")!.handler("cloud --save-project", harness.commandCtx);
-		expect(JSON.parse(readFileSync(join(cwd, ".pi", "cursor-sdk.json"), "utf8"))).toEqual({ runtime: "cloud" });
+		expect(JSON.parse(readFileSync(join(cwd, ".omp", "cursor-sdk.json"), "utf8"))).toEqual({ runtime: "cloud" });
 	});
 });
 
@@ -475,7 +487,7 @@ describe("Cursor cloud model selection", () => {
 			registerCursorRuntimeControls(pi);
 			await pi.runSessionStart({ model: makeModel(modelId) });
 			await collectEvents(streamCursor(makeModel(modelId), {
-				systemPrompt: "Be helpful.",
+				systemPrompt: ["Be helpful."],
 				messages: [{ role: "user", content: "hello", timestamp: 1 }],
 			}, { apiKey: "test-key" }));
 		}

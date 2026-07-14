@@ -1,3 +1,5 @@
+import type { ApiKey } from "@oh-my-pi/pi-ai";
+
 export const CURSOR_API_KEY_ENV_VAR = "CURSOR_API_KEY";
 const CURSOR_PROVIDER_ID = "cursor";
 
@@ -14,6 +16,11 @@ const CURSOR_API_KEY_PLACEHOLDERS = new Set([
 	CURSOR_API_KEY_CONFIG_VALUE,
 ]);
 
+/** Coerce pi-ai `ApiKey` (string | resolver) down to a static string for resolve paths. */
+export function coerceApiKeyString(apiKey?: ApiKey): string | undefined {
+	return typeof apiKey === "string" ? apiKey : undefined;
+}
+
 export function resolveCursorApiKey(apiKey?: string): string | undefined {
 	const trimmed = apiKey?.trim();
 	if (!trimmed) return undefined;
@@ -24,7 +31,27 @@ export function resolveCursorApiKey(apiKey?: string): string | undefined {
 async function getStoredCursorApiKey(): Promise<string | undefined> {
 	try {
 		const { AuthStorage } = await import("@oh-my-pi/pi-coding-agent");
-		return resolveCursorApiKey(await AuthStorage.create().getApiKey(CURSOR_PROVIDER_ID, { includeFallback: false }));
+		const { getAgentDbPath } = await import("./host-agent-paths.js");
+		const storage = await AuthStorage.create(getAgentDbPath());
+		try {
+			// omp AuthStorage.create opens SQLite but does not hydrate in-memory
+			// credentials until reload() (same pattern as auth-broker / CLI).
+			await storage.reload();
+			// Read only persisted credentials. AuthStorage.getApiKey() intentionally
+			// prefers CURSOR_API_KEY over non-login stored keys; this package keeps
+			// stored-then-env ordering via resolveCursorRuntimeApiKey.
+			const stored = storage.listStoredCredentials(CURSOR_PROVIDER_ID);
+			const apiKeys = stored
+				.map((row) => row.credential)
+				.filter(
+					(credential): credential is { type: "api_key"; key: string; source?: "login" } =>
+						credential.type === "api_key",
+				);
+			const preferred = apiKeys.find((credential) => credential.source === "login") ?? apiKeys[0];
+			return preferred ? resolveCursorApiKey(preferred.key) : undefined;
+		} finally {
+			storage.close();
+		}
 	} catch {
 		return undefined;
 	}

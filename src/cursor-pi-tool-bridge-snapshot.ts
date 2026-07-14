@@ -38,9 +38,6 @@ export function buildCursorPiToolBridgeSurfaceSignature(snapshot: CursorPiToolBr
 				description: tool.description,
 				promptGuidelines: tool.promptGuidelines,
 				inputSchema: tool.inputSchema,
-				source: tool.sourceInfo?.source,
-				path: tool.sourceInfo?.path,
-				scope: tool.sourceInfo?.scope,
 			}),
 		)
 		.sort()
@@ -53,7 +50,7 @@ export function buildCursorPiToolBridgeSnapshot(
 	options: CursorPiToolBridgeSnapshotOptions = {},
 ): CursorPiToolBridgeSnapshot {
 	const activeToolNames = new Set(pi.getActiveTools());
-	const allTools = pi.getAllTools();
+	const allToolNames = pi.getAllTools();
 	const usedMcpToolNames = new Set<string>();
 	const mcpToolNameToPiToolName = new Map<string, string>();
 	const piToolNameToMcpToolName = new Map<string, string>();
@@ -61,22 +58,22 @@ export function buildCursorPiToolBridgeSnapshot(
 
 	const exposeOverlappingBuiltins = options.exposeOverlappingBuiltins === true;
 
-	for (const tool of allTools) {
-		if (!activeToolNames.has(tool.name)) continue;
-		if (isExcludedFromCursorBridgeExposure(tool.name) && isRegisteredCursorNativeToolName(tool.name)) continue;
-		if (!exposeOverlappingBuiltins && isOverlappingCursorNativePiToolName(tool.name)) continue;
+	for (const toolName of allToolNames) {
+		if (!activeToolNames.has(toolName)) continue;
+		if (isExcludedFromCursorBridgeExposure(toolName) && isRegisteredCursorNativeToolName(toolName)) continue;
+		if (!exposeOverlappingBuiltins && isOverlappingCursorNativePiToolName(toolName)) continue;
 
-		const mcpToolName = createMcpToolName(tool.name, usedMcpToolNames);
-		const description = tool.description || `Run pi tool ${tool.name}`;
-		mcpToolNameToPiToolName.set(mcpToolName, tool.name);
-		piToolNameToMcpToolName.set(tool.name, mcpToolName);
+		const metadata = pi.getToolMetadata?.(toolName);
+		const mcpToolName = createMcpToolName(toolName, usedMcpToolNames);
+		const description = metadata?.description?.trim() || `Run pi tool ${toolName}`;
+		mcpToolNameToPiToolName.set(mcpToolName, toolName);
+		piToolNameToMcpToolName.set(toolName, mcpToolName);
 		tools.push({
-			piToolName: tool.name,
+			piToolName: toolName,
 			mcpToolName,
 			description,
-			promptGuidelines: tool.promptGuidelines,
-			inputSchema: normalizeMcpInputSchema(tool.parameters),
-			sourceInfo: tool.sourceInfo,
+			...(metadata?.promptGuidelines ? { promptGuidelines: [...metadata.promptGuidelines] } : {}),
+			inputSchema: normalizeMcpInputSchema(metadata?.parameters),
 		});
 	}
 

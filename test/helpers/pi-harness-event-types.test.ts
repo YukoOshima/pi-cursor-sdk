@@ -14,44 +14,44 @@ describe("pi-harness event map types", () => {
 describe("pi-harness before_agent_start results", () => {
 	it("chains systemPrompt edits across multiple handlers", async () => {
 		const pi = createEventHarness();
-		pi.on("before_agent_start", (event) => ({ systemPrompt: `${event.systemPrompt}-first` }));
-		pi.on("before_agent_start", (event, ctx) => {
-			expect(event.systemPrompt).toContain("-first");
-			expect(ctx.getSystemPrompt()).toContain("-first");
-			return { systemPrompt: `${event.systemPrompt}-second` };
+		pi.on("before_agent_start", (event: any) => ({
+			systemPrompt: [`${event.systemPrompt.join("")}-first`],
+		}));
+		pi.on("before_agent_start", (event: any, ctx: any) => {
+			expect(event.systemPrompt.join("")).toContain("-first");
+			expect(ctx.getSystemPrompt().join("")).toContain("-first");
+			return { systemPrompt: [`${event.systemPrompt.join("")}-second`] };
 		});
 
 		const result = await pi.invokeEvent("before_agent_start", {
 			type: "before_agent_start",
 			prompt: "hello",
-			systemPrompt: "base",
-			systemPromptOptions: { cwd: "/repo", selectedTools: [] },
+			systemPrompt: ["base"],
 		});
 
-		expect(result?.systemPrompt).toBe("base-first-second");
+		expect(result?.systemPrompt?.join("")).toBe("base-first-second");
 	});
 
 	it("rebinds ctx.getSystemPrompt() while chaining handlers", async () => {
 		const pi = createEventHarness();
 		const seenPrompts: string[] = [];
-		pi.on("before_agent_start", (_event, ctx) => {
-			seenPrompts.push(ctx.getSystemPrompt());
-			return { systemPrompt: "after-first" };
+		pi.on("before_agent_start", (_event: any, ctx: any) => {
+			seenPrompts.push(ctx.getSystemPrompt().join(""));
+			return { systemPrompt: ["after-first"] };
 		});
-		pi.on("before_agent_start", (_event, ctx) => {
-			seenPrompts.push(ctx.getSystemPrompt());
-			return { systemPrompt: "after-second" };
+		pi.on("before_agent_start", (_event: any, ctx: any) => {
+			seenPrompts.push(ctx.getSystemPrompt().join(""));
+			return { systemPrompt: ["after-second"] };
 		});
 
 		const result = await pi.invokeEvent("before_agent_start", {
 			type: "before_agent_start",
 			prompt: "hello",
-			systemPrompt: "base",
-			systemPromptOptions: { cwd: "/repo", selectedTools: [] },
+			systemPrompt: ["base"],
 		});
 
 		expect(seenPrompts).toEqual(["base", "after-first"]);
-		expect(result?.systemPrompt).toBe("after-second");
+		expect(result?.systemPrompt?.join("")).toBe("after-second");
 	});
 
 	it("returns undefined when no handler modifies the prompt", async () => {
@@ -61,8 +61,7 @@ describe("pi-harness before_agent_start results", () => {
 		const result = await pi.invokeEvent("before_agent_start", {
 			type: "before_agent_start",
 			prompt: "hello",
-			systemPrompt: "base",
-			systemPromptOptions: { cwd: "/repo", selectedTools: [] },
+			systemPrompt: ["base"],
 		});
 
 		expect(result).toBeUndefined();
@@ -86,8 +85,7 @@ describe("pi-harness before_agent_start results", () => {
 		const result = await pi.invokeEvent("before_agent_start", {
 			type: "before_agent_start",
 			prompt: "hello",
-			systemPrompt: "base",
-			systemPromptOptions: { cwd: "/repo", selectedTools: [] },
+			systemPrompt: ["base"],
 		});
 
 		expect(result?.messages).toEqual([firstMessage, secondMessage]);
@@ -119,7 +117,7 @@ describe("pi-harness tool_call results", () => {
 });
 
 // Negative compile tests: invalid harness payloads must not type-check.
-// @ts-expect-error session_start requires type and reason
+// @ts-expect-error session_start requires type
 const _invalidSessionStart = {} satisfies HarnessEventMap["session_start"];
 
 const _invalidModelSelect = {
@@ -138,7 +136,7 @@ const _validBeforeAgentStartInvoke: HarnessEventInvokeResult<"before_agent_start
 			display: false,
 		},
 	],
-	systemPrompt: "updated",
+	systemPrompt: ["updated"],
 };
 
 const _invalidBeforeAgentStartInvoke = {

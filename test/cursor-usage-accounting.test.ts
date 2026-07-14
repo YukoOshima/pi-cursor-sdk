@@ -55,7 +55,7 @@ describe("cursor usage accounting", () => {
 	it("applies real SDK usage when a turn reports usage within the model window", () => {
 		const model = makeModel();
 		const context: Context = {
-			systemPrompt: "Be helpful.",
+			systemPrompt: ["Be helpful."],
 			messages: [{ role: "user", content: "Hello", timestamp: 1 }],
 		};
 		const partial = makeAssistantMessage([{ type: "text", text: "Hello back." }]);
@@ -74,12 +74,12 @@ describe("cursor usage accounting", () => {
 	it("rejects SDK usage whose full SDK total would exceed the selected model window", () => {
 		const model = makeModel();
 		const context: Context = {
-			systemPrompt: "Be helpful.",
+			systemPrompt: ["Be helpful."],
 			messages: [{ role: "user", content: "Hello", timestamp: 1 }],
 		};
 		const partial = makeAssistantMessage([{ type: "text", text: "Hello back." }]);
 		const overWindowUsage = {
-			inputTokens: model.contextWindow - 10,
+			inputTokens: (model.contextWindow ?? 128000) - 10,
 			outputTokens: 1,
 			cacheReadTokens: 9,
 			cacheWriteTokens: 1,
@@ -92,7 +92,7 @@ describe("cursor usage accounting", () => {
 		applyCursorUsage(partial, model, context, 7, { turn: overWindowUsage });
 
 		expect(partial.usage.input).toBe(7);
-		expect(partial.usage.totalTokens).toBeLessThan(model.contextWindow);
+		expect(partial.usage.totalTokens).toBeLessThan(model.contextWindow ?? 128000);
 	});
 
 	it("rejects full-run-sized SDK usage before it can poison compaction totals", () => {
@@ -106,7 +106,7 @@ describe("cursor usage accounting", () => {
 
 		const model = makeModel();
 		const context: Context = {
-			systemPrompt: "Be helpful.",
+			systemPrompt: ["Be helpful."],
 			messages: [{ role: "user", content: "Hello", timestamp: 1 }],
 		};
 		const partial = makeAssistantMessage([{ type: "text", text: "Hello back." }]);
@@ -124,7 +124,7 @@ describe("cursor usage accounting", () => {
 		expect(partial.usage.cacheRead).toBe(0);
 		expect(partial.usage.cacheWrite).toBe(0);
 		expect(partial.usage.input).toBe(7);
-		expect(partial.usage.totalTokens).toBeLessThan(model.contextWindow);
+		expect(partial.usage.totalTokens).toBeLessThan(model.contextWindow ?? 128000);
 	});
 
 	it("reads the installed Cursor SDK turn-ended usage update contract", () => {
@@ -144,7 +144,6 @@ describe("cursor usage accounting", () => {
 			cacheRead: 3,
 			cacheWrite: 4,
 			totalTokens: 10,
-			cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
 		})).toBe(10);
 		expect(readCursorSdkTurnUsage({ inputTokens: -1, outputTokens: 2, cacheReadTokens: 3, cacheWriteTokens: 4 })).toBeUndefined();
 		expect(readCursorSdkTurnUsage({ inputTokens: 1, outputTokens: Number.POSITIVE_INFINITY, cacheReadTokens: 3, cacheWriteTokens: 4 })).toBeUndefined();
@@ -157,7 +156,7 @@ describe("cursor usage accounting", () => {
 	it("ignores returned RunResult usage for pi context totals when turn usage is absent", () => {
 		const model = makeModel();
 		const context: Context = {
-			systemPrompt: "Be helpful.",
+			systemPrompt: ["Be helpful."],
 			messages: [{ role: "user", content: "Hello", timestamp: 1 }],
 		};
 		const partial = makeAssistantMessage([{ type: "text", text: "Hello back." }]);
@@ -174,7 +173,7 @@ describe("cursor usage accounting", () => {
 	it("uses turn-ended usage when present", () => {
 		const model = makeModel();
 		const context: Context = {
-			systemPrompt: "Be helpful.",
+			systemPrompt: ["Be helpful."],
 			messages: [{ role: "user", content: "Hello", timestamp: 1 }],
 		};
 		const partial = makeAssistantMessage([{ type: "text", text: "Hello back." }]);
@@ -189,7 +188,7 @@ describe("cursor usage accounting", () => {
 	it("keeps the prompt/output estimate fallback when SDK usage is absent", () => {
 		const model = makeModel();
 		const context: Context = {
-			systemPrompt: "Be helpful.",
+			systemPrompt: ["Be helpful."],
 			messages: [{ role: "user", content: "Hello", timestamp: 1 }],
 		};
 		const partial = makeAssistantMessage([

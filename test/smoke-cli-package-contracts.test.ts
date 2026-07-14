@@ -1,14 +1,69 @@
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { delimiter, join } from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { describe, expect, it } from "vitest";
 import { LOCAL_RESUME_SUITES } from "../scripts/platform-smoke/local-resume-suites.mjs";
 
+/**
+ * Smoke scripts are Node ESM CLIs (`node --check`, exit code 2 usage errors, experimental loaders).
+ * Under `bun --bun vitest`:
+ * - `process.execPath` is bun (`bun --check` hangs ~300s; CLI exit codes differ)
+ * - bun also sets `npm_node_execpath` to a shim *directory* and puts `node -> bun` first on PATH
+ * Resolve a real Node binary, not bun or that directory.
+ */
+function isBunPath(path: string): boolean {
+	return /(?:^|[/\\])bun(?:\.exe)?$/i.test(path) || /(?:^|[/\\])bun-node-/i.test(path);
+}
+
+function resolveRealNodeBin(): string {
+	const candidates: string[] = [];
+	const fromEnv = process.env.NODE_BINARY || process.env.npm_node_execpath;
+	if (fromEnv) candidates.push(fromEnv);
+	if (!isBunPath(process.execPath)) candidates.push(process.execPath);
+
+	for (const dir of (process.env.PATH || "").split(delimiter)) {
+		if (!dir || /bun-node-/i.test(dir)) continue;
+		candidates.push(join(dir, process.platform === "win32" ? "node.exe" : "node"));
+	}
+
+	for (const candidate of candidates) {
+		try {
+			const st = statSync(candidate);
+			if (!st.isFile()) continue; // skip bun's npm_node_execpath directory
+			const real = realpathSync(candidate);
+			if (isBunPath(real)) continue;
+			return candidate;
+		} catch {
+			// not resolvable
+		}
+	}
+
+	throw new Error("Could not resolve a real Node.js binary for smoke CLI contracts (bun shims are not usable)");
+}
+
+const NODE_BIN = resolveRealNodeBin();
+
+function sanitizeSmokeEnv(env: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
+	const pathDirs = (env.PATH || "")
+		.split(delimiter)
+		.filter((dir) => dir && !/bun-node-/i.test(dir) && !isBunPath(dir));
+	const nodeDir = NODE_BIN.includes("/") || NODE_BIN.includes("\\") ? NODE_BIN.replace(/[/\\][^/\\]+$/, "") : "";
+	const nextPath = [nodeDir, ...pathDirs.filter((dir) => dir !== nodeDir)].filter(Boolean).join(delimiter);
+	const next: NodeJS.ProcessEnv = { ...env, PATH: nextPath, NODE_BINARY: NODE_BIN, npm_node_execpath: NODE_BIN };
+	delete next.BUN_INSTALL_BIN;
+	return next;
+}
+
 function run(command: string, args: string[], env = process.env, cwd = process.cwd()) {
-	return spawnSync(command, args, { cwd, encoding: "utf8", env, shell: process.platform === "win32" && command === "npm" });
+	return spawnSync(command, args, {
+		cwd,
+		encoding: "utf8",
+		env: sanitizeSmokeEnv(env),
+		shell: process.platform === "win32" && command === "npm",
+	});
 }
 
 describe("smoke CLI and package contracts", () => {
@@ -16,32 +71,32 @@ describe("smoke CLI and package contracts", () => {
 		expect(run("bash", ["-n", "scripts/lib/cursor-smoke-shell.sh"]).status).toBe(0);
 		expect(run("bash", ["-n", "scripts/tmux-live-smoke.sh"]).status).toBe(0);
 		expect(run("bash", ["-n", "scripts/isolated-cursor-smoke.sh"]).status).toBe(0);
-		expect(run(process.execPath, ["--check", "scripts/steering-rpc-smoke.mjs"]).status).toBe(0);
-		expect(run(process.execPath, ["--check", "scripts/visual-tui-smoke.mjs"]).status).toBe(0);
-		expect(run(process.execPath, ["--check", "scripts/visual-tui-smoke-self-test.mjs"]).status).toBe(0);
-		expect(run(process.execPath, ["--check", "scripts/lib/cursor-visual-manifest.mjs"]).status).toBe(0);
-		expect(run(process.execPath, ["--check", "scripts/validate-smoke-jsonl.mjs"]).status).toBe(0);
-		expect(run(process.execPath, ["--check", "scripts/debug-sdk-events.mjs"]).status).toBe(0);
-		expect(run(process.execPath, ["--check", "scripts/debug-provider-events.mjs"]).status).toBe(0);
-		expect(run(process.execPath, ["--check", "scripts/local-resume-smoke.mjs"]).status).toBe(0);
-		expect(run(process.execPath, ["--check", "scripts/lib/local-resume-smoke-harness.mjs"]).status).toBe(0);
-		expect(run(process.execPath, ["--check", "scripts/platform-smoke.mjs"]).status).toBe(0);
-		expect(run(process.execPath, ["--check", "scripts/platform-smoke/doctor.mjs"]).status).toBe(0);
-		expect(run(process.execPath, ["--check", "scripts/platform-smoke/live-suite-runner.mjs"]).status).toBe(0);
-		expect(run(process.execPath, ["--check", "scripts/platform-smoke/local-resume-runner.mjs"]).status).toBe(0);
-		expect(run(process.execPath, ["--check", "scripts/platform-smoke/target-runtime.mjs"]).status).toBe(0);
-		expect(run(process.execPath, ["--check", "scripts/platform-smoke/targets.mjs"]).status).toBe(0);
+		expect(run(NODE_BIN, ["--check", "scripts/steering-rpc-smoke.mjs"]).status).toBe(0);
+		expect(run(NODE_BIN, ["--check", "scripts/visual-tui-smoke.mjs"]).status).toBe(0);
+		expect(run(NODE_BIN, ["--check", "scripts/visual-tui-smoke-self-test.mjs"]).status).toBe(0);
+		expect(run(NODE_BIN, ["--check", "scripts/lib/cursor-visual-manifest.mjs"]).status).toBe(0);
+		expect(run(NODE_BIN, ["--check", "scripts/validate-smoke-jsonl.mjs"]).status).toBe(0);
+		expect(run(NODE_BIN, ["--check", "scripts/debug-sdk-events.mjs"]).status).toBe(0);
+		expect(run(NODE_BIN, ["--check", "scripts/debug-provider-events.mjs"]).status).toBe(0);
+		expect(run(NODE_BIN, ["--check", "scripts/local-resume-smoke.mjs"]).status).toBe(0);
+		expect(run(NODE_BIN, ["--check", "scripts/lib/local-resume-smoke-harness.mjs"]).status).toBe(0);
+		expect(run(NODE_BIN, ["--check", "scripts/platform-smoke.mjs"]).status).toBe(0);
+		expect(run(NODE_BIN, ["--check", "scripts/platform-smoke/doctor.mjs"]).status).toBe(0);
+		expect(run(NODE_BIN, ["--check", "scripts/platform-smoke/live-suite-runner.mjs"]).status).toBe(0);
+		expect(run(NODE_BIN, ["--check", "scripts/platform-smoke/local-resume-runner.mjs"]).status).toBe(0);
+		expect(run(NODE_BIN, ["--check", "scripts/platform-smoke/target-runtime.mjs"]).status).toBe(0);
+		expect(run(NODE_BIN, ["--check", "scripts/platform-smoke/targets.mjs"]).status).toBe(0);
 
 		const liveHelp = process.platform === "win32" ? undefined : run("scripts/tmux-live-smoke.sh", ["--help"]);
 		const isolatedHelp = process.platform === "win32" ? undefined : run("scripts/isolated-cursor-smoke.sh", ["--help"]);
-		const steeringHelp = run(process.execPath, ["scripts/steering-rpc-smoke.mjs", "--help"]);
-		const visualHelp = run(process.execPath, ["scripts/visual-tui-smoke.mjs", "--help"]);
-		const jsonlHelp = run(process.execPath, ["scripts/validate-smoke-jsonl.mjs", "--help"]);
-		const sdkEventsHelp = run(process.execPath, ["scripts/debug-sdk-events.mjs", "--help"]);
-		const providerEventsHelp = run(process.execPath, ["scripts/debug-provider-events.mjs", "--help"]);
-		const platformLiveHelp = run(process.execPath, ["scripts/platform-smoke/live-suite-runner.mjs", "--help"]);
-		const cloudHelp = run(process.execPath, ["scripts/cloud-runtime-smoke.mjs", "--help"]);
-		const localResumeHelp = run(process.execPath, ["scripts/local-resume-smoke.mjs", "--help"]);
+		const steeringHelp = run(NODE_BIN, ["scripts/steering-rpc-smoke.mjs", "--help"]);
+		const visualHelp = run(NODE_BIN, ["scripts/visual-tui-smoke.mjs", "--help"]);
+		const jsonlHelp = run(NODE_BIN, ["scripts/validate-smoke-jsonl.mjs", "--help"]);
+		const sdkEventsHelp = run(NODE_BIN, ["scripts/debug-sdk-events.mjs", "--help"]);
+		const providerEventsHelp = run(NODE_BIN, ["scripts/debug-provider-events.mjs", "--help"]);
+		const platformLiveHelp = run(NODE_BIN, ["scripts/platform-smoke/live-suite-runner.mjs", "--help"]);
+		const cloudHelp = run(NODE_BIN, ["scripts/cloud-runtime-smoke.mjs", "--help"]);
+		const localResumeHelp = run(NODE_BIN, ["scripts/local-resume-smoke.mjs", "--help"]);
 
 		if (process.platform !== "win32") {
 			expect(liveHelp!.status).toBe(0);
@@ -92,12 +147,12 @@ describe("smoke CLI and package contracts", () => {
 		}
 
 		if (process.platform !== "win32") {
-			const visualSelfTest = run(process.execPath, ["scripts/visual-tui-smoke.mjs", "--self-test"]);
+			const visualSelfTest = run(NODE_BIN, ["scripts/visual-tui-smoke.mjs", "--self-test"]);
 			expect(visualSelfTest.status).toBe(0);
 			expect(visualSelfTest.stdout).toContain("self-test PASS");
 		}
 		if (process.platform !== "win32") {
-			const steeringSelfTest = run(process.execPath, ["scripts/steering-rpc-smoke.mjs", "--self-test"]);
+			const steeringSelfTest = run(NODE_BIN, ["scripts/steering-rpc-smoke.mjs", "--self-test"]);
 			expect(steeringSelfTest.status).toBe(0);
 			expect(steeringSelfTest.stdout).toContain("self-test PASS");
 		}
@@ -109,7 +164,7 @@ describe("smoke CLI and package contracts", () => {
 			expect(isolatedSelfTest.status).toBe(0);
 			expect(isolatedSelfTest.stdout).toContain("self-test PASS");
 		}
-		const invalidVisualArgs = run(process.execPath, ["scripts/visual-tui-smoke.mjs", "--label", "bad", "--prompt", "bad", "--expose-builtin-tools"]);
+		const invalidVisualArgs = run(NODE_BIN, ["scripts/visual-tui-smoke.mjs", "--label", "bad", "--prompt", "bad", "--expose-builtin-tools"]);
 		expect(invalidVisualArgs.status).toBe(2);
 		expect(invalidVisualArgs.stderr).toContain("--expose-builtin-tools requires --bridge");
 	}, 90_000);
@@ -150,7 +205,7 @@ describe("smoke CLI and package contracts", () => {
 			},
 		];
 		for (const testCase of cases) {
-			const result = run(process.execPath, testCase.args, env);
+			const result = run(NODE_BIN, testCase.args, env);
 			expect(result.status, testCase.args.join(" ")).toBe(2);
 			expect(result.stderr).toContain("usage error");
 			expect(result.stderr).toContain(testCase.expected);
@@ -163,7 +218,7 @@ describe("smoke CLI and package contracts", () => {
 		const apiKey = "cursor-offline-smoke-secret-12345";
 		const env = { ...process.env, CURSOR_API_KEY: apiKey };
 		for (const script of ["scripts/cloud-runtime-smoke.mjs", "scripts/local-resume-smoke.mjs"]) {
-			const result = run(process.execPath, [script, `--${apiKey}`], env);
+			const result = run(NODE_BIN, [script, `--${apiKey}`], env);
 			expect(result.status, script).toBe(2);
 			expect(result.stderr).toContain("usage error");
 			expect(result.stderr).toContain("[redacted]");
@@ -200,9 +255,9 @@ describe("smoke CLI and package contracts", () => {
 		];
 		try {
 			for (const args of cases) {
-				const result = run(process.execPath, ["--experimental-loader", pathToFileURL(loader).href, script, ...args], {
+				const result = run(NODE_BIN, ["--experimental-loader", pathToFileURL(loader).href, script, ...args], {
 					...process.env,
-					PLATFORM_SMOKE_CRABBOX: process.execPath,
+					PLATFORM_SMOKE_CRABBOX: NODE_BIN,
 				}, cwd);
 				expect(result.status, args.join(" ")).toBe(2);
 				expect(result.stderr).toContain("usage error:");
@@ -250,7 +305,7 @@ if (!windowsCommand.startsWith("powershell.exe -NoLogo -NoProfile -ExecutionPoli
 if (!windows.includes("npm run smoke:local-resume:cleanup") || !windows.includes("/lr") || windows.includes("local-resume-cursor-local-resume-cleanup")) process.exit(1);
 if (!windows.includes("for($i=0;$i -lt 10") || !windows.includes("$w=$e.Replace('/','\\')") || !windows.includes("cmd.exe /d /c rd /s /q $w") || !windows.includes("Start-Sleep -Milliseconds 200") || !windows.includes("local-resume evidence cleanup failed") || windows.includes("SilentlyContinue")) process.exit(1);
 `;
-		const result = run(process.execPath, ["--input-type=module", "-e", code]);
+		const result = run(NODE_BIN, ["--input-type=module", "-e", code]);
 		expect(result.status).toBe(0);
 		expect(result.stdout).toContain('"posix":"node scripts/platform-smoke/live-suite-runner.mjs --prepare-only');
 	});

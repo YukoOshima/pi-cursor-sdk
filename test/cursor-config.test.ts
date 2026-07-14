@@ -114,7 +114,7 @@ describe("Cursor SDK config resolver", () => {
 		const projectPath = getCursorSdkProjectConfigPath(cwd);
 		mkdirSync(agentDir, { recursive: true });
 		writeFileSync(userPath, "{}\n");
-		mkdirSync(join(cwd, ".pi"), { recursive: true });
+		mkdirSync(join(cwd, ".omp"), { recursive: true });
 		writeFileSync(projectPath, "{}\n");
 		if (process.platform !== "win32") {
 			chmodSync(userPath, 0o660);
@@ -131,7 +131,7 @@ describe("Cursor SDK config resolver", () => {
 			expect(statSync(projectPath).mode & 0o777).toBe(0o640);
 		}
 		expect(readdirSync(agentDir)).toEqual(["cursor-sdk.json"]);
-		expect(readdirSync(join(cwd, ".pi"))).toEqual(["cursor-sdk.json"]);
+		expect(readdirSync(join(cwd, ".omp"))).toEqual(["cursor-sdk.json"]);
 	});
 
 	it.skipIf(process.platform === "win32")("uses normal umask permissions for new project config files", () => {
@@ -162,7 +162,7 @@ describe("Cursor SDK config resolver", () => {
 
 	it("trust-gates project config loading through the caller's project trust state", () => {
 		const projectPath = getCursorSdkProjectConfigPath(cwd);
-		mkdirSync(join(cwd, ".pi"), { recursive: true });
+		mkdirSync(join(cwd, ".omp"), { recursive: true });
 		writeFileSync(projectPath, JSON.stringify({ runtime: "cloud" }));
 
 		expect(loadCursorSdkConfig({ cwd, agentDir, projectTrusted: false })).toEqual({ user: {} });

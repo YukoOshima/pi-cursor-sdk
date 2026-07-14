@@ -13,12 +13,13 @@ export function registerCursorAgentsContextDedup(pi: CursorAgentsContextExtensio
 			const resolved = resolveCursorFacingSystemPrompt(
 				event.systemPrompt,
 				ctx.model,
-				event.systemPromptOptions,
+				undefined,
 				undefined,
 				undefined,
 				runtime,
 			);
-			if (resolved === event.systemPrompt) return undefined;
+			const { joinSystemPromptText } = await import("./context.js");
+			if (joinSystemPromptText(resolved) === joinSystemPromptText(event.systemPrompt)) return undefined;
 			return { systemPrompt: resolved };
 		},
 	});

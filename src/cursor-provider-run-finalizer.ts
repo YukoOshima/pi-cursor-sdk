@@ -1,3 +1,4 @@
+import { coerceApiKeyString } from "./cursor-api-key.js";
 import type { AssistantMessage } from "@oh-my-pi/pi-ai";
 import { cursorLiveRuns } from "./cursor-provider-live-run-drain.js";
 import {
@@ -99,7 +100,7 @@ export class CursorRunFinalizer {
 			runResultFallback: run.result,
 			runErrorFallback: run.error,
 			resolvedApiKey: this.params.resolvedApiKey(),
-			optionsApiKey: runnerParams.options?.apiKey,
+			optionsApiKey: coerceApiKeyString(runnerParams.options?.apiKey),
 			sdkEventDebug,
 			cacheContextWindow: true,
 			contextWindowAgentId: liveRun.agent.agentId,
@@ -112,7 +113,7 @@ export class CursorRunFinalizer {
 				if (!liveRun.disposed) {
 					cursorLiveRuns.markError(
 						liveRun,
-						sanitizeCursorProviderError(error, this.params.resolvedApiKey() ?? runnerParams.options?.apiKey),
+						sanitizeCursorProviderError(error, this.params.resolvedApiKey() ?? coerceApiKeyString(runnerParams.options?.apiKey)),
 					);
 				}
 				this.safeCleanup(() => sdkEventDebug?.recordWaitResult({ status: "error", error: String(error) }));
@@ -212,7 +213,7 @@ export class CursorRunFinalizer {
 			this.pushTerminalError(
 				this.params.runnerParams.partial,
 				"error",
-				sanitizeCursorProviderError(error, this.params.resolvedApiKey() ?? this.params.runnerParams.options?.apiKey),
+				sanitizeCursorProviderError(error, this.params.resolvedApiKey() ?? coerceApiKeyString(this.params.runnerParams.options?.apiKey)),
 			);
 		}
 	}

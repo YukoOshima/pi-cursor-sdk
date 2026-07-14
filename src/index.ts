@@ -32,7 +32,6 @@ type CursorExtensionApi =
 
 function createCursorProviderConfig(models: ProviderModelConfig[]): ProviderConfig {
 	return {
-		name: "Cursor",
 		baseUrl: "https://cursor.com",
 		apiKey: CURSOR_API_KEY_CONFIG_VALUE,
 		api: "cursor-sdk",

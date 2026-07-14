@@ -11,42 +11,69 @@ import type {
 	SessionBeforeTreeEvent,
 	SessionBeforeCompactEvent,
 	SessionCompactEvent,
-	SessionInfoChangedEvent,
 	SessionShutdownEvent,
 	SessionStartEvent,
 	SessionTreeEvent,
 	ToolCallEvent,
 	ToolCallEventResult,
 	ToolDefinition,
-	ToolInfo,
 	ToolResultEvent,
 	TurnEndEvent,
 	TurnStartEvent,
 } from "@oh-my-pi/pi-coding-agent";
-import type { TSchema } from "typebox";
+export type RegisteredTool = ToolDefinition<any, any>;
 
-export type RegisteredTool = ToolDefinition<TSchema, unknown, unknown>;
-
-export type ExtensionContextOverrides = Omit<Partial<ExtensionContext>, "sessionManager" | "ui"> & {
-	sessionManager?: Partial<ExtensionContext["sessionManager"]>;
-	ui?: Partial<ExtensionContext["ui"]>;
+/** Lightweight tool metadata for harness fixtures (ToolInfo removed from pi exports). */
+export type HarnessToolInfo = {
+	name: string;
+	description?: string;
+	parameters?: any;
+	promptGuidelines?: string[];
+	sourceInfo?: Record<string, unknown>;
 };
 
-export type ExtensionCommandContextOverrides = Omit<
-	Partial<ExtensionCommandContext>,
-	"sessionManager" | "ui"
-> & {
-	sessionManager?: Partial<ExtensionCommandContext["sessionManager"]>;
-	ui?: Partial<ExtensionCommandContext["ui"]>;
+/**
+ * Looser than Partial<ExtensionContext> so tests can still pass obsolete fields
+ * (mode/signal/isProjectTrusted) without fighting every call site; prefer hasUI.
+ */
+export type ExtensionContextOverrides = {
+	hasUI?: boolean;
+	cwd?: string;
+	model?: ExtensionContext["model"];
+	modelRegistry?: ExtensionContext["modelRegistry"];
+	models?: ExtensionContext["models"];
+	sessionManager?: Partial<ExtensionContext["sessionManager"]>;
+	ui?: Partial<ExtensionContext["ui"]>;
+	getSystemPrompt?: ExtensionContext["getSystemPrompt"];
+	isIdle?: ExtensionContext["isIdle"];
+	abort?: ExtensionContext["abort"];
+	hasPendingMessages?: ExtensionContext["hasPendingMessages"];
+	shutdown?: ExtensionContext["shutdown"];
+	getContextUsage?: ExtensionContext["getContextUsage"];
+	compact?: ExtensionContext["compact"];
+	memory?: ExtensionContext["memory"];
+	/** @deprecated use hasUI; kept for transitional test call sites */
+	mode?: string;
+	signal?: AbortSignal | undefined;
+	isProjectTrusted?: (() => boolean) | boolean;
+};
+
+export type ExtensionCommandContextOverrides = ExtensionContextOverrides & {
+	waitForIdle?: ExtensionCommandContext["waitForIdle"];
+	newSession?: ExtensionCommandContext["newSession"];
+	fork?: ExtensionCommandContext["branch"];
+	navigateTree?: ExtensionCommandContext["navigateTree"];
+	switchSession?: ExtensionCommandContext["switchSession"];
+	reload?: ExtensionCommandContext["reload"];
 };
 
 export type RegisteredCommandOptions = Omit<RegisteredCommand, "name" | "sourceInfo">;
 
-export type HarnessOn = ExtensionAPI["on"];
+/** Loosened so model_select / before_agent_start registrations typecheck in tests. */
+export type HarnessOn = (event: string, handler: any) => void;
 
 export type HarnessEventName =
 	| "session_start"
-	| "session_info_changed"
 	| "model_select"
 	| "before_agent_start"
 	| "turn_start"
@@ -67,14 +94,16 @@ export type HarnessModelSelectEvent = {
 	source: "set" | "cycle" | "restore";
 };
 
+/** omp SessionShutdownEvent has no reason; harness keeps optional reload reason for lifecycle tests. */
+export type HarnessSessionShutdownEvent = SessionShutdownEvent & { reason?: "reload" | string };
+
 export type HarnessEventMap = {
 	session_start: SessionStartEvent;
-	session_info_changed: SessionInfoChangedEvent;
 	model_select: HarnessModelSelectEvent;
 	before_agent_start: BeforeAgentStartEvent;
 	turn_start: TurnStartEvent;
 	turn_end: TurnEndEvent;
-	session_shutdown: SessionShutdownEvent;
+	session_shutdown: HarnessSessionShutdownEvent;
 	session_before_compact: SessionBeforeCompactEvent;
 	session_compact: SessionCompactEvent;
 	session_tree: SessionTreeEvent;
@@ -86,7 +115,7 @@ export type HarnessEventMap = {
 /** Combined invoke result for before_agent_start (matches installed pi ExtensionRunner). */
 export type HarnessBeforeAgentStartCombinedResult = {
 	messages?: NonNullable<BeforeAgentStartEventResult["message"]>[];
-	systemPrompt?: string;
+	systemPrompt?: string[];
 };
 
 /** Combined invoke result for tool_result (matches installed pi ExtensionRunner.emitToolResult). */
@@ -120,8 +149,8 @@ export type HarnessEventResultMap = {
 export type MockFn<T extends (...args: never[]) => unknown> = MockedFunction<T>;
 
 export interface PiHarnessOptions {
-	/** Tool catalog available before extension registration. */
-	initialTools?: ToolInfo[];
+	/** Tool catalog available before extension registration (names or lightweight metadata). */
+	initialTools?: Array<string | HarnessToolInfo>;
 	/** Active tool names returned by getActiveTools. */
 	activeTools?: string[];
 	/** Default value returned by getFlag when a name is not in flagValues. */
@@ -202,6 +231,12 @@ export interface PiHarness extends EventHarness {
 	registerCommand: MockFn<ExtensionAPI["registerCommand"]>;
 	registerTool: MockFn<ExtensionAPI["registerTool"]> & ExtensionAPI["registerTool"];
 	getAllTools: MockFn<ExtensionAPI["getAllTools"]>;
+	getToolMetadata?: (toolName: string) => {
+		description?: string;
+		parameters?: unknown;
+		promptGuidelines?: string[];
+		sourceInfo?: Record<string, unknown>;
+	} | undefined;
 	getActiveTools: MockFn<ExtensionAPI["getActiveTools"]>;
 	setActiveTools: MockFn<ExtensionAPI["setActiveTools"]>;
 	sendMessage: MockFn<ExtensionAPI["sendMessage"]>;
@@ -221,5 +256,10 @@ export interface PiHarness extends EventHarness {
 export interface BridgePiHarness extends EventHarness {
 	getActiveTools: MockFn<ExtensionAPI["getActiveTools"]>;
 	getAllTools: MockFn<ExtensionAPI["getAllTools"]>;
+	getToolMetadata?: (toolName: string) => {
+		description?: string;
+		parameters?: unknown;
+		promptGuidelines?: string[];
+	} | undefined;
 	setActiveTools: MockFn<ExtensionAPI["setActiveTools"]>;
 }

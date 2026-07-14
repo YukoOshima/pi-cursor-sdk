@@ -91,7 +91,8 @@ export function isCursorSdkMcpToolTimeoutStack(stack: string | undefined): boole
 
 export function isCursorSdkMcpConnectTimeoutStack(stack: string | undefined): boolean {
 	if (!stack || !isCursorSdkMcpProtocolTimeoutStack(stack)) return false;
-	return /\bClient\.(?:connect|listTools)\b|\bMcpSdkClient\.getTools\b/.test(stack);
+	// Bun often omits class receivers (`Client.connect` -> `connect`) for nested/minified frames.
+	return /\b(?:Client\.)?(?:connect|listTools)\b|\b(?:McpSdkClient\.)?getTools\b/.test(stack);
 }
 
 function isCursorSdkDefaultMcpTimeout(delay: SetTimeoutDelay): boolean {

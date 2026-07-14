@@ -41,7 +41,7 @@ describe("registerCursorModelLifecycle", () => {
 			},
 			beforeAgentStart: (event, ctx) => {
 				calls.push(`before:${ctx.model?.id}:${event.systemPrompt}`);
-				return { systemPrompt: `${event.systemPrompt} updated` };
+				return { systemPrompt: [`${event.systemPrompt} updated`] };
 			},
 		});
 
@@ -53,9 +53,9 @@ describe("registerCursorModelLifecycle", () => {
 			"session:cursor-model",
 			"sync:cursor-model",
 			"sync:cursor-model",
-			"before:cursor-model:",
+			"before:cursor-model:Be helpful.",
 		]);
-		expect(result).toEqual({ systemPrompt: " updated" });
+		expect(result).toEqual({ systemPrompt: ["Be helpful. updated"] });
 	});
 
 	it("runs explicit model-select and turn-start handlers without raw event hooks", async () => {

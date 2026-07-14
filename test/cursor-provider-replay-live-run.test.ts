@@ -414,7 +414,7 @@ describe("streamCursor native replay live run", () => {
 		});
 
 		const context = makeContext();
-		context.tools = [{ name: "read", description: "Read files", parameters: Type.Object({}) }];
+		context.tools = [{ name: "read", description: "Read files", parameters: Type.Object({}) as any }];
 
 		const eventsPromise = collectEvents(streamCursor(makeModel(), context, { apiKey: "test-key" }));
 		while (!firstOnDelta) await new Promise((resolve) => setTimeout(resolve, 0));
@@ -491,7 +491,7 @@ describe("streamCursor native replay live run", () => {
 		resolveRun({ id: "run-1", status: "finished", result: "Done." });
 
 		const replayContext = makeContext();
-		replayContext.tools = [{ name: "read", description: "Read files", parameters: Type.Object({}) }];
+		replayContext.tools = [{ name: "read", description: "Read files", parameters: Type.Object({}) as any }];
 		replayContext.messages = [
 			...replayContext.messages,
 			firstDone.message,

@@ -7,11 +7,20 @@ import type {
 	SessionShutdownEvent,
 	ToolCallEvent,
 	ToolCallEventResult,
-	ToolInfo,
 	ToolResultEvent,
 } from "@oh-my-pi/pi-coding-agent";
 
-export type CursorPiToolBridgeSnapshotApi = Pick<ExtensionAPI, "getActiveTools" | "getAllTools">;
+/** Optional per-tool metadata when the host only exposes tool names via getAllTools(). */
+export type CursorPiToolBridgeToolMetadata = {
+	description?: string;
+	parameters?: unknown;
+	promptGuidelines?: string[];
+};
+
+export type CursorPiToolBridgeSnapshotApi = Pick<ExtensionAPI, "getActiveTools" | "getAllTools"> & {
+	/** Resolve description/schema/guidelines for a tool name when available (tests + richer hosts). */
+	getToolMetadata?: (toolName: string) => CursorPiToolBridgeToolMetadata | undefined;
+};
 
 export type CursorPiToolBridgeExtensionApi = CursorPiToolBridgeSnapshotApi & {
 	on(event: "tool_call", handler: ExtensionHandler<ToolCallEvent, ToolCallEventResult>): void;
@@ -30,9 +39,8 @@ export interface CursorPiBridgeToolDefinition {
 	piToolName: string;
 	mcpToolName: string;
 	description: string;
-	promptGuidelines?: ToolInfo["promptGuidelines"];
+	promptGuidelines?: string[];
 	inputSchema: CursorPiMcpInputSchema;
-	sourceInfo: ToolInfo["sourceInfo"];
 }
 
 export interface CursorPiToolBridgeSnapshot {

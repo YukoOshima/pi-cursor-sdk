@@ -1,11 +1,11 @@
 import {
 	type Api,
 	type AssistantMessage,
-	AssistantMessageEventStream,
 	type Context,
 	type Model,
 	type SimpleStreamOptions,
 } from "@oh-my-pi/pi-ai";
+import { AssistantMessageEventStream } from "@oh-my-pi/pi-ai/utils/event-stream";
 import {
 	cursorLiveRuns,
 	DEFAULT_CURSOR_NATIVE_REPLAY_IDLE_DISPOSE_MS,
@@ -19,7 +19,7 @@ import { disposeAllSessionCursorAgents } from "./cursor-session-agent.js";
 import { attachCursorSdkEventDebugPiStreamTap, type CursorSdkEventDebugSink } from "./cursor-sdk-event-debug.js";
 import { installCursorSdkProcessErrorGuard } from "./cursor-sdk-process-error-guard.js";
 import { sanitizeCursorProviderError } from "./cursor-provider-errors.js";
-import { resolveCursorApiKey } from "./cursor-api-key.js";
+import { coerceApiKeyString, resolveCursorApiKey } from "./cursor-api-key.js";
 import { CursorProviderTurnRunner } from "./cursor-provider-turn-runner.js";
 import { getCursorSessionScopeKey } from "./cursor-session-scope.js";
 import { runExclusiveCursorSessionTurn, __testUtils as cursorSessionTurnQueueTestUtils } from "./cursor-session-turn-queue.js";
@@ -36,7 +36,9 @@ function makeInitialMessage(model: Model<Api>): AssistantMessage {
 			output: 0,
 			cacheRead: 0,
 			cacheWrite: 0,
-			totalTokens: 0 },
+			totalTokens: 0,
+			cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+		},
 		stopReason: "stop",
 		timestamp: Date.now() };
 }
@@ -76,7 +78,7 @@ export function streamCursor(
 	})().catch((error: unknown) => {
 		const partial = makeInitialMessage(model);
 		partial.stopReason = "error";
-		partial.errorMessage = sanitizeCursorProviderError(error, resolveCursorApiKey(options?.apiKey));
+		partial.errorMessage = sanitizeCursorProviderError(error, resolveCursorApiKey(coerceApiKeyString(options?.apiKey)));
 		stream.push({ type: "error", reason: "error", error: partial });
 		stream.end();
 	});

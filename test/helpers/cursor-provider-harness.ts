@@ -1,3 +1,4 @@
+import { setCursorSdkModuleForTests } from "../../src/cursor-sdk-runtime.js";
 import { expect, vi } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
@@ -35,6 +36,7 @@ vi.mock("@cursor/sdk", () => {
 });
 
 import { Agent, createAgentPlatform } from "@cursor/sdk";
+setCursorSdkModuleForTests({ Agent, createAgentPlatform } as never);
 import {
 	__testUtils as cloudLifecycleTestUtils,
 	registerCursorCloudLifecycleLedger,
@@ -50,7 +52,8 @@ import { registerCursorNativeToolDisplay } from "../../src/cursor-native-tool-di
 import type { CursorNativeToolDisplayExtensionApi } from "../../src/cursor-native-tool-display-registration.js";
 import type { ModelListItem, Run, SDKAgent, SendOptions } from "@cursor/sdk";
 import type { AssistantMessage, AssistantMessageEvent, TextContent, ImageContent, ToolCall } from "@oh-my-pi/pi-ai";
-import type { ExtensionAPI, ToolInfo } from "@oh-my-pi/pi-coding-agent";
+import type { ExtensionAPI } from "@oh-my-pi/pi-coding-agent";
+import type { HarnessToolInfo } from "./pi-harness-types.js";
 import {
 	collectAssistantEvents,
 	createBridgePiHarness,
@@ -131,7 +134,7 @@ export function textFromToolResultBlock(block: TextContent | ImageContent | unde
 	return block?.type === "text" ? block.text : "";
 }
 
-export function registerBridgeForProviderTest(options: { active: string[]; tools: ToolInfo[] }) {
+export function registerBridgeForProviderTest(options: { active: string[]; tools: Array<string | HarnessToolInfo> }) {
 	const pi = createBridgePiHarness(options);
 	registerCursorPiToolBridge(pi);
 	return { pi, runSessionShutdown: pi.runSessionShutdown.bind(pi) };
@@ -263,8 +266,8 @@ export async function createNativeToolDisplayPiForTest(registeredTools: Register
 	await pi.runSessionStart({ hasUI: false });
 	return {
 		getActiveTools: () => pi.getActiveTools(),
-		setActiveTools: (toolNames) => {
-			pi.setActiveTools(toolNames);
+		setActiveTools: async (toolNames) => {
+			await pi.setActiveTools(toolNames);
 		},
 		runTurnStart: (ctxOverrides = {}) => pi.runTurnStart({ hasUI: false, ...ctxOverrides }),
 	};

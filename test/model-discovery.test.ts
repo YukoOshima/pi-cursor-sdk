@@ -21,6 +21,8 @@ vi.mock("@cursor/sdk", () => ({
 }));
 
 import { Cursor } from "@cursor/sdk";
+import { setCursorSdkModuleForTests } from "../src/cursor-sdk-runtime.js";
+import { installTempAgentDir, restoreAgentDirFromEnv, writeStoredCursorApiKey } from "./helpers/omp-agent-dir.js";
 import type { ModelListItem } from "@cursor/sdk";
 
 const mockedList = vi.mocked(Cursor.models.list);
@@ -29,12 +31,6 @@ function register(items: ModelListItem[]) {
 	return __testUtils.registerModelItems(items);
 }
 
-function writeStoredCursorApiKey(apiKey: string): void {
-	writeFileSync(
-		join(process.env.PI_CODING_AGENT_DIR!, "auth.json"),
-		JSON.stringify({ cursor: { type: "api_key", key: apiKey } }, null, 2),
-	);
-}
 
 describe("discoverModels", () => {
 	const originalEnv = process.env;
@@ -44,8 +40,9 @@ describe("discoverModels", () => {
 	beforeEach(() => {
 		process.env = { ...originalEnv };
 		delete process.env.CURSOR_API_KEY;
+		setCursorSdkModuleForTests({ Cursor } as never);
 		tmpAgentDir = mkdtempSync(join(tmpdir(), "pi-cursor-discovery-"));
-		process.env.PI_CODING_AGENT_DIR = tmpAgentDir;
+		installTempAgentDir(tmpAgentDir);
 		process.argv = ["node", "vitest"];
 	});
 
@@ -53,6 +50,7 @@ describe("discoverModels", () => {
 		rmSync(tmpAgentDir, { recursive: true, force: true });
 		process.env = originalEnv;
 		process.argv = originalArgv;
+		restoreAgentDirFromEnv();
 		vi.clearAllMocks();
 	});
 
@@ -127,7 +125,7 @@ describe("discoverModels", () => {
 	});
 
 	it("uses stored pi auth for model discovery when env and CLI are absent", async () => {
-		writeStoredCursorApiKey("stored-key-123");
+		await writeStoredCursorApiKey("stored-key-123");
 		mockedList.mockResolvedValueOnce([
 			{
 				id: "composer-2",
@@ -143,7 +141,7 @@ describe("discoverModels", () => {
 	});
 
 	it("prefers stored pi auth over CURSOR_API_KEY for model discovery", async () => {
-		writeStoredCursorApiKey("stored-key-123");
+		await writeStoredCursorApiKey("stored-key-123");
 		process.env.CURSOR_API_KEY = "env-key-123";
 		mockedList.mockResolvedValueOnce([
 			{
@@ -161,7 +159,7 @@ describe("discoverModels", () => {
 	it.each(["CURSOR_API_KEY", "$CURSOR_API_KEY", "${CURSOR_API_KEY}", "pi-cursor-sdk-cursor-api-key-placeholder"])(
 		"treats unresolved stored %s auth as missing when env is absent",
 		async (placeholder) => {
-			writeStoredCursorApiKey(placeholder);
+			await writeStoredCursorApiKey(placeholder);
 			const issues: CursorModelFallbackIssue[] = [];
 
 			const models = await discoverModels({ onFallback: (issue) => issues.push(issue) });
@@ -176,7 +174,7 @@ describe("discoverModels", () => {
 	it.each(["CURSOR_API_KEY", "$CURSOR_API_KEY", "${CURSOR_API_KEY}", "pi-cursor-sdk-cursor-api-key-placeholder"])(
 		"resolves stored %s auth through the env var when present",
 		async (placeholder) => {
-			writeStoredCursorApiKey(placeholder);
+			await writeStoredCursorApiKey(placeholder);
 			process.env.CURSOR_API_KEY = "env-key-123";
 			mockedList.mockResolvedValueOnce([
 				{
@@ -461,8 +459,9 @@ describe("discoverModels", () => {
 	});
 
 	it("uses bundled SDK-derived context windows for models without context params", async () => {
-		const tmpAgentDir = mkdtempSync(join(tmpdir(), "pi-cursor-context-window-bundled-"));
-		process.env.PI_CODING_AGENT_DIR = tmpAgentDir;
+		setCursorSdkModuleForTests({ Cursor } as never);
+		tmpAgentDir = mkdtempSync(join(tmpdir(), "pi-cursor-context-window-bundled-"));
+		installTempAgentDir(tmpAgentDir);
 		try {
 			process.env.CURSOR_API_KEY = "test-key-123";
 			mockedList.mockResolvedValueOnce([
@@ -493,8 +492,9 @@ describe("discoverModels", () => {
 	});
 
 	it("loads the context-window cache once while registering a model catalog", async () => {
-		const tmpAgentDir = mkdtempSync(join(tmpdir(), "pi-cursor-context-window-count-"));
-		process.env.PI_CODING_AGENT_DIR = tmpAgentDir;
+		setCursorSdkModuleForTests({ Cursor } as never);
+		tmpAgentDir = mkdtempSync(join(tmpdir(), "pi-cursor-context-window-count-"));
+		installTempAgentDir(tmpAgentDir);
 		try {
 			contextWindowCacheTestUtils.resetUserContextWindowOverrideLoadCount();
 			process.env.CURSOR_API_KEY = "test-key-123";
@@ -515,8 +515,9 @@ describe("discoverModels", () => {
 	});
 
 	it("lets user cache override context-qualified model IDs", async () => {
-		const tmpAgentDir = mkdtempSync(join(tmpdir(), "pi-cursor-context-window-qualified-"));
-		process.env.PI_CODING_AGENT_DIR = tmpAgentDir;
+		setCursorSdkModuleForTests({ Cursor } as never);
+		tmpAgentDir = mkdtempSync(join(tmpdir(), "pi-cursor-context-window-qualified-"));
+		installTempAgentDir(tmpAgentDir);
 		try {
 			saveCachedContextWindow("gpt-5.5@1m", 950000);
 			process.env.CURSOR_API_KEY = "test-key-123";
@@ -541,8 +542,9 @@ describe("discoverModels", () => {
 	});
 
 	it("lets user cache override bundled context windows", async () => {
-		const tmpAgentDir = mkdtempSync(join(tmpdir(), "pi-cursor-context-window-"));
-		process.env.PI_CODING_AGENT_DIR = tmpAgentDir;
+		setCursorSdkModuleForTests({ Cursor } as never);
+		tmpAgentDir = mkdtempSync(join(tmpdir(), "pi-cursor-context-window-"));
+		installTempAgentDir(tmpAgentDir);
 		try {
 			saveCachedContextWindow("composer-2", 201000);
 			process.env.CURSOR_API_KEY = "test-key-123";
@@ -568,8 +570,9 @@ describe("discoverModels", () => {
 	});
 
 	it("ignores malformed context-window cache values", async () => {
-		const tmpAgentDir = mkdtempSync(join(tmpdir(), "pi-cursor-context-window-malformed-"));
-		process.env.PI_CODING_AGENT_DIR = tmpAgentDir;
+		setCursorSdkModuleForTests({ Cursor } as never);
+		tmpAgentDir = mkdtempSync(join(tmpdir(), "pi-cursor-context-window-malformed-"));
+		installTempAgentDir(tmpAgentDir);
 		try {
 			writeFileSync(contextWindowCacheTestUtils.getCachePath(), JSON.stringify({ contextWindows: { "composer-2": "201000" } }));
 			process.env.CURSOR_API_KEY = "test-key-123";
@@ -600,7 +603,7 @@ describe("discoverModels", () => {
 		]);
 		const models = await discoverModels();
 		expect(models[0].reasoning).toBe(false);
-		expect(models[0].thinkingLevelMap).toBeUndefined();
+		expect((models[0] as any).thinkingLevelMap).toBeUndefined();
 	});
 
 	it("maps Cursor reasoning values to pi thinking levels", async () => {
@@ -633,7 +636,7 @@ describe("discoverModels", () => {
 			},
 		]);
 		const models = await discoverModels();
-		expect(models[0].thinkingLevelMap).toEqual({
+		expect((models[0] as any).thinkingLevelMap).toEqual({
 			off: "none",
 			minimal: "minimal",
 			low: "low",
@@ -666,7 +669,7 @@ describe("discoverModels", () => {
 			},
 		]);
 		const models = await discoverModels();
-		expect(models[0].thinkingLevelMap).toEqual({
+		expect((models[0] as any).thinkingLevelMap).toEqual({
 			off: "false",
 			minimal: null,
 			low: null,
@@ -715,7 +718,7 @@ describe("discoverModels", () => {
 		expect(models.map((model) => model.id)).toEqual(["claude-opus-4-7@300k", "claude-opus-4-7@1m"]);
 		expect(models[0].contextWindow).toBe(300000);
 		expect(models[1].contextWindow).toBe(1000000);
-		expect(models[0].thinkingLevelMap).toEqual({
+		expect((models[0] as any).thinkingLevelMap).toEqual({
 			off: "false",
 			minimal: null,
 			low: "low",
@@ -759,7 +762,7 @@ describe("discoverModels", () => {
 
 		const models = await discoverModels();
 
-		expect(models[0].thinkingLevelMap).toEqual({
+		expect((models[0] as any).thinkingLevelMap).toEqual({
 			off: null,
 			minimal: null,
 			low: "low",
@@ -798,7 +801,7 @@ describe("discoverModels", () => {
 
 		const models = await discoverModels();
 
-		expect(models[0].thinkingLevelMap).toEqual({
+		expect((models[0] as any).thinkingLevelMap).toEqual({
 			off: "false",
 			minimal: null,
 			low: "low",

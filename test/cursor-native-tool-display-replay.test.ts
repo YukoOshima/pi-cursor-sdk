@@ -13,18 +13,17 @@ import { LOCAL_READ_PREVIEW_NOTICE } from "../src/cursor-transcript-utils.js";
 import { Text } from "@oh-my-pi/pi-tui";
 import { createRenderContext, createRenderTheme } from "./helpers/render-fixtures.js";
 
-const theme = createRenderTheme();
+const theme = createRenderTheme() as any;
 
 const taggedTheme = createRenderTheme({
 	fg: (name: string, value: string) => `<${name}>${value}</${name}>`,
-});
+} as any);
 
 function renderReplayResultWithDetails(details: unknown): string {
-	return renderCursorReplayResult(
+	return (renderCursorReplayResult as any)(
 		{ content: [{ type: "text", text: "ok" }], details },
 		{ expanded: false, isPartial: false },
 		taggedTheme,
-		createRenderContext({ isError: false, showImages: false }),
 		false,
 	)
 		.render(240)
@@ -174,11 +173,11 @@ describe("cursor native replay rendering", () => {
 			content: [{ type: "text" as const, text: `${LOCAL_READ_PREVIEW_NOTICE}\n# Local preview\n` }],
 			details: { localReadPreview: true },
 		};
-		const rendered = renderNativeLookingCursorReadReplayResult(
+		const rendered = (renderNativeLookingCursorReadReplayResult as any)(
 			result,
 			{ expanded: false, isPartial: false },
 			theme,
-			createRenderContext({ isError: false, args: { path: "README.md", localReadPreview: true } }),
+			{ path: "README.md", localReadPreview: true },
 			() => new Text("", 0, 0),
 		)
 			.render(120)

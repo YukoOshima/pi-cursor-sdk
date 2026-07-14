@@ -43,7 +43,7 @@ describe("cursor pi tool bridge debug safety", () => {
 			const callPromise = client.callTool({ name: "pi__read", arguments: { path: "README.md" } });
 			const request = await waitForQueuedRequest(run);
 			await run.resolveToolResultsFromContext({
-				systemPrompt: "",
+				systemPrompt: [""],
 				messages: [{
 					role: "toolResult",
 					toolCallId: request.piToolCallId,

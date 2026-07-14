@@ -10,7 +10,7 @@ describe("wrapNativeCursorTool", () => {
 	it("does not use Cursor replay rendering for ordinary pi edit toolCallIds", () => {
 		const replaySpy = vi.spyOn(replay, "renderCursorReplayResult").mockReturnValue(new Text("", 0, 0));
 		const parameters = Type.Object({});
-		type EditToolDefinition = ToolDefinition<typeof parameters, unknown, unknown>;
+		type EditToolDefinition = ToolDefinition<any, unknown>;
 		const delegateRenderResult = vi.fn<NonNullable<EditToolDefinition["renderResult"]>>(() => new Text("pi edit", 0, 0));
 		const definition: EditToolDefinition = {
 			name: "edit",
@@ -20,10 +20,10 @@ describe("wrapNativeCursorTool", () => {
 			execute: vi.fn(async () => ({ content: [], details: undefined })),
 			renderResult: delegateRenderResult,
 		};
-		const wrapped = wrapNativeCursorTool(definition, () => definition);
-		const theme = createRenderTheme();
+		const wrapped = wrapNativeCursorTool(definition as any, () => definition as any);
+		const theme = createRenderTheme() as any;
 
-		wrapped.renderResult?.(
+		(wrapped.renderResult as any)?.(
 			{
 				content: [{ type: "text", text: "edit src/foo.ts" }],
 				details: {
@@ -34,8 +34,8 @@ describe("wrapNativeCursorTool", () => {
 				},
 			},
 			createRenderOptions(),
-			theme,
-			createRenderContext({ isError: false, toolCallId: "ordinary-edit-1" }),
+			theme as any,
+			{ toolCallId: "ordinary-edit-1" } as any,
 		);
 
 		expect(replaySpy).not.toHaveBeenCalled();

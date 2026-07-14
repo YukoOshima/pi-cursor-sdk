@@ -2,18 +2,23 @@ import type { Dirent } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
 import { dirname, join, relative } from "node:path";
 import type {
-	BuildSystemPromptOptions,
 	ExtensionAPI,
 	ExtensionContext,
 	Skill,
+	ToolDefinition,
 } from "@oh-my-pi/pi-coding-agent";
+
+import { getActiveSkills } from "@oh-my-pi/pi-coding-agent";
 import { Type } from "typebox";
+import { joinSystemPromptText, toSystemPromptParts } from "./context.js";
 import { arePiToolsDisabled } from "./cursor-active-tools.js";
 import type { CursorRuntime } from "./cursor-config.js";
 import { isCursorModel } from "./cursor-model.js";
 import { registerCursorModelLifecycle, type CursorModelLifecycleExtensionApi } from "./cursor-model-lifecycle.js";
 import { resolveCursorPiToolBridgeEnabled } from "./cursor-pi-tool-bridge-env.js";
 import { resolveEffectiveCursorConfigForContext } from "./cursor-runtime-state.js";
+
+type LooseToolDefinition = ToolDefinition<any, unknown>;
 
 export const CURSOR_ACTIVATE_SKILL_TOOL_NAME = "cursor_activate_skill";
 export const CURSOR_ACTIVATE_SKILL_MCP_NAME = "pi__cursor_activate_skill";
@@ -47,8 +52,24 @@ function escapeXml(value: string): string {
 		.replace(/'/g, "&apos;");
 }
 
+type SkillFrontmatterFlags = {
+	hide?: boolean;
+	disableModelInvocation?: boolean;
+};
+
+function getSkillFrontmatterFlags(skill: Skill): SkillFrontmatterFlags | undefined {
+	return (skill as Skill & { frontmatter?: SkillFrontmatterFlags }).frontmatter;
+}
+
+/** omp: hide/disable-model-invocation live on skill.frontmatter (exported Skill may also expose root hide). */
+function isSkillHiddenFromModel(skill: Skill): boolean {
+	const frontmatter = getSkillFrontmatterFlags(skill);
+	if (frontmatter?.hide === true || frontmatter?.disableModelInvocation === true) return true;
+	return skill.hide === true;
+}
+
 function getVisibleSkills(skills: readonly Skill[] | undefined): Skill[] {
-	return (skills ?? []).filter((skill) => !skill.disableModelInvocation);
+	return (skills ?? []).filter((skill) => !isSkillHiddenFromModel(skill));
 }
 
 function setCurrentSkills(skills: readonly Skill[] | undefined): void {
@@ -61,7 +82,7 @@ function getAvailableSkillNames(): string[] {
 
 function resolveEffectiveRuntimeForSkillLifecycle(
 	cursorModel: boolean,
-	ctx: Pick<ExtensionContext, "cwd"> & Partial<Pick<ExtensionContext, "isProjectTrusted">>,
+	ctx: Pick<ExtensionContext, "cwd">,
 ): CursorRuntime {
 	return cursorModel ? resolveEffectiveCursorConfigForContext(ctx).runtime.value : "local";
 }
@@ -111,20 +132,25 @@ export function formatCursorSkillsForPrompt(skills: readonly Skill[]): string {
 }
 
 export function resolveCursorSkillSystemPrompt(
-	systemPrompt: string,
+	systemPrompt: string | string[],
 	model: ExtensionContext["model"],
-	systemPromptOptions?: BuildSystemPromptOptions,
+	skills?: readonly Skill[],
 	runtime: CursorRuntime = "local",
-): string {
-	if (!isCursorModel(model)) return systemPrompt;
-	if (runtime === "cloud") return systemPrompt.replace(AVAILABLE_SKILLS_SECTION_PATTERN, "");
-	const skills = getVisibleSkills(systemPromptOptions?.skills);
-	if (skills.length === 0) return systemPrompt;
-	const replacement = formatCursorSkillsForPrompt(skills);
-	if (AVAILABLE_SKILLS_SECTION_PATTERN.test(systemPrompt)) {
-		return systemPrompt.replace(AVAILABLE_SKILLS_SECTION_PATTERN, replacement);
+): string[] {
+	const parts = toSystemPromptParts(systemPrompt);
+	if (!isCursorModel(model)) return parts;
+	const promptText = joinSystemPromptText(parts);
+	if (runtime === "cloud") {
+		if (!AVAILABLE_SKILLS_SECTION_PATTERN.test(promptText)) return parts;
+		return [promptText.replace(AVAILABLE_SKILLS_SECTION_PATTERN, "")];
 	}
-	return `${systemPrompt}${replacement}`;
+	const visibleSkills = getVisibleSkills(skills);
+	if (visibleSkills.length === 0) return parts;
+	const replacement = formatCursorSkillsForPrompt(visibleSkills);
+	if (AVAILABLE_SKILLS_SECTION_PATTERN.test(promptText)) {
+		return [promptText.replace(AVAILABLE_SKILLS_SECTION_PATTERN, replacement)];
+	}
+	return [...parts, replacement];
 }
 
 async function collectResourcePaths(root: string, absoluteDir: string, output: string[]): Promise<void> {
@@ -194,15 +220,10 @@ export function registerCursorSkillTool(pi: CursorSkillToolExtensionApi): void {
 		name: CURSOR_ACTIVATE_SKILL_TOOL_NAME,
 		label: "Cursor skill",
 		description: "Load full pi Agent Skill instructions for Cursor. Use with a skill name from the current <available_skills> catalog before applying that skill.",
-		promptSnippet: "Load full pi Agent Skill instructions for a listed skill before Cursor applies that skill",
 		parameters: Type.Object({
 			name: Type.String({ description: "Skill name from the current <available_skills> catalog" }),
 		}),
-		promptGuidelines: [
-			`Use ${CURSOR_ACTIVATE_SKILL_TOOL_NAME} only for skill names listed in the current <available_skills> catalog.`,
-			"After loading a skill, follow its instructions and resolve relative skill paths against the returned skill directory.",
-		],
-		async execute(_toolCallId, params) {
+		async execute(_toolCallId: string, params: CursorActivateSkillParams) {
 			const requestedName = (params as CursorActivateSkillParams).name?.trim();
 			if (!requestedName) {
 				throw new Error("No skill name was provided.");
@@ -229,7 +250,7 @@ export function registerCursorSkillTool(pi: CursorSkillToolExtensionApi): void {
 				);
 			}
 		},
-	});
+	} as LooseToolDefinition);
 
 	const clearSkillsAndSync = (model: ExtensionContext["model"], runtime: CursorRuntime = "local"): void => {
 		setCurrentSkills([]);
@@ -252,14 +273,25 @@ export function registerCursorSkillTool(pi: CursorSkillToolExtensionApi): void {
 		beforeAgentStart: (event, ctx) => {
 			const cursorModel = isCursorModel(ctx.model);
 			const runtime = resolveEffectiveRuntimeForSkillLifecycle(cursorModel, ctx);
+			let skillsForPrompt: readonly Skill[] | undefined;
 			if (cursorModel && runtime === "local") {
-				setCurrentSkills(event.systemPromptOptions?.skills);
+				const activeSkills = getActiveSkills();
+				if (activeSkills.length > 0) {
+					setCurrentSkills(activeSkills);
+					skillsForPrompt = activeSkills;
+				} else if (currentSkillsByName.size > 0) {
+					// Fall back to previous runtime cache when active skills are unavailable.
+					skillsForPrompt = [...currentSkillsByName.values()];
+				} else {
+					skillsForPrompt = [];
+				}
 			} else {
 				setCurrentSkills([]);
+				skillsForPrompt = [];
 			}
 			syncCursorSkillToolForModel(pi, ctx.model, runtime);
-			const resolved = resolveCursorSkillSystemPrompt(event.systemPrompt, ctx.model, event.systemPromptOptions, runtime);
-			if (resolved === event.systemPrompt) return undefined;
+			const resolved = resolveCursorSkillSystemPrompt(event.systemPrompt, ctx.model, skillsForPrompt, runtime);
+			if (joinSystemPromptText(resolved) === joinSystemPromptText(event.systemPrompt)) return undefined;
 			return { systemPrompt: resolved };
 		},
 	});

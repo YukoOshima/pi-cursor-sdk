@@ -170,7 +170,7 @@ function matchesCurrentSession(
 }
 
 function canResumeHandleSpanEntry(entry: SessionEntry): boolean {
-	if (entry.type === "custom" || entry.type === "label" || entry.type === "session_info") return true;
+	if (entry.type === "custom" || entry.type === "label") return true;
 	return entry.type === "message" && entry.message.role === "user";
 }
 

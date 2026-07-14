@@ -5,7 +5,6 @@ import type {
 	ModelSelection,
 } from "./cursor-sdk-types.js";
 import type { ProviderModelConfig } from "@oh-my-pi/pi-coding-agent";
-import type { ModelThinkingLevel, ThinkingLevelMap } from "@oh-my-pi/pi-ai";
 import { loadContextWindowCache } from "./context-window-cache.js";
 import { loadCursorSdk } from "./cursor-sdk-runtime.js";
 import { resolveCursorApiKey, resolveCursorRuntimeApiKey } from "./cursor-api-key.js";
@@ -16,6 +15,10 @@ import {
 	loadFreshCachedModels,
 	saveModelListCache,
 } from "./model-list-cache.js";
+
+type ThinkingLevel = "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+type ModelThinkingLevel = "off" | ThinkingLevel;
+type ThinkingLevelMap = Partial<Record<ModelThinkingLevel, string | null>>;
 
 const FALLBACK_CONTEXT_WINDOW = 128000;
 const FALLBACK_MAX_TOKENS = 16384;

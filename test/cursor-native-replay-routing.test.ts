@@ -51,7 +51,7 @@ describe("cursor-native-replay-routing", () => {
 
 	it("partitions native tools by context.tools snapshot", () => {
 		const context = {
-			systemPrompt: "",
+			systemPrompt: [""],
 			messages: [],
 			tools: [{ name: "read", description: "read", parameters: {} }],
 		} as unknown as Context;

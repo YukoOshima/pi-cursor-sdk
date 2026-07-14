@@ -22,7 +22,8 @@ export function registerCursorSessionAgentLifecycle(pi: CursorSessionAgentLifecy
 	});
 	pi.on("session_shutdown", async (event) => {
 		const { disposeSessionCursorAgent, resetSessionCursorAgent } = await import("./cursor-session-agent.js");
-		if (event.reason === "reload") {
+		// omp SessionShutdownEvent has no `reason`; keep optional local/harness field for reload resets.
+		if ((event as SessionShutdownEvent & { reason?: string }).reason === "reload") {
 			await resetSessionCursorAgent();
 			return;
 		}

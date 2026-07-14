@@ -1,6 +1,3 @@
-import { createRequire } from "node:module";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@oh-my-pi/pi-coding-agent", async (importOriginal) => {
@@ -11,7 +8,7 @@ vi.mock("@oh-my-pi/pi-coding-agent", async (importOriginal) => {
 	};
 });
 
-import type { BeforeAgentStartEvent, BuildSystemPromptOptions, ExtensionContext } from "@oh-my-pi/pi-coding-agent";
+import type { BeforeAgentStartEvent, ExtensionContext } from "@oh-my-pi/pi-coding-agent";
 import type { Context } from "@oh-my-pi/pi-ai";
 import {
 	classifyContextFileOverlap,
@@ -27,10 +24,10 @@ import {
 	shouldSuppressPiAgentsContext,
 } from "../src/cursor-agents-context.js";
 import { registerCursorAgentsContextDedup } from "../src/cursor-agents-context-registration.js";
-import { buildCursorPrompt } from "../src/context.js";
+import { buildCursorPrompt, joinSystemPromptText } from "../src/context.js";
 import { CURSOR_SETTING_SOURCES_ENV } from "../src/cursor-setting-sources.js";
 import { createEventHarness, makeModel } from "./helpers/pi-harness.js";
-import { buildPiSystemPromptWithContextFiles, makeSystemPromptOptions } from "./helpers/pi-system-prompt.js";
+import { buildPiSystemPromptWithContextFiles } from "./helpers/pi-system-prompt.js";
 
 const GLOBAL_AGENTS_PATH = "/Users/me/.pi/agent/AGENTS.md";
 const GLOBAL_CLAUDE_PATH = "/Users/me/.pi/agent/CLAUDE.md";
@@ -46,23 +43,12 @@ const GLOBAL_CLAUDE_FILE = { path: GLOBAL_CLAUDE_PATH, content: "Global claude g
 const PROJECT_FILE = { path: PROJECT_AGENTS_PATH, content: "Project guidance" };
 const PROJECT_CLAUDE_FILE = { path: PROJECT_CLAUDE_PATH, content: "Project claude guidance" };
 
-type PiBuildSystemPrompt = (options: BuildSystemPromptOptions) => string;
-let cachedBuildSystemPrompt: PiBuildSystemPrompt | undefined;
-
-function loadInstalledPiBuildSystemPrompt(): PiBuildSystemPrompt {
-	if (cachedBuildSystemPrompt) return cachedBuildSystemPrompt;
-	const piMain = fileURLToPath(import.meta.resolve("@oh-my-pi/pi-coding-agent"));
-	const piPackageRoot = dirname(dirname(piMain));
-	const require = createRequire(piMain);
-	cachedBuildSystemPrompt = require(join(piPackageRoot, "dist/core/system-prompt.js")).buildSystemPrompt as PiBuildSystemPrompt;
-	return cachedBuildSystemPrompt;
-}
-
-function getProjectContextSection(systemPrompt: string): string {
-	const start = systemPrompt.indexOf("\n\n<project_context>");
+function getProjectContextSection(systemPrompt: string | string[]): string {
+	const promptText = joinSystemPromptText(systemPrompt);
+	const start = promptText.indexOf("\n\n<project_context>");
 	const close = "</project_context>\n";
-	const end = systemPrompt.indexOf(close, start) + close.length;
-	return systemPrompt.slice(start, end);
+	const end = promptText.indexOf(close, start) + close.length;
+	return promptText.slice(start, end);
 }
 
 beforeEach(() => {
@@ -130,12 +116,8 @@ describe("pi project_context serialization helpers", () => {
 		);
 	});
 
-	it("matches installed pi buildSystemPrompt project_context output", () => {
-		const prompt = loadInstalledPiBuildSystemPrompt()({
-			cwd: "/repo",
-			contextFiles: [GLOBAL_FILE, PROJECT_FILE],
-			selectedTools: [],
-		});
+	it("embeds serializePiProjectContextSection via buildPiSystemPromptWithContextFiles", () => {
+		const prompt = buildPiSystemPromptWithContextFiles([GLOBAL_FILE, PROJECT_FILE]);
 		expect(getProjectContextSection(prompt)).toBe(serializePiProjectContextSection([GLOBAL_FILE, PROJECT_FILE]));
 	});
 });
@@ -144,7 +126,9 @@ describe("removePiAgentsContextFromSystemPrompt with pi project_context fixtures
 	it("removes AGENTS.md blocks Cursor will load under all", () => {
 		const prompt = buildPiSystemPromptWithContextFiles([GLOBAL_FILE, PROJECT_FILE]);
 		expect(prompt).toContain(`${PI_PROJECT_INSTRUCTIONS_OPEN_PREFIX}${GLOBAL_AGENTS_PATH}">`);
-		const stripped = removePiAgentsContextFromSystemPrompt(prompt, [GLOBAL_FILE, PROJECT_FILE], ["all"]);
+		const stripped = joinSystemPromptText(
+			removePiAgentsContextFromSystemPrompt(prompt, [GLOBAL_FILE, PROJECT_FILE], ["all"]),
+		);
 		expect(stripped).not.toContain("Global guidance");
 		expect(stripped).not.toContain("Project guidance");
 		expect(stripped).not.toContain("<project_context>");
@@ -152,7 +136,9 @@ describe("removePiAgentsContextFromSystemPrompt with pi project_context fixtures
 
 	it("keeps global AGENTS.md when only project setting source is enabled", () => {
 		const prompt = buildPiSystemPromptWithContextFiles([GLOBAL_FILE, PROJECT_FILE]);
-		const stripped = removePiAgentsContextFromSystemPrompt(prompt, [GLOBAL_FILE, PROJECT_FILE], ["project"]);
+		const stripped = joinSystemPromptText(
+			removePiAgentsContextFromSystemPrompt(prompt, [GLOBAL_FILE, PROJECT_FILE], ["project"]),
+		);
 		expect(stripped).toContain("Global guidance");
 		expect(stripped).not.toContain("Project guidance");
 		expect(stripped).toContain(PI_PROJECT_INSTRUCTIONS_OPEN_PREFIX);
@@ -160,15 +146,15 @@ describe("removePiAgentsContextFromSystemPrompt with pi project_context fixtures
 
 	it("does not strip when setting sources are disabled", () => {
 		const prompt = buildPiSystemPromptWithContextFiles([GLOBAL_FILE, PROJECT_FILE]);
-		expect(removePiAgentsContextFromSystemPrompt(prompt, [GLOBAL_FILE, PROJECT_FILE], undefined)).toBe(prompt);
+		expect(removePiAgentsContextFromSystemPrompt(prompt, [GLOBAL_FILE, PROJECT_FILE], undefined)).toEqual([
+			prompt,
+		]);
 	});
 
 	it("removes project CLAUDE.md but keeps ~/.pi/agent/CLAUDE.md", () => {
 		const prompt = buildPiSystemPromptWithContextFiles([GLOBAL_CLAUDE_FILE, PROJECT_CLAUDE_FILE]);
-		const stripped = removePiAgentsContextFromSystemPrompt(
-			prompt,
-			[GLOBAL_CLAUDE_FILE, PROJECT_CLAUDE_FILE],
-			["all"],
+		const stripped = joinSystemPromptText(
+			removePiAgentsContextFromSystemPrompt(prompt, [GLOBAL_CLAUDE_FILE, PROJECT_CLAUDE_FILE], ["all"]),
 		);
 		expect(stripped).not.toContain("Project claude guidance");
 		expect(stripped).toContain("Global claude guidance");
@@ -176,7 +162,9 @@ describe("removePiAgentsContextFromSystemPrompt with pi project_context fixtures
 
 	it("removes project AGENTS.md and CLAUDE.md together under all", () => {
 		const prompt = buildPiSystemPromptWithContextFiles([PROJECT_FILE, PROJECT_CLAUDE_FILE]);
-		const stripped = removePiAgentsContextFromSystemPrompt(prompt, [PROJECT_FILE, PROJECT_CLAUDE_FILE], ["all"]);
+		const stripped = joinSystemPromptText(
+			removePiAgentsContextFromSystemPrompt(prompt, [PROJECT_FILE, PROJECT_CLAUDE_FILE], ["all"]),
+		);
 		expect(stripped).not.toContain("Project guidance");
 		expect(stripped).not.toContain("Project claude guidance");
 	});
@@ -187,7 +175,7 @@ describe("removePiAgentsContextFromSystemPrompt with pi project_context fixtures
 			content: "Use </project_context> only in docs, not as markup.",
 		};
 		const prompt = buildPiSystemPromptWithContextFiles([trickyFile]);
-		const stripped = removePiAgentsContextFromSystemPrompt(prompt, [trickyFile], ["all"]);
+		const stripped = joinSystemPromptText(removePiAgentsContextFromSystemPrompt(prompt, [trickyFile], ["all"]));
 		expect(stripped).not.toContain("Use </project_context> only in docs");
 		expect(stripped).not.toContain("<project_context>");
 	});
@@ -198,7 +186,7 @@ describe("removePiAgentsContextFromSystemPrompt with pi project_context fixtures
 			content: "Document </project_instructions> as escaped text only.",
 		};
 		const prompt = buildPiSystemPromptWithContextFiles([trickyFile]);
-		const stripped = removePiAgentsContextFromSystemPrompt(prompt, [trickyFile], ["all"]);
+		const stripped = joinSystemPromptText(removePiAgentsContextFromSystemPrompt(prompt, [trickyFile], ["all"]));
 		expect(stripped).not.toContain("Document </project_instructions>");
 		expect(stripped).not.toContain("<project_context>");
 	});
@@ -206,7 +194,9 @@ describe("removePiAgentsContextFromSystemPrompt with pi project_context fixtures
 	it("keeps non-overlapping context files while removing AGENTS overlap", () => {
 		const customFile = { path: "/repo/CUSTOM.md", content: "Custom repo guidance stays." };
 		const prompt = buildPiSystemPromptWithContextFiles([PROJECT_FILE, customFile]);
-		const stripped = removePiAgentsContextFromSystemPrompt(prompt, [PROJECT_FILE, customFile], ["all"]);
+		const stripped = joinSystemPromptText(
+			removePiAgentsContextFromSystemPrompt(prompt, [PROJECT_FILE, customFile], ["all"]),
+		);
 		expect(stripped).not.toContain("Project guidance");
 		expect(stripped).toContain("Custom repo guidance stays.");
 		expect(stripped).toContain("<project_context>");
@@ -220,76 +210,58 @@ describe("resolveCursorFacingSystemPrompt", () => {
 
 	it("strips for cursor models when Cursor loads overlapping rules", () => {
 		const prompt = buildPiSystemPromptWithContextFiles([PROJECT_FILE]);
-		const resolved = resolveCursorFacingSystemPrompt(
-			prompt,
-			cursorModel,
-			makeSystemPromptOptions([PROJECT_FILE]),
-			"all",
+		const resolved = joinSystemPromptText(
+			resolveCursorFacingSystemPrompt(prompt, cursorModel, [PROJECT_FILE], "all"),
 		);
 		expect(resolved).not.toContain("Project guidance");
 	});
 
 	it("strips for cursor-sdk api models when Cursor loads overlapping rules", () => {
 		const prompt = buildPiSystemPromptWithContextFiles([PROJECT_FILE]);
-		const resolved = resolveCursorFacingSystemPrompt(
-			prompt,
-			cursorSdkModel,
-			makeSystemPromptOptions([PROJECT_FILE]),
-			"all",
+		const resolved = joinSystemPromptText(
+			resolveCursorFacingSystemPrompt(prompt, cursorSdkModel, [PROJECT_FILE], "all"),
 		);
 		expect(resolved).not.toContain("Project guidance");
 	});
 
-	it("leaves prompt unchanged when systemPromptOptions is absent", () => {
+	it("leaves prompt unchanged when contextFiles is absent", () => {
 		const prompt = buildPiSystemPromptWithContextFiles([PROJECT_FILE]);
-		expect(resolveCursorFacingSystemPrompt(prompt, cursorModel, undefined, "all")).toBe(prompt);
+		expect(resolveCursorFacingSystemPrompt(prompt, cursorModel, undefined, "all")).toEqual([prompt]);
 	});
 
 	it("leaves prompt unchanged for non-cursor models", () => {
 		const prompt = buildPiSystemPromptWithContextFiles([PROJECT_FILE]);
-		expect(
-			resolveCursorFacingSystemPrompt(prompt, otherModel, makeSystemPromptOptions([PROJECT_FILE]), "all"),
-		).toBe(prompt);
+		expect(resolveCursorFacingSystemPrompt(prompt, otherModel, [PROJECT_FILE], "all")).toEqual([prompt]);
 	});
 
 	it("leaves prompt unchanged when pi did not load context files (-nc)", () => {
 		const prompt = buildPiSystemPromptWithContextFiles([PROJECT_FILE]);
-		expect(
-			resolveCursorFacingSystemPrompt(prompt, cursorModel, makeSystemPromptOptions([]), "all"),
-		).toBe(prompt);
+		expect(resolveCursorFacingSystemPrompt(prompt, cursorModel, [], "all")).toEqual([prompt]);
 	});
 
 	it("leaves prompt unchanged when PI_CURSOR_SETTING_SOURCES=none", () => {
 		const prompt = buildPiSystemPromptWithContextFiles([GLOBAL_FILE, PROJECT_FILE]);
 		expect(
-			resolveCursorFacingSystemPrompt(
-				prompt,
-				cursorModel,
-				makeSystemPromptOptions([GLOBAL_FILE, PROJECT_FILE]),
-				"none",
-			),
-		).toBe(prompt);
+			resolveCursorFacingSystemPrompt(prompt, cursorModel, [GLOBAL_FILE, PROJECT_FILE], "none"),
+		).toEqual([prompt]);
 	});
 
 	it("leaves prompt unchanged for plugins-only setting sources", () => {
 		const prompt = buildPiSystemPromptWithContextFiles([GLOBAL_FILE, PROJECT_FILE]);
 		expect(
-			resolveCursorFacingSystemPrompt(
-				prompt,
-				cursorModel,
-				makeSystemPromptOptions([GLOBAL_FILE, PROJECT_FILE]),
-				"plugins",
-			),
-		).toBe(prompt);
+			resolveCursorFacingSystemPrompt(prompt, cursorModel, [GLOBAL_FILE, PROJECT_FILE], "plugins"),
+		).toEqual([prompt]);
 	});
 
 	it("removes project AGENTS.md and CLAUDE.md for project,user sources", () => {
 		const prompt = buildPiSystemPromptWithContextFiles([GLOBAL_FILE, PROJECT_FILE, PROJECT_CLAUDE_FILE]);
-		const resolved = resolveCursorFacingSystemPrompt(
-			prompt,
-			cursorModel,
-			makeSystemPromptOptions([GLOBAL_FILE, PROJECT_FILE, PROJECT_CLAUDE_FILE]),
-			"project,user",
+		const resolved = joinSystemPromptText(
+			resolveCursorFacingSystemPrompt(
+				prompt,
+				cursorModel,
+				[GLOBAL_FILE, PROJECT_FILE, PROJECT_CLAUDE_FILE],
+				"project,user",
+			),
 		);
 		expect(resolved).not.toContain("Project guidance");
 		expect(resolved).not.toContain("Project claude guidance");
@@ -302,20 +274,18 @@ describe("resolveCursorFacingSystemPrompt", () => {
 			resolveCursorFacingSystemPrompt(
 				prompt,
 				cursorModel,
-				makeSystemPromptOptions([GLOBAL_FILE, PROJECT_FILE]),
+				[GLOBAL_FILE, PROJECT_FILE],
 				"all",
 				undefined,
 				"cloud",
 			),
-		).toBe(prompt);
+		).toEqual([prompt]);
 	});
 
 	it("honors PI_CURSOR_PRESERVE_PI_AGENTS_MD=1", () => {
 		process.env[CURSOR_PRESERVE_PI_AGENTS_MD_ENV] = "1";
 		const prompt = buildPiSystemPromptWithContextFiles([PROJECT_FILE]);
-		expect(
-			resolveCursorFacingSystemPrompt(prompt, cursorModel, makeSystemPromptOptions([PROJECT_FILE]), "all"),
-		).toBe(prompt);
+		expect(resolveCursorFacingSystemPrompt(prompt, cursorModel, [PROJECT_FILE], "all")).toEqual([prompt]);
 	});
 });
 
@@ -336,7 +306,7 @@ describe("shouldSuppressPiAgentsContext", () => {
 describe("registerCursorAgentsContextDedup", () => {
 	const cursorModelOverrides = { model: makeModel("composer-2.5") };
 
-	it("strips via before_agent_start for cursor models with overlapping setting sources", async () => {
+	it("skips dedup via before_agent_start when contextFiles are unavailable", async () => {
 		process.env[CURSOR_SETTING_SOURCES_ENV] = "all";
 		const pi = createEventHarness();
 		registerCursorAgentsContextDedup(pi);
@@ -347,14 +317,13 @@ describe("registerCursorAgentsContextDedup", () => {
 			{
 				type: "before_agent_start",
 				prompt: "hello",
-				systemPrompt: prompt,
-				systemPromptOptions: makeSystemPromptOptions([PROJECT_FILE]),
-			},
+				systemPrompt: [prompt],
+			} satisfies BeforeAgentStartEvent,
 			cursorModelOverrides,
 		);
 
-		expect(result?.systemPrompt).toBeTypeOf("string");
-		expect(result?.systemPrompt).not.toContain("Project guidance");
+		// omp BeforeAgentStart no longer carries contextFiles; registration skips dedup.
+		expect(result).toBeUndefined();
 	});
 
 	it("preserves project instructions through registration in cloud runtime", async () => {
@@ -369,9 +338,8 @@ describe("registerCursorAgentsContextDedup", () => {
 			{
 				type: "before_agent_start",
 				prompt: "hello",
-				systemPrompt: prompt,
-				systemPromptOptions: makeSystemPromptOptions([PROJECT_FILE]),
-			},
+				systemPrompt: [prompt],
+			} satisfies BeforeAgentStartEvent,
 			cursorModelOverrides,
 		);
 
@@ -390,16 +358,15 @@ describe("registerCursorAgentsContextDedup", () => {
 			{
 				type: "before_agent_start",
 				prompt: "hello",
-				systemPrompt: prompt,
-				systemPromptOptions: makeSystemPromptOptions([PROJECT_FILE]),
-			},
+				systemPrompt: [prompt],
+			} satisfies BeforeAgentStartEvent,
 			{ model: { provider: "anthropic", id: "claude-sonnet-4-5" } as ExtensionContext["model"] },
 		);
 
 		expect(result).toBeUndefined();
 	});
 
-	it("does not modify prompt when systemPromptOptions is absent", async () => {
+	it("does not modify prompt when contextFiles are absent", async () => {
 		const pi = createEventHarness();
 		registerCursorAgentsContextDedup(pi);
 
@@ -409,8 +376,8 @@ describe("registerCursorAgentsContextDedup", () => {
 			{
 				type: "before_agent_start",
 				prompt: "hello",
-				systemPrompt: prompt,
-			} as BeforeAgentStartEvent,
+				systemPrompt: [prompt],
+			} satisfies BeforeAgentStartEvent,
 			cursorModelOverrides,
 		);
 
@@ -428,9 +395,8 @@ describe("registerCursorAgentsContextDedup", () => {
 			{
 				type: "before_agent_start",
 				prompt: "hello",
-				systemPrompt: prompt,
-				systemPromptOptions: makeSystemPromptOptions([PROJECT_FILE]),
-			},
+				systemPrompt: [prompt],
+			} satisfies BeforeAgentStartEvent,
 			cursorModelOverrides,
 		);
 
@@ -448,37 +414,24 @@ describe("registerCursorAgentsContextDedup", () => {
 			{
 				type: "before_agent_start",
 				prompt: "hello",
-				systemPrompt: prompt,
-				systemPromptOptions: makeSystemPromptOptions([PROJECT_FILE]),
-			},
+				systemPrompt: [prompt],
+			} satisfies BeforeAgentStartEvent,
 			cursorModelOverrides,
 		);
 
 		expect(result).toBeUndefined();
 	});
 
-	it("feeds deduped system prompt from before_agent_start into buildCursorPrompt", async () => {
-		process.env[CURSOR_SETTING_SOURCES_ENV] = "all";
-		const pi = createEventHarness();
-		registerCursorAgentsContextDedup(pi);
-
+	it("feeds resolved system prompt from resolveCursorFacingSystemPrompt into buildCursorPrompt", () => {
 		const prompt = buildPiSystemPromptWithContextFiles([PROJECT_FILE]);
-		const hookResult = await pi.invokeEvent(
-			"before_agent_start",
-			{
-				type: "before_agent_start",
-				prompt: "hello",
-				systemPrompt: prompt,
-				systemPromptOptions: makeSystemPromptOptions([PROJECT_FILE]),
-			},
-			cursorModelOverrides,
-		);
+		const resolved = resolveCursorFacingSystemPrompt(prompt, makeModel("composer-2.5"), [PROJECT_FILE], "all");
+		const resolvedText = joinSystemPromptText(resolved);
 
-		expect(hookResult?.systemPrompt).toBeTypeOf("string");
-		expect(hookResult?.systemPrompt).not.toContain("Project guidance");
+		expect(Array.isArray(resolved)).toBe(true);
+		expect(resolvedText).not.toContain("Project guidance");
 
 		const ctx: Context = {
-			systemPrompt: hookResult?.systemPrompt ?? prompt,
+			systemPrompt: resolved,
 			messages: [],
 		};
 		const result = buildCursorPrompt(ctx);

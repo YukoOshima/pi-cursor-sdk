@@ -91,7 +91,7 @@ describe("Cursor local force consumption", () => {
 		mockCreatedAgent({ send: mockSend });
 
 		await collectEvents(streamCursor(makeModel("gpt-5.5@1m"), makeContext(), { apiKey: "test-key" }));
-		await pi.runSessionStart({ model: makeModel("gpt-5.5@1m") }, { reason: "reload" });
+		await pi.runSessionStart({ model: makeModel("gpt-5.5@1m") });
 		await collectEvents(streamCursor(makeModel("gpt-5.5@1m"), makeContext(), { apiKey: "test-key" }));
 
 		expect(mockSend.mock.calls[0]?.[1]).toMatchObject({ local: { force: true } });

@@ -13,9 +13,10 @@ import { dirname, isAbsolute, join, relative, resolve as resolvePath, sep } from
 import { spawn } from "node:child_process";
 import { Text } from "@oh-my-pi/pi-tui";
 import type { ToolDefinition } from "@oh-my-pi/pi-coding-agent";
-import { Type, type Static, type TSchema } from "typebox";
+import { Type, type Static } from "typebox";
 
-type HostToolDefinition = ToolDefinition<TSchema, unknown>;
+/** Use `any` for params so typebox schemas satisfy omp ToolDefinition without forcing typebox into pi-ai TSchema. */
+type HostToolDefinition = ToolDefinition<any, unknown>;
 
 type ThemeLike = {
 	fg?: (style: string, text: string) => string;
@@ -293,7 +294,7 @@ export function createEditToolDefinition(cwd: string): HostToolDefinition {
 			return callText(theme, "edit", displayPath(path, cwd));
 		},
 		renderResult(result, options) {
-			return resultText(result, Boolean((options as { isError?: boolean } | undefined)?.isError));
+			return resultText(result, Boolean(result?.isError ?? (options as { isError?: boolean } | undefined)?.isError));
 		},
 	} as HostToolDefinition;
 }
@@ -318,7 +319,7 @@ export function createWriteToolDefinition(cwd: string): HostToolDefinition {
 			return callText(theme, "write", displayPath(path, cwd));
 		},
 		renderResult(result, options) {
-			return resultText(result, Boolean((options as { isError?: boolean } | undefined)?.isError));
+			return resultText(result, Boolean(result?.isError ?? (options as { isError?: boolean } | undefined)?.isError));
 		},
 	} as HostToolDefinition;
 }
@@ -349,7 +350,7 @@ export function createReadToolDefinition(cwd: string): HostToolDefinition {
 			return callText(theme, "read", displayPath(path, cwd));
 		},
 		renderResult(result, options) {
-			return resultText(result, Boolean((options as { isError?: boolean } | undefined)?.isError));
+			return resultText(result, Boolean(result?.isError ?? (options as { isError?: boolean } | undefined)?.isError));
 		},
 	} as HostToolDefinition;
 }
@@ -372,7 +373,7 @@ export function createBashToolDefinition(cwd: string): HostToolDefinition {
 			return callText(theme, "bash", command);
 		},
 		renderResult(result, options) {
-			return resultText(result, Boolean((options as { isError?: boolean } | undefined)?.isError));
+			return resultText(result, Boolean(result?.isError ?? (options as { isError?: boolean } | undefined)?.isError));
 		},
 	} as HostToolDefinition;
 }
@@ -406,7 +407,7 @@ export function createFindToolDefinition(cwd: string): HostToolDefinition {
 			);
 		},
 		renderResult(result, options) {
-			return resultText(result, Boolean((options as { isError?: boolean } | undefined)?.isError));
+			return resultText(result, Boolean(result?.isError ?? (options as { isError?: boolean } | undefined)?.isError));
 		},
 	} as HostToolDefinition;
 }
@@ -457,7 +458,7 @@ export function createGrepToolDefinition(cwd: string): HostToolDefinition {
 			);
 		},
 		renderResult(result, options) {
-			return resultText(result, Boolean((options as { isError?: boolean } | undefined)?.isError));
+			return resultText(result, Boolean(result?.isError ?? (options as { isError?: boolean } | undefined)?.isError));
 		},
 	} as HostToolDefinition;
 }
@@ -484,7 +485,7 @@ export function createLsToolDefinition(cwd: string): HostToolDefinition {
 			return callText(theme, "ls", displayPath((args as LsInput | undefined)?.path, cwd));
 		},
 		renderResult(result, options) {
-			return resultText(result, Boolean((options as { isError?: boolean } | undefined)?.isError));
+			return resultText(result, Boolean(result?.isError ?? (options as { isError?: boolean } | undefined)?.isError));
 		},
 	} as HostToolDefinition;
 }

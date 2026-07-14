@@ -11,6 +11,7 @@ export type {
 	HarnessModelSelectEvent,
 	HarnessOn,
 	HarnessSessionBeforeTreeCombinedResult,
+	HarnessToolInfo,
 	HarnessToolResultCombinedResult,
 	PiHarness,
 	PiHarnessOptions,

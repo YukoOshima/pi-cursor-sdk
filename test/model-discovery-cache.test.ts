@@ -15,15 +15,12 @@ vi.mock("@cursor/sdk", () => ({
 }));
 
 import { Cursor } from "@cursor/sdk";
+import { setCursorSdkModuleForTests } from "../src/cursor-sdk-runtime.js";
+import { installTempAgentDir, restoreAgentDirFromEnv, writeStoredCursorApiKey } from "./helpers/omp-agent-dir.js";
 
 const mockedList = vi.mocked(Cursor.models.list);
 
-function writeStoredCursorApiKey(apiKey: string): void {
-	writeFileSync(
-		join(process.env.PI_CODING_AGENT_DIR!, "auth.json"),
-		JSON.stringify({ cursor: { type: "api_key", key: apiKey } }, null, 2),
-	);
-}
+
 
 describe("discoverModels model-list cache", () => {
 	const originalEnv = process.env;
@@ -41,8 +38,9 @@ describe("discoverModels model-list cache", () => {
 		delete process.env.CURSOR_API_KEY;
 		delete process.env.PI_CURSOR_SDK_DISABLE_MODEL_CACHE;
 		delete process.env.PI_CURSOR_SDK_MODEL_CACHE_TTL_MS;
+		setCursorSdkModuleForTests({ Cursor } as never);
 		tmpAgentDir = mkdtempSync(join(tmpdir(), "pi-cursor-discovery-cache-"));
-		process.env.PI_CODING_AGENT_DIR = tmpAgentDir;
+		installTempAgentDir(tmpAgentDir);
 		process.argv = ["node", "vitest"];
 	});
 
@@ -50,6 +48,7 @@ describe("discoverModels model-list cache", () => {
 		rmSync(tmpAgentDir, { recursive: true, force: true });
 		process.env = originalEnv;
 		process.argv = originalArgv;
+		restoreAgentDirFromEnv();
 		vi.clearAllMocks();
 	});
 
@@ -95,7 +94,7 @@ describe("discoverModels model-list cache", () => {
 	});
 
 	it("serves a warm catalog from cache without a second network call", async () => {
-		writeStoredCursorApiKey("cache-key");
+		await writeStoredCursorApiKey("cache-key");
 		mockedList.mockResolvedValueOnce([MODEL]);
 
 		const first = await discoverModels();
@@ -106,7 +105,7 @@ describe("discoverModels model-list cache", () => {
 	});
 
 	it("bypasses the cache when forceRefresh is set", async () => {
-		writeStoredCursorApiKey("cache-key");
+		await writeStoredCursorApiKey("cache-key");
 		mockedList.mockResolvedValue([MODEL]);
 
 		await discoverModels();
@@ -117,7 +116,7 @@ describe("discoverModels model-list cache", () => {
 
 	it("does not read the cache when disabled via env", async () => {
 		process.env.PI_CURSOR_SDK_DISABLE_MODEL_CACHE = "1";
-		writeStoredCursorApiKey("cache-key");
+		await writeStoredCursorApiKey("cache-key");
 		mockedList.mockResolvedValue([MODEL]);
 
 		await discoverModels();
@@ -141,7 +140,7 @@ describe("discoverModels model-list cache", () => {
 	});
 
 	it("falls back to the cached catalog with a warning when a forced refresh fails", async () => {
-		writeStoredCursorApiKey("cache-key");
+		await writeStoredCursorApiKey("cache-key");
 		mockedList.mockResolvedValueOnce([MODEL]);
 		await discoverModels();
 
@@ -157,7 +156,7 @@ describe("discoverModels model-list cache", () => {
 	});
 
 	it("omits an empty cached-catalog error detail", async () => {
-		writeStoredCursorApiKey("cache-key");
+		await writeStoredCursorApiKey("cache-key");
 		mockedList.mockResolvedValueOnce([MODEL]);
 		await discoverModels();
 

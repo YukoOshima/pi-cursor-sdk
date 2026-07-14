@@ -1,20 +1,19 @@
-import { Type, type TSchema } from "typebox";
-import type { ToolInfo } from "@oh-my-pi/pi-coding-agent";
-import type { RegisteredTool } from "./pi-harness-types.js";
+import { Type } from "typebox";
+import type { HarnessToolInfo } from "./pi-harness-types.js";
 
 export const DEFAULT_BUILTIN_TOOL_NAMES = ["read", "bash", "grep", "find", "ls", "edit", "write"] as const;
 export const DEFAULT_ACTIVE_TOOL_NAMES = ["read", "bash", "edit", "write"] as const;
 
 export function createBuiltinToolInfo(
 	name: string,
-	parameters: TSchema = Type.Object({}),
+	parameters: any = Type.Object({}),
 	description = "",
 	promptGuidelines?: string[],
-): ToolInfo {
+): HarnessToolInfo {
 	return {
 		name,
 		description,
-		parameters,
+		parameters: parameters as any,
 		...(promptGuidelines ? { promptGuidelines } : {}),
 		sourceInfo: { source: "builtin", path: `<builtin:${name}>`, scope: "temporary", origin: "top-level" },
 	};
@@ -23,20 +22,20 @@ export function createBuiltinToolInfo(
 /** Generic test-scoped tool metadata (extension-registered tools, bridge MCP tools, etc.). */
 export function createTestToolInfo(
 	name: string,
-	parameters: TSchema = Type.Object({}),
+	parameters: any = Type.Object({}),
 	description = `${name} tool`,
 	promptGuidelines?: string[],
-): ToolInfo {
+): HarnessToolInfo {
 	return {
 		name,
 		description,
-		parameters,
+		parameters: parameters as any,
 		...(promptGuidelines ? { promptGuidelines } : {}),
 		sourceInfo: { source: "test", path: `test:${name}`, scope: "temporary", origin: "top-level" },
 	};
 }
 
-export function getHarnessRegisteredTool(tools: readonly RegisteredTool[], name: string): RegisteredTool {
+export function getHarnessRegisteredTool(tools: readonly { name: string }[], name: string) {
 	const tool = tools.find((entry) => entry.name === name);
 	if (!tool) {
 		throw new Error(`Tool not registered: ${name}`);

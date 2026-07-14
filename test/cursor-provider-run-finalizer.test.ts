@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { AssistantMessageEventStream } from "@oh-my-pi/pi-ai";
+import { AssistantMessageEventStream } from "@oh-my-pi/pi-ai/utils/event-stream";
 import type { SDKAgent } from "@cursor/sdk";
 import { buildIncompleteCursorToolRunOutcome } from "../src/cursor-incomplete-tool-visibility.js";
 import { CursorRunFinalizer } from "../src/cursor-provider-run-finalizer.js";

@@ -85,12 +85,21 @@ export type CursorOverflowExtensionApi = Pick<ExtensionAPI, "on">;
  * only for `stopReason === "error"`, never for throttling, and idempotent.
  */
 export function registerCursorOverflowNormalization(pi: CursorOverflowExtensionApi): void {
-	pi.on("message_end", (event, ctx) => {
+	// omp 16.5 `message_end` is ExtensionHandler<MessageEndEvent> with no rewrite result.
+	// Register via widened `on` and mutate event.message in place to preserve overflow rewrite.
+	type MessageEndRewriteEvent = { message: AssistantMessage | { role: string } };
+	type MessageEndRewriteCtx = { model?: { provider?: string } };
+	const onMessageEnd = pi.on as (
+		event: "message_end",
+		handler: (event: MessageEndRewriteEvent, ctx: MessageEndRewriteCtx) => void,
+	) => void;
+	onMessageEnd("message_end", (event, ctx) => {
 		const message = event.message;
-		if (message.role !== "assistant") return undefined;
-		const isCursorProvider = message.provider === CURSOR_PROVIDER || ctx.model?.provider === CURSOR_PROVIDER;
-		const rewritten = rewriteCursorOverflowAssistantMessage(message, isCursorProvider);
-		if (!rewritten) return undefined;
-		return { message: rewritten };
+		if (message.role !== "assistant") return;
+		const assistant = message as AssistantMessage;
+		const isCursorProvider = assistant.provider === CURSOR_PROVIDER || ctx.model?.provider === CURSOR_PROVIDER;
+		const rewritten = rewriteCursorOverflowAssistantMessage(assistant, isCursorProvider);
+		if (!rewritten) return;
+		event.message = rewritten;
 	});
 }

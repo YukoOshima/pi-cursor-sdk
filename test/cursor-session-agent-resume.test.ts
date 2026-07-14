@@ -163,7 +163,7 @@ describe("cursor-session-agent-resume", () => {
 	it("rejects a prompt that Pi persisted before a hard-killed provider process exited", async () => {
 		const tempDir = mkdtempSync(join(tmpdir(), "cursor-resume-hard-kill-"));
 		try {
-			const manager = SessionManager.create(tempDir, tempDir, { id: "hard-kill-session" });
+			const manager = SessionManager.create(tempDir, tempDir);
 			manager.appendMessage({ role: "user", content: "completed prompt", timestamp: 1 });
 			manager.appendMessage(makeAssistantMessage("completed answer"));
 			const branch = manager.getBranch();
@@ -185,11 +185,11 @@ describe("cursor-session-agent-resume", () => {
 			const child = spawnSync(process.execPath, [
 				"--input-type=module",
 				"-e",
-				`import { SessionManager } from "@oh-my-pi/pi-coding-agent"; const manager = SessionManager.open(${JSON.stringify(manager.getSessionFile()!)}); manager.appendMessage({ role: "user", content: "submitted before crash", timestamp: 2 }); process.kill(process.pid, "SIGKILL");`,
+				`import { SessionManager } from "@oh-my-pi/pi-coding-agent"; const manager = await SessionManager.open(${JSON.stringify(manager.getSessionFile()!)}); manager.appendMessage({ role: "user", content: "submitted before crash", timestamp: 2 }); process.kill(process.pid, "SIGKILL");`,
 			], { cwd: process.cwd(), encoding: "utf8" });
 			expect(child.status).not.toBe(0);
 
-			const reopened = SessionManager.open(manager.getSessionFile()!, tempDir, tempDir);
+			const reopened = await SessionManager.open(manager.getSessionFile()!, tempDir);
 			const pi = createPiHarness();
 			registerCursorSessionScope(pi);
 			registerCursorSessionAgentResume(pi);

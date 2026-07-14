@@ -19,7 +19,7 @@ import type { Context, UserMessage, AssistantMessage, ToolResultMessage } from "
 describe("buildCursorPrompt", () => {
 	it("includes system prompt", () => {
 		const ctx: Context = {
-			systemPrompt: "You are helpful.",
+			systemPrompt: ["You are helpful."],
 			messages: [],
 		};
 		const result = buildCursorPrompt(ctx);
@@ -60,7 +60,7 @@ describe("buildCursorPrompt", () => {
 				"Current working directory: /repo",
 				"Semantic code intelligence priority:",
 				"- Prefer custom_private_tool for symbols",
-			].join("\n"),
+			],
 			messages: [],
 		};
 		const result = buildCursorPrompt(ctx);
@@ -411,7 +411,7 @@ describe("buildCursorPrompt", () => {
 
 	it("budgets transcript history while preserving system prompt and latest user request", () => {
 		const ctx: Context = {
-			systemPrompt: "Always preserve this system instruction.",
+			systemPrompt: ["Always preserve this system instruction."],
 			messages: [
 				{ role: "user", content: `old request ${"x".repeat(200)}`, timestamp: 1 } satisfies UserMessage,
 				{
@@ -498,7 +498,7 @@ describe("buildCursorPrompt", () => {
 
 	it("places tool manifest after boundary and before system instructions when provided", () => {
 		const ctx: Context = {
-			systemPrompt: "Be helpful.",
+			systemPrompt: ["Be helpful."],
 			messages: [{ role: "user", content: "test", timestamp: 1 }],
 		};
 		const manifest = "Callable tool surfaces this run:\n- sample";
@@ -515,7 +515,7 @@ describe("buildCursorPrompt", () => {
 
 	it("uses compact pi-bridge framing when bridge guidance is disabled", () => {
 		const ctx: Context = {
-			systemPrompt: "Reply with code only.",
+			systemPrompt: ["Reply with code only."],
 			messages: [{ role: "user", content: "def add(a, b):", timestamp: 1 }],
 			tools: [],
 		};
@@ -545,7 +545,7 @@ describe("buildCursorPrompt", () => {
 		const readTool: NonNullable<Context["tools"]>[number] = {
 			name: "read",
 			description: "Read files",
-			parameters: Type.Object({}),
+			parameters: Type.Object({}) as any,
 		};
 		const withTools = buildCursorPrompt({ messages: [{ role: "user", content: "test", timestamp: 1 }], tools: [readTool] });
 		const unknownTools = buildCursorPrompt({ messages: [{ role: "user", content: "test", timestamp: 1 }] });
@@ -561,7 +561,7 @@ describe("buildCursorPrompt", () => {
 
 	it("instructs Cursor not to claim web search without an actual Cursor web tool", () => {
 		const ctx: Context = {
-			systemPrompt: "You can use WebSearch and WebFetch.",
+			systemPrompt: ["You can use WebSearch and WebFetch."],
 			messages: [{ role: "user", content: "search the web for Cursor SDK best practices", timestamp: 1 }],
 		};
 		const result = buildCursorPrompt(ctx);
@@ -619,7 +619,7 @@ describe("buildCursorPrompt", () => {
 describe("cursor session prompt assembly", () => {
 	it("bootstraps the first send with the full Cursor prompt", () => {
 		const context: Context = {
-			systemPrompt: "Be helpful.",
+			systemPrompt: ["Be helpful."],
 			messages: [{ role: "user", content: "Hello", timestamp: 1 }],
 		};
 		const sendState = { bootstrapped: false, contextFingerprint: "", incrementalSendCount: 0 };
@@ -633,14 +633,14 @@ describe("cursor session prompt assembly", () => {
 
 	it("sends an incremental prompt after a bootstrapped session agent send", () => {
 		const priorContext: Context = {
-			systemPrompt: "Be helpful.",
+			systemPrompt: ["Be helpful."],
 			messages: [
 				{ role: "user", content: "Hello", timestamp: 1 },
 				{ role: "assistant", content: [{ type: "text", text: "Hi" }], api: "cursor-sdk", provider: "cursor", model: "test", usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 } }, stopReason: "stop", timestamp: 2 },
 			],
 		};
 		const context: Context = {
-			systemPrompt: "Be helpful.",
+			systemPrompt: ["Be helpful."],
 			messages: [...priorContext.messages, { role: "user", content: "Follow up", timestamp: 3 }],
 		};
 		const sendState = {
@@ -696,7 +696,7 @@ describe("cursor session prompt assembly", () => {
 
 	it("omits the full tool boundary block from incremental prompts", () => {
 		const incremental = buildCursorIncrementalPrompt({
-			systemPrompt: "Be helpful.",
+			systemPrompt: ["Be helpful."],
 			messages: [{ role: "user", content: "Follow up", timestamp: 3 }],
 		});
 		expect(incremental.text).not.toContain("Cursor SDK tool boundary:");
@@ -706,7 +706,7 @@ describe("cursor session prompt assembly", () => {
 
 	it("ends bootstrap and incremental prompts with the tool tail guard", () => {
 		const context: Context = {
-			systemPrompt: "Be helpful.",
+			systemPrompt: ["Be helpful."],
 			messages: [{ role: "user", content: "Follow up", timestamp: 3 }],
 		};
 		const bootstrap = buildCursorPrompt(context);
@@ -720,7 +720,7 @@ describe("cursor session prompt assembly", () => {
 	it("preserves the latest user request and tail guard in incremental prompts under budget pressure", () => {
 		const incremental = buildCursorIncrementalPrompt(
 			{
-				systemPrompt: "Long pi system prompt. ".repeat(20),
+				systemPrompt: ["Long pi system prompt. ".repeat(20)],
 				messages: [{ role: "user", content: "Keep this exact follow-up request", timestamp: 3 }],
 			},
 			{ maxInputTokens: 80, charsPerToken: 1 },
@@ -791,7 +791,7 @@ describe("cursor session prompt assembly", () => {
 
 		const prompt = buildCursorPrompt(context);
 
-		expect(prompt.text).toContain("conversation history before this point was compacted");
+		expect(prompt.text).toContain("Another language model started to solve this problem and produced a summary of its thinking process");
 		expect(prompt.text).toContain("Earlier work covered auth setup.");
 	});
 });

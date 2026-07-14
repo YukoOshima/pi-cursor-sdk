@@ -19,36 +19,18 @@ afterEach(() => {
 
 function scheduleSyntheticCursorSdkMcpListToolsTimeout(callback: () => void): ReturnType<typeof setTimeout> {
 	const sdkUrl = pathToFileURL(join(process.cwd(), "node_modules/@cursor/sdk/dist/esm/index.js")).href;
+	// Nested named functions keep method names on Bun stacks (class methods collapse to <anonymous>).
 	const source = `
-return (() => {
-	class Protocol {
-		_setupTimeout() {
+function getTools() {
+	function listTools() {
+		function _setupTimeout() {
 			return setTimeout(callback, 60000);
 		}
-
-		request() {
-			return this._setupTimeout();
-		}
+		return _setupTimeout();
 	}
-
-	class Client extends Protocol {
-		listTools() {
-			return this.request();
-		}
-	}
-
-	class McpSdkClient {
-		constructor() {
-			this.client = new Client();
-		}
-
-		getTools() {
-			return this.client.listTools();
-		}
-	}
-
-	return new McpSdkClient().getTools();
-})();
+	return listTools();
+}
+return getTools();
 //# sourceURL=${sdkUrl}
 `;
 	const run = new Function("callback", source) as (callback: () => void) => ReturnType<typeof setTimeout>;
@@ -58,25 +40,13 @@ return (() => {
 function scheduleSyntheticCursorSdkMcpInitializeTimeout(callback: () => void): ReturnType<typeof setTimeout> {
 	const sdkUrl = pathToFileURL(join(process.cwd(), "node_modules/@cursor/sdk/dist/esm/index.js")).href;
 	const source = `
-return (() => {
-	class Protocol {
-		_setupTimeout() {
-			return setTimeout(callback, 60000);
-		}
-
-		request() {
-			return this._setupTimeout();
-		}
+function connect() {
+	function _setupTimeout() {
+		return setTimeout(callback, 60000);
 	}
-
-	class Client extends Protocol {
-		connect() {
-			return this.request();
-		}
-	}
-
-	return new Client().connect();
-})();
+	return _setupTimeout();
+}
+return connect();
 //# sourceURL=${sdkUrl}
 `;
 	const run = new Function("callback", source) as (callback: () => void) => ReturnType<typeof setTimeout>;
@@ -86,25 +56,13 @@ return (() => {
 function scheduleSyntheticCursorSdkMcpUnknownProtocolTimeout(callback: () => void): ReturnType<typeof setTimeout> {
 	const sdkUrl = pathToFileURL(join(process.cwd(), "node_modules/@cursor/sdk/dist/esm/index.js")).href;
 	const source = `
-return (() => {
-	class Protocol {
-		_setupTimeout() {
-			return setTimeout(callback, 60000);
-		}
-
-		request() {
-			return this._setupTimeout();
-		}
+function listPrompts() {
+	function _setupTimeout() {
+		return setTimeout(callback, 60000);
 	}
-
-	class Client extends Protocol {
-		listPrompts() {
-			return this.request();
-		}
-	}
-
-	return new Client().listPrompts();
-})();
+	return _setupTimeout();
+}
+return listPrompts();
 //# sourceURL=${sdkUrl}
 `;
 	const run = new Function("callback", source) as (callback: () => void) => ReturnType<typeof setTimeout>;
@@ -114,35 +72,13 @@ return (() => {
 function scheduleSyntheticCursorSdkMcpToolTimeout(callback: () => void): ReturnType<typeof setTimeout> {
 	const sdkUrl = pathToFileURL(join(process.cwd(), "node_modules/@cursor/sdk/dist/esm/index.js")).href;
 	const source = `
-return (() => {
-	class Protocol {
-		_setupTimeout() {
-			return setTimeout(callback, 60000);
-		}
-
-		request() {
-			return this._setupTimeout();
-		}
+function callTool() {
+	function _setupTimeout() {
+		return setTimeout(callback, 60000);
 	}
-
-	class Client extends Protocol {
-		callTool() {
-			return this.request();
-		}
-	}
-
-	class McpSdkClient {
-		constructor() {
-			this.client = new Client();
-		}
-
-		callTool() {
-			return this.client.callTool();
-		}
-	}
-
-	return new McpSdkClient().callTool();
-})();
+	return _setupTimeout();
+}
+return callTool();
 //# sourceURL=${sdkUrl}
 `;
 	const run = new Function("callback", source) as (callback: () => void) => ReturnType<typeof setTimeout>;

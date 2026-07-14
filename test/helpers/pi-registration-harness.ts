@@ -1,5 +1,5 @@
 import { vi } from "vitest";
-import type { ExtensionAPI, ProviderConfig, ToolInfo } from "@oh-my-pi/pi-coding-agent";
+import type { ExtensionAPI, ProviderConfig } from "@oh-my-pi/pi-coding-agent";
 import type { CursorNativeToolDisplayExtensionApi } from "../../src/cursor-native-tool-display-registration.js";
 import type cursorExtensionFactory from "../../src/index.js";
 import { createExtensionCommandContext } from "./context-fixtures.js";
@@ -12,6 +12,7 @@ import {
 import type {
 	BridgePiHarness,
 	ExtensionCommandContextOverrides,
+	HarnessToolInfo,
 	PiHarness,
 	PiHarnessOptions,
 	RegisteredCommandOptions,
@@ -21,13 +22,36 @@ import type {
 /** Pi harness surface accepted by `src/index.ts` extension factory registration. */
 export type CursorExtensionRegistrationPi = Parameters<typeof cursorExtensionFactory>[0];
 
-export function createBridgePiHarness(options: { active: string[]; tools: ToolInfo[] }): BridgePiHarness {
+function toolNameOf(tool: string | HarnessToolInfo): string {
+	return typeof tool === "string" ? tool : tool.name;
+}
+
+export function createBridgePiHarness(options: {
+	active: string[];
+	tools: Array<string | HarnessToolInfo>;
+}): BridgePiHarness {
 	const eventApi = createHarnessEventApi();
+	const toolNames = options.tools.map(toolNameOf);
+	const metadataByName = new Map<string, HarnessToolInfo>();
+	for (const tool of options.tools) {
+		if (typeof tool === "string") continue;
+		metadataByName.set(tool.name, tool);
+	}
 	return {
 		...eventApi,
 		getActiveTools: vi.fn<ExtensionAPI["getActiveTools"]>(() => [...options.active]),
-		getAllTools: vi.fn<ExtensionAPI["getAllTools"]>(() => [...options.tools]),
-		setActiveTools: vi.fn<ExtensionAPI["setActiveTools"]>(),
+		getAllTools: vi.fn<ExtensionAPI["getAllTools"]>(() => [...toolNames]),
+		getToolMetadata: (toolName: string) => {
+			const tool = metadataByName.get(toolName);
+			if (!tool) return undefined;
+			return {
+				description: tool.description,
+				parameters: tool.parameters,
+				promptGuidelines: tool.promptGuidelines,
+				sourceInfo: tool.sourceInfo,
+			};
+		},
+		setActiveTools: vi.fn<ExtensionAPI["setActiveTools"]>(async () => undefined),
 	};
 }
 
@@ -75,20 +99,32 @@ export function createPiHarness(options: PiHarnessOptions = {}): PiHarness {
 		}),
 		registerTool,
 		getAllTools: vi.fn<ExtensionAPI["getAllTools"]>(() => {
-			const toolsByName = new Map<string, ToolInfo>();
-			for (const tool of initialTools) toolsByName.set(tool.name, tool);
-			for (const tool of tools) {
-				toolsByName.set(tool.name, {
-					name: tool.name,
-					description: tool.description,
-					parameters: tool.parameters,
-					sourceInfo: { source: "test", path: "pi-cursor-sdk-test", scope: "temporary", origin: "top-level" },
-				});
-			}
-			return [...toolsByName.values()];
+			const names = new Set<string>();
+			for (const tool of initialTools) names.add(toolNameOf(tool));
+			for (const tool of tools) names.add(tool.name);
+			return [...names];
 		}),
+		getToolMetadata: (toolName: string) => {
+			const registered = tools.find((tool) => tool.name === toolName);
+			if (registered) {
+				return {
+					description: registered.description,
+					parameters: registered.parameters,
+					promptGuidelines: (registered as { promptGuidelines?: string[] }).promptGuidelines,
+					sourceInfo: (registered as { sourceInfo?: Record<string, unknown> }).sourceInfo,
+				};
+			}
+			const initial = initialTools.find((tool) => toolNameOf(tool) === toolName);
+			if (!initial || typeof initial === "string") return undefined;
+			return {
+				description: initial.description,
+				parameters: initial.parameters,
+				promptGuidelines: initial.promptGuidelines,
+				sourceInfo: initial.sourceInfo,
+			};
+		},
 		getActiveTools: vi.fn<ExtensionAPI["getActiveTools"]>(() => [...activeToolNames]),
-		setActiveTools: vi.fn<ExtensionAPI["setActiveTools"]>((toolNames: string[]) => {
+		setActiveTools: vi.fn<ExtensionAPI["setActiveTools"]>(async (toolNames: string[]) => {
 			activeToolNames = [...toolNames];
 		}),
 		sendMessage: vi.fn<ExtensionAPI["sendMessage"]>(),
@@ -106,7 +142,7 @@ export function createExtensionRegistrationPi(
 	options: PiHarnessOptions = {},
 ): PiHarness & CursorExtensionRegistrationPi {
 	const harness = createPiHarness(options);
-	return harness;
+	return harness as PiHarness & CursorExtensionRegistrationPi;
 }
 
 export type { CursorNativeToolDisplayExtensionApi };

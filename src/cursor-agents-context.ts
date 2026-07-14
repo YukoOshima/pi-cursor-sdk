@@ -1,8 +1,6 @@
-import type {
-	BuildSystemPromptOptions,
-	ExtensionContext,
-} from "@oh-my-pi/pi-coding-agent";
+import type { ExtensionContext } from "@oh-my-pi/pi-coding-agent";
 import { getAgentDir } from "@oh-my-pi/pi-coding-agent";
+import { joinSystemPromptText, toSystemPromptParts } from "./context.js";
 import { parseEnvBoolean } from "./cursor-env-boolean.js";
 import { isCursorModel } from "./cursor-model.js";
 import {
@@ -124,11 +122,12 @@ export function serializePiProjectContextSection(contextFiles: readonly PiAgents
 
 /** Remove pi context blocks that overlap Cursor setting sources. */
 export function removePiAgentsContextFromSystemPrompt(
-	systemPrompt: string,
+	systemPrompt: string | string[],
 	contextFiles: readonly PiAgentsContextFile[],
 	settingSources: SettingSource[] | undefined,
 	agentDir?: string,
-): string {
+): string[] {
+	const parts = toSystemPromptParts(systemPrompt);
 	const retainedContextFiles: PiAgentsContextFile[] = [];
 	let removedAny = false;
 	for (const file of contextFiles) {
@@ -138,32 +137,39 @@ export function removePiAgentsContextFromSystemPrompt(
 		}
 		retainedContextFiles.push(file);
 	}
-	if (!removedAny) return systemPrompt;
+	if (!removedAny) return parts;
 
+	const promptText = joinSystemPromptText(parts);
 	const originalSection = serializePiProjectContextSection(contextFiles);
-	const start = systemPrompt.indexOf(originalSection);
-	if (start < 0) return systemPrompt;
+	const start = promptText.indexOf(originalSection);
+	if (start < 0) return parts;
 
 	const replacementSection = serializePiProjectContextSection(retainedContextFiles);
-	return systemPrompt.slice(0, start) + replacementSection + systemPrompt.slice(start + originalSection.length);
+	return [
+		promptText.slice(0, start) + replacementSection + promptText.slice(start + originalSection.length),
+	];
 }
 
+/**
+ * omp BeforeAgentStart no longer provides systemPromptOptions/contextFiles.
+ * When contextFiles are unavailable, return the prompt unchanged (skip dedup).
+ */
 export function resolveCursorFacingSystemPrompt(
-	systemPrompt: string,
+	systemPrompt: string | string[],
 	model: ExtensionContext["model"],
-	systemPromptOptions?: BuildSystemPromptOptions,
+	contextFiles?: readonly PiAgentsContextFile[],
 	settingSourcesRaw?: string,
 	agentDir?: string,
 	runtime: CursorRuntime = "local",
-): string {
-	if (runtime === "cloud" || !systemPromptOptions) return systemPrompt;
-	const contextFiles = systemPromptOptions.contextFiles ?? [];
+): string[] {
+	const parts = toSystemPromptParts(systemPrompt);
+	if (runtime === "cloud" || !contextFiles) return parts;
 	const settingSources =
 		settingSourcesRaw === undefined
 			? getEffectiveCursorSettingSources()
 			: resolveCursorSettingSources(settingSourcesRaw);
 	if (!shouldSuppressPiAgentsContext(model, contextFiles, settingSources, agentDir)) {
-		return systemPrompt;
+		return parts;
 	}
-	return removePiAgentsContextFromSystemPrompt(systemPrompt, contextFiles, settingSources, agentDir);
+	return removePiAgentsContextFromSystemPrompt(parts, contextFiles, settingSources, agentDir);
 }

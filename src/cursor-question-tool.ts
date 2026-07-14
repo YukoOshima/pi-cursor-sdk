@@ -1,10 +1,12 @@
-import type { ExtensionAPI, ExtensionContext } from "@oh-my-pi/pi-coding-agent";
+import type { ExtensionAPI, ExtensionContext, ToolDefinition } from "@oh-my-pi/pi-coding-agent";
 import { Text } from "@oh-my-pi/pi-tui";
 import { Type } from "typebox";
 import { arePiToolsDisabled } from "./cursor-active-tools.js";
 import { isCursorModel } from "./cursor-model.js";
 import { registerCursorModelLifecycle, type CursorModelLifecycleExtensionApi } from "./cursor-model-lifecycle.js";
 import { resolveCursorPiToolBridgeEnabled } from "./cursor-pi-tool-bridge-env.js";
+
+type LooseToolDefinition = ToolDefinition<any, unknown>;
 
 export const CURSOR_ASK_QUESTION_TOOL_NAME = "cursor_ask_question";
 
@@ -193,13 +195,8 @@ export function registerCursorQuestionTool(pi: CursorQuestionToolExtensionApi): 
 		label: "Cursor question",
 		description:
 			"Ask the user a clarifying question from Cursor. Use when user preferences materially affect the next step; provide options when possible.",
-		promptSnippet: "Ask the user a clarifying question through pi UI when material choices affect Cursor's next step",
 		parameters: CursorAskQuestionParamsSchema,
-		promptGuidelines: [
-			"Use cursor_ask_question only when running a Cursor model and user input would materially change the plan, scope, platform, or implementation path.",
-			"Prefer cursor_ask_question with 2-4 concrete options instead of guessing when Cursor plan mode needs user choices.",
-		],
-		async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
+		async execute(_toolCallId: string, params: CursorAskQuestionParams, _signal: AbortSignal | undefined, _onUpdate: unknown, ctx: ExtensionContext) {
 			const questions = normalizeQuestions(params as CursorAskQuestionParams);
 			if (questions.length === 0) {
 				throw new Error("No valid question was provided.");
@@ -222,12 +219,13 @@ export function registerCursorQuestionTool(pi: CursorQuestionToolExtensionApi): 
 				details: buildDetails(questions, answers, true),
 			};
 		},
-		renderCall(args, theme) {
+		renderCall(args: unknown, _options: unknown, theme: { fg?: (k: string, t: string) => string; bold?: (t: string) => string }) {
 			const questions = normalizeQuestions(args as CursorAskQuestionParams);
 			const label = questions[0]?.question ?? "Ask the user";
-			return new Text(theme.fg("toolTitle", theme.bold("cursor question ")) + theme.fg("muted", label), 0, 0);
+			const title = theme.fg?.("toolTitle", theme.bold?.("cursor question ") ?? "cursor question ") ?? "cursor question ";
+			return new Text(title + (theme.fg?.("muted", label) ?? label), 0, 0);
 		},
-	});
+	} as LooseToolDefinition);
 
 	registerCursorModelLifecycle(pi, (ctx) => {
 		syncCursorQuestionToolForModel(pi, ctx.model);

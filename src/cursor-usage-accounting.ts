@@ -8,6 +8,9 @@ import {
 } from "./context.js";
 import { asRecord, getNumber } from "./cursor-record-utils.js";
 
+const FALLBACK_CONTEXT_WINDOW = 128000;
+const FALLBACK_MAX_TOKENS = 16384;
+
 export interface CursorUsagePromptOptions extends CursorPromptOptions {
 	maxInputTokens: number;
 	charsPerToken: number;
@@ -22,8 +25,10 @@ export interface CursorSdkTurnUsage {
 }
 
 function getPromptInputTokenBudget(model: Model<Api>): number {
-	const outputReserveTokens = Math.min(model.maxTokens, Math.max(1, Math.floor(model.contextWindow * 0.2)));
-	return Math.max(1, model.contextWindow - outputReserveTokens);
+	const contextWindow = model.contextWindow ?? FALLBACK_CONTEXT_WINDOW;
+	const maxTokens = model.maxTokens ?? FALLBACK_MAX_TOKENS;
+	const outputReserveTokens = Math.min(maxTokens, Math.max(1, Math.floor(contextWindow * 0.2)));
+	return Math.max(1, contextWindow - outputReserveTokens);
 }
 
 export function getCursorPromptOptions(model: Model<Api>): CursorUsagePromptOptions {
@@ -86,10 +91,12 @@ export function estimateCursorContextTotalTokens(partial: AssistantMessage, mode
 
 export function isCursorSdkUsageSafeForPiMessage(turnUsage: CursorSdkTurnUsage, model: Model<Api>): boolean {
 	const counts = [turnUsage.inputTokens, turnUsage.outputTokens, turnUsage.cacheReadTokens, turnUsage.cacheWriteTokens];
+	const maxTokens = model.maxTokens ?? FALLBACK_MAX_TOKENS;
+	const contextWindow = model.contextWindow ?? FALLBACK_CONTEXT_WINDOW;
 	return (
 		counts.every((count) => Number.isFinite(count) && count >= 0) &&
-		turnUsage.outputTokens <= model.maxTokens &&
-		turnUsage.inputTokens + turnUsage.outputTokens + turnUsage.cacheReadTokens + turnUsage.cacheWriteTokens <= model.contextWindow
+		turnUsage.outputTokens <= maxTokens &&
+		turnUsage.inputTokens + turnUsage.outputTokens + turnUsage.cacheReadTokens + turnUsage.cacheWriteTokens <= contextWindow
 	);
 }
 

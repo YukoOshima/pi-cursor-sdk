@@ -33,13 +33,24 @@ smoke_resolve_cmd() {
 
 smoke_resolve_node_cmd() {
 	local node_cmd node_path
-	node_cmd="$(smoke_resolve_cmd node)"
+	# Prefer an explicit Node binary when tests/CI already resolved one (avoids bun's
+	# `node` shim on PATH under `bun --bun vitest`).
+	if [[ -n "${NODE_BINARY:-}" && -x "$NODE_BINARY" && ! -d "$NODE_BINARY" ]]; then
+		node_cmd="$NODE_BINARY"
+	else
+		node_cmd="$(smoke_resolve_cmd node)"
+	fi
 	if ! node_path="$("$node_cmd" -p 'process.execPath' 2>/dev/null)" || [[ -z "$node_path" ]]; then
 		smoke_fail "failed to resolve real node executable from $node_cmd"
 	fi
 	if [[ "$node_path" != /* ]]; then
 		smoke_fail "real node executable did not resolve to an absolute path: $node_path"
 	fi
+	case "$(basename -- "$node_path")" in
+		bun|bun.exe)
+			smoke_fail "resolved node executable is bun ($node_path); set NODE_BINARY to a real Node.js binary"
+			;;
+	esac
 	printf '%s\n' "$node_path"
 }
 

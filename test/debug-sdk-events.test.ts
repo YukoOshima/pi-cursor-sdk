@@ -3,6 +3,7 @@ import { spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { resolveRealNodeBin } from "./helpers/resolve-real-node-bin.js";
 import { CURSOR_SDK_STARTUP_NOISE_PATTERNS as providerNoisePatterns } from "../src/cursor-sdk-output-filter.js";
 import { resolveCursorSettingSources as resolveProviderSettingSources } from "../src/cursor-setting-sources.js";
 import { scrubSensitiveText as scrubProviderSensitiveText } from "../src/cursor-sensitive-text.js";
@@ -20,6 +21,9 @@ import {
 import { installCursorSdkOutputFilter, suppressCursorSdkOutput } from "../scripts/lib/cursor-sdk-output-filter.mjs";
 
 const scriptPath = "scripts/debug-sdk-events.mjs";
+
+const NODE_BIN = resolveRealNodeBin();
+
 
 function run(args: string[], env: Record<string, string | undefined> = {}) {
 	return spawnSync(process.execPath, [scriptPath, ...args], {
@@ -208,7 +212,7 @@ describe("debug-sdk-events maintainer probe", () => {
 	});
 
 	it("shows help and validates script syntax without live Cursor auth", () => {
-		expect(spawnSync(process.execPath, ["--check", scriptPath], { cwd: process.cwd(), encoding: "utf8" }).status).toBe(0);
+		expect(spawnSync(NODE_BIN, ["--check", scriptPath], { cwd: process.cwd(), encoding: "utf8" }).status).toBe(0);
 
 		const help = run(["--help"]);
 		expect(help.status).toBe(0);

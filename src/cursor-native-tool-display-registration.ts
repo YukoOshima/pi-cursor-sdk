@@ -31,13 +31,22 @@ type CursorNativeToolRegistryApi = CursorNativeToolActivationApi & Pick<Extensio
 
 export interface CursorNativeToolDisplayExtensionApi extends CursorNativeToolRegistryApi, CursorModelLifecycleExtensionApi {}
 
-function hasNonBuiltinTool(pi: Pick<ExtensionAPI, "getAllTools">, toolName: NativeCursorToolName): boolean {
-	const existingTool = pi.getAllTools().find((tool) => tool.name === toolName);
-	return existingTool !== undefined && existingTool.sourceInfo.source !== "builtin";
+function hasNonBuiltinTool(
+	pi: Pick<ExtensionAPI, "getAllTools"> & {
+		getToolMetadata?: (toolName: string) => { sourceInfo?: { source?: string } } | undefined;
+	},
+	toolName: NativeCursorToolName,
+): boolean {
+	// omp getAllTools() returns names only; harness/tests may expose ownership via getToolMetadata.
+	void pi.getAllTools;
+	const source = pi.getToolMetadata?.(toolName)?.sourceInfo?.source;
+	return typeof source === "string" && source !== "builtin";
 }
 
-type NativeRegistrationContext = Pick<ExtensionContext, "mode" | "model"> & {
+type NativeRegistrationContext = Pick<ExtensionContext, "hasUI" | "model"> & {
 	ui: Pick<ExtensionContext["ui"], "notify">;
+	/** omp removed ExtensionContext.mode; harness may still attach print/json/rpc. */
+	mode?: string;
 };
 
 async function registerNativeCursorToolsFromSet(
@@ -61,7 +70,7 @@ async function registerNativeCursorToolsFromSet(
 }
 
 function notifySkippedNativeCursorToolsIfNeeded(ctx: NativeRegistrationContext, skippedToolNames: readonly NativeCursorToolName[]): void {
-	if (skippedToolNames.length === 0 || readBooleanEnv(NATIVE_CURSOR_TOOL_DISPLAY_ENV) !== true || ctx.mode !== "tui") return;
+	if (skippedToolNames.length === 0 || readBooleanEnv(NATIVE_CURSOR_TOOL_DISPLAY_ENV) !== true || !ctx.hasUI) return;
 	ctx.ui.notify(
 		`Cursor native tool replay skipped for ${skippedToolNames.join(", ")} because another extension already provides ${skippedToolNames.length === 1 ? "that tool" : "those tools"}. Cursor will use scrubbed activity transcripts for skipped tools.`,
 		"warning",

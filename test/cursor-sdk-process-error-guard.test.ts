@@ -3,6 +3,9 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
+import { resolveRealNodeBin } from "./helpers/resolve-real-node-bin.js";
+
+const NODE_BIN = resolveRealNodeBin();
 import { isUnauthenticatedConnectError } from "../src/cursor-provider-errors.js";
 import {
 	__testUtils,
@@ -51,7 +54,7 @@ registerHooks({
 
 function runNodeProcessErrorProbe(body: string) {
 	return spawnSync(
-		process.execPath,
+		NODE_BIN,
 		[
 			"--import",
 			nodeTypeScriptImportHook,

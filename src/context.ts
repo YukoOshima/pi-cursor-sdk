@@ -135,9 +135,20 @@ function formatToolCall(toolCall: ToolCall): string {
 	return `Tool call (${getCursorReplayPromptLabel(toolCall.name)}, call ${toolCall.id}): ${args}`;
 }
 
-function normalizeSystemPromptText(systemPrompt: string | string[] | undefined): string {
+/** Join omp/pi `systemPrompt` parts for string-based helpers. */
+export function joinSystemPromptText(systemPrompt: string | string[] | undefined): string {
 	if (!systemPrompt) return "";
 	return Array.isArray(systemPrompt) ? systemPrompt.join("\n") : systemPrompt;
+}
+
+/** Normalize `systemPrompt` to the omp `string[]` shape. */
+export function toSystemPromptParts(systemPrompt: string | string[] | undefined): string[] {
+	if (!systemPrompt) return [];
+	return Array.isArray(systemPrompt) ? [...systemPrompt] : [systemPrompt];
+}
+
+function normalizeSystemPromptText(systemPrompt: string | string[] | undefined): string {
+	return joinSystemPromptText(systemPrompt);
 }
 
 function sanitizeSystemPromptForCursor(systemPrompt: string): string {
@@ -284,6 +295,8 @@ function serializeMessageForFingerprint(message: Message, index: number): string
 			return hashCursorContextValue(
 				`toolResult:${message.timestamp ?? index}:${message.toolCallId}:${message.toolName}:${JSON.stringify(message.content)}:${message.isError === true}`,
 			);
+		default:
+			return hashCursorContextValue(`other:${(message as { role?: string }).role ?? "unknown"}:${index}:${JSON.stringify((message as { content?: unknown }).content ?? "")}`);
 	}
 }
 

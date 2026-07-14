@@ -8,11 +8,18 @@ import {
 
 export { PI_PROJECT_INSTRUCTIONS_OPEN_PREFIX, serializePiProjectContextSection, serializePiProjectInstructionsBlock };
 
+/** Test-only options bag — omp BuildSystemPromptOptions no longer carries contextFiles. */
+export type TestSystemPromptOptions = BuildSystemPromptOptions & {
+	contextFiles?: PiAgentsContextFile[];
+	selectedTools?: string[];
+	skills?: unknown[];
+};
+
 export function makeSystemPromptOptions(
 	contextFiles: PiAgentsContextFile[],
 	cwd = "/repo",
-): BuildSystemPromptOptions {
-	return { cwd, contextFiles, selectedTools: [] };
+): TestSystemPromptOptions {
+	return { cwd, contextFiles };
 }
 
 /** Minimal pi-like system prompt containing only the project_context subset this feature owns. */

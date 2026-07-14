@@ -1,3 +1,4 @@
+import { coerceApiKeyString } from "./cursor-api-key.js";
 import { CursorLiveRunAbortError } from "./cursor-live-run-coordinator.js";
 import { drainExistingCursorLiveRunBeforeSend } from "./cursor-provider-live-run-drain.js";
 import { getCursorSessionCwd } from "./cursor-session-scope.js";
@@ -129,7 +130,7 @@ export class CursorProviderTurnRunner {
 				runResultFallback: send.run.result,
 				runErrorFallback: send.run.error,
 				resolvedApiKey: this.resolvedApiKey,
-				optionsApiKey: options?.apiKey,
+				optionsApiKey: coerceApiKeyString(options?.apiKey),
 				sdkEventDebug: this.sdkEventDebug,
 				contextWindowAgentId: prepared.contextWindowAgentId,
 			});
