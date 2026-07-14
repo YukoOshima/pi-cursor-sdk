@@ -202,7 +202,7 @@ async function prepareCursorCloudProviderTurn(
 			cwd,
 			payload: {
 				text: prompt.text,
-				images: prompt.images.length > 0 ? prompt.images : undefined,
+				images: (prompt.images?.length ?? 0) > 0 ? prompt.images : undefined,
 			},
 			meta: {
 				sendPlan: CLOUD_SEND_PLAN,
@@ -318,7 +318,7 @@ async function prepareCursorLocalProviderTurn(
 		const bridgeRun = sessionAgentLease.bridgeRun;
 		const sendPayload = {
 			text: prompt.text,
-			images: prompt.images.length > 0 ? prompt.images : undefined,
+			images: (prompt.images?.length ?? 0) > 0 ? prompt.images : undefined,
 		};
 		const sessionBridgeRun = bridgeRun;
 		const promptInputTokens = estimateCursorPromptTokens(prompt, promptOptions);

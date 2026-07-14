@@ -88,7 +88,7 @@ export async function sendCursorProviderTurn(sendParams: SendCursorProviderTurnP
 			resetAgent: meta.sendPlan.resetAgent,
 			bootstrap: meta.bootstrap,
 			promptText: meta.prompt.text,
-			imageCount: meta.prompt.images.length,
+			imageCount: meta.prompt.images?.length ?? 0,
 			useNativeToolReplay: meta.useNativeToolReplay,
 			bridgeEnabled: meta.bridgeEnabled,
 			nativeReplayId: meta.nativeReplayId,

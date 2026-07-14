@@ -243,7 +243,7 @@ export function estimateCursorTextTokens(text: string, options: Pick<CursorPromp
 }
 
 export function estimateCursorPromptTokens(prompt: CursorPrompt, options: Pick<CursorPromptOptions, "charsPerToken" | "imageTokenEstimate"> = {}): number {
-	return estimateCursorTextTokens(prompt.text, options) + prompt.images.length * (options.imageTokenEstimate ?? CURSOR_IMAGE_TOKEN_ESTIMATE);
+	return estimateCursorTextTokens(prompt.text, options) + (prompt.images?.length ?? 0) * (options.imageTokenEstimate ?? CURSOR_IMAGE_TOKEN_ESTIMATE);
 }
 
 export function estimateCursorPromptMessageTokens(message: Message, options: Pick<CursorPromptOptions, "charsPerToken"> = {}): number {
