@@ -135,6 +135,11 @@ function formatToolCall(toolCall: ToolCall): string {
 	return `Tool call (${getCursorReplayPromptLabel(toolCall.name)}, call ${toolCall.id}): ${args}`;
 }
 
+function normalizeSystemPromptText(systemPrompt: string | string[] | undefined): string {
+	if (!systemPrompt) return "";
+	return Array.isArray(systemPrompt) ? systemPrompt.join("\n") : systemPrompt;
+}
+
 function sanitizeSystemPromptForCursor(systemPrompt: string): string {
 	let sanitized = systemPrompt;
 	sanitized = sanitized.replace(
@@ -337,7 +342,7 @@ function parseCursorContextFingerprint(fingerprint: string): CursorContextFinger
 
 export function computeCursorContextFingerprint(context: Context): string {
 	const payload: CursorContextFingerprintPayload = {
-		systemHash: hashCursorContextValue(context.systemPrompt ?? ""),
+		systemHash: hashCursorContextValue(normalizeSystemPromptText(context.systemPrompt)),
 		messageHashes: context.messages.map((message, index) => serializeRawPiMessageForFingerprint(message, index)),
 	};
 	return JSON.stringify(payload);
@@ -383,8 +388,8 @@ export function buildCursorIncrementalPrompt(context: Context, options: CursorPr
 	const sectionsBeforeMessages = [
 		"Continue the conversation using Cursor SDK capabilities only. Do not list, promise, or call pi-only tools from earlier context as if they were available.",
 	];
-	if (context.systemPrompt) {
-		sectionsBeforeMessages.push(`System instructions from pi:\n${sanitizeSystemPromptForCursor(context.systemPrompt)}`);
+	if (normalizeSystemPromptText(context.systemPrompt)) {
+		sectionsBeforeMessages.push(`System instructions from pi:\n${sanitizeSystemPromptForCursor(normalizeSystemPromptText(context.systemPrompt))}`);
 	}
 	const latestUserMessageSections =
 		latestUserText && latestUserMessageIndex >= 0 ? [{ index: latestUserMessageIndex, text: latestUserText }] : [];
@@ -415,8 +420,8 @@ export function buildCursorPrompt(context: Context, options: CursorPromptOptions
 		sectionsBeforeMessages.push(options.toolManifest);
 	}
 
-	if (context.systemPrompt) {
-		sectionsBeforeMessages.push(`System instructions from pi:\n${sanitizeSystemPromptForCursor(context.systemPrompt)}`);
+	if (normalizeSystemPromptText(context.systemPrompt)) {
+		sectionsBeforeMessages.push(`System instructions from pi:\n${sanitizeSystemPromptForCursor(normalizeSystemPromptText(context.systemPrompt))}`);
 	}
 
 	const messages = normalizePiContextMessages(context.messages);

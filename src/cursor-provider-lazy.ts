@@ -19,8 +19,7 @@ function makeProviderLoadErrorMessage(model: Model<Api>, error: unknown): Assist
 			output: 0,
 			cacheRead: 0,
 			cacheWrite: 0,
-			totalTokens: 0,
-			cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 } },
+			totalTokens: 0 },
 		stopReason: "error",
 		timestamp: Date.now(),
 		errorMessage: `Failed to load Cursor provider runtime: ${error instanceof Error ? error.message : String(error)}` };
