@@ -87,13 +87,16 @@ export type CursorOverflowExtensionApi = Pick<ExtensionAPI, "on">;
 export function registerCursorOverflowNormalization(pi: CursorOverflowExtensionApi): void {
 	// omp 16.5 `message_end` is ExtensionHandler<MessageEndEvent> with no rewrite result.
 	// Register via widened `on` and mutate event.message in place to preserve overflow rewrite.
+	// Keep the method call on `pi` — extracting `pi.on` unbound breaks ConcreteExtensionAPI (`this.extension`).
 	type MessageEndRewriteEvent = { message: AssistantMessage | { role: string } };
 	type MessageEndRewriteCtx = { model?: { provider?: string } };
-	const onMessageEnd = pi.on as (
-		event: "message_end",
-		handler: (event: MessageEndRewriteEvent, ctx: MessageEndRewriteCtx) => void,
-	) => void;
-	onMessageEnd("message_end", (event, ctx) => {
+	type OverflowMessageEndApi = {
+		on(
+			event: "message_end",
+			handler: (event: MessageEndRewriteEvent, ctx: MessageEndRewriteCtx) => void,
+		): void;
+	};
+	(pi as OverflowMessageEndApi).on("message_end", (event, ctx) => {
 		const message = event.message;
 		if (message.role !== "assistant") return;
 		const assistant = message as AssistantMessage;
