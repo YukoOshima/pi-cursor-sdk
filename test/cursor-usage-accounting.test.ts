@@ -3,7 +3,7 @@ import { createRequire } from "node:module";
 import { describe, expect, it } from "vitest";
 import { InteractionUpdateSchema, TurnEndedUpdateSchema } from "@cursor/sdk";
 import type { AssistantMessage, Context } from "@oh-my-pi/pi-ai";
-import { calculateContextTokens } from "@oh-my-pi/pi-coding-agent";
+import { calculateContextTokens } from "../src/host-context-tokens.js";
 import {
 	applyCursorApproximateUsage,
 	applyCursorUsage,

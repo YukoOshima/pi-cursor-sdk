@@ -1,3 +1,4 @@
+import { type ToolDefinition } from "@oh-my-pi/pi-coding-agent";
 import {
 	createBashToolDefinition,
 	createEditToolDefinition,
@@ -6,8 +7,7 @@ import {
 	createLsToolDefinition,
 	createReadToolDefinition,
 	createWriteToolDefinition,
-	type ToolDefinition,
-} from "@oh-my-pi/pi-coding-agent";
+} from "./host-tool-definitions.js";
 import { Text } from "@oh-my-pi/pi-tui";
 import type { TSchema } from "typebox";
 import { getCursorSessionCwd } from "./cursor-session-scope.js";
@@ -36,7 +36,7 @@ import {
 } from "./cursor-native-tool-display-state.js";
 
 
-type AnyToolDefinition = ToolDefinition<TSchema, unknown, unknown>;
+type AnyToolDefinition = ToolDefinition<TSchema, unknown>;
 type RenderCall = NonNullable<AnyToolDefinition["renderCall"]>;
 type RenderResult = NonNullable<AnyToolDefinition["renderResult"]>;
 
@@ -155,10 +155,10 @@ function getNativeReplayStrategy(toolName: string): NativeReplayStrategy | undef
 }
 
 
-export function wrapNativeCursorTool<TParams extends TSchema, TDetails, TState>(
-	definition: ToolDefinition<TParams, TDetails, TState>,
-	getCurrentDefinition: () => ToolDefinition<TParams, TDetails, TState>,
-): ToolDefinition<TParams, TDetails, TState> {
+export function wrapNativeCursorTool<TParams extends TSchema, TDetails>(
+	definition: ToolDefinition<TParams, TDetails>,
+	getCurrentDefinition: () => ToolDefinition<TParams, TDetails>,
+): ToolDefinition<TParams, TDetails> {
 	const strategy = getNativeReplayStrategy(definition.name);
 	return {
 		...definition,
@@ -188,7 +188,7 @@ export function wrapNativeCursorTool<TParams extends TSchema, TDetails, TState>(
 			const renderBase = () => currentRenderCall?.(args, theme, context) ?? emptyText();
 			const isReplayCall = typeof context.toolCallId === "string" && isCursorReplayToolCallId(context.toolCallId);
 			if (isReplayCall && strategy?.renderReplayCall) {
-				return strategy.renderReplayCall(args, theme, context, renderBase) as ReturnType<NonNullable<ToolDefinition<TParams, TDetails, TState>["renderCall"]>>;
+				return strategy.renderReplayCall(args, theme, context, renderBase) as ReturnType<NonNullable<ToolDefinition<TParams, TDetails>["renderCall"]>>;
 			}
 			return renderBase();
 		},
@@ -197,17 +197,17 @@ export function wrapNativeCursorTool<TParams extends TSchema, TDetails, TState>(
 			const renderBase = () => currentRenderResult?.(result, options, theme, context) ?? emptyText();
 			const isReplayCall = typeof context.toolCallId === "string" && isCursorReplayToolCallId(context.toolCallId);
 			if (isReplayCall && strategy?.renderReplayResult) {
-				return strategy.renderReplayResult(result, options, theme, context, renderBase) as ReturnType<NonNullable<ToolDefinition<TParams, TDetails, TState>["renderResult"]>>;
+				return strategy.renderReplayResult(result, options, theme, context, renderBase) as ReturnType<NonNullable<ToolDefinition<TParams, TDetails>["renderResult"]>>;
 			}
 			return renderBase();
 		},
 	};
 }
 
-export function createNativeCursorToolDefinition(toolName: NativeCursorToolName, cwd: string): ToolDefinition<TSchema, unknown, unknown> {
+export function createNativeCursorToolDefinition(toolName: NativeCursorToolName, cwd: string): ToolDefinition<TSchema, unknown> {
 	const strategy = getNativeReplayStrategy(toolName);
 	if (strategy) return strategy.createDefinition(cwd);
-	if (isCursorReplayToolName(toolName)) return createCursorReplayOnlyToolDefinition(toolName) as ToolDefinition<TSchema, unknown, unknown>;
+	if (isCursorReplayToolName(toolName)) return createCursorReplayOnlyToolDefinition(toolName) as ToolDefinition<TSchema, unknown>;
 	throw new Error(`Unsupported Cursor native replay tool: ${toolName}`);
 }
 

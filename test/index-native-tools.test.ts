@@ -9,7 +9,7 @@ import {
 	createEditToolDefinition,
 	createReadToolDefinition,
 	createWriteToolDefinition,
-} from "@oh-my-pi/pi-coding-agent";
+} from "../src/host-tool-definitions.js";
 import {
 	createBuiltinToolInfo,
 	createExtensionTestContext,
