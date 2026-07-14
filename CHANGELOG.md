@@ -8,13 +8,14 @@
 
 ### Changed
 
-- Import Cursor stream helpers from `@earendil-works/pi-ai` (package root) instead of `@earendil-works/pi-ai/compat`, so omp's remapper can resolve the module.
-- Dual-declare plugin manifests: keep `pi.extensions` and add `omp.extensions` pointing at `./src/index.ts`.
-- Document dual-host install and paths for stock pi (`~/.pi` / `.pi`) and omp (`~/.omp` / `.omp`), including that registering provider id `cursor` replaces omp's built-in Cursor models.
+- **omp-only port:** hard-cut package peers/imports onto `@oh-my-pi/pi-*`, abandon stock pi (`@earendil-works/*`) support, and make install/docs omp-first (`omp install` / `omp plugin link`, `~/.omp/agent`, project `.omp/`).
+- Declare `omp.extensions` (and keep a benign `pi.extensions` mirror for omp's `omp||pi` manifest reader).
+- Warn that provider id `cursor` **overrides** omp's built-in Cursor catalog with this extension's Cursor-SDK-backed models.
+- Replace dual-host "keep stock pi working" framing from earlier omp-compat notes with omp-only install and path guidance.
 
 ### Validation
 
-- Docs/metadata release notes for omp compatibility; runtime verification belongs with the omp load smoke on the migration branch.
+- Docs/metadata assert `@oh-my-pi` peers and `omp.extensions`; runtime verification belongs with the omp load smoke on the migration branch.
 
 ## 0.1.57 - 2026-07-10
 

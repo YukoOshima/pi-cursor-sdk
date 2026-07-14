@@ -12,6 +12,8 @@ const packageJson = require("../package.json") as {
 	peerDependencies: Record<string, string>;
 	bundledDependencies?: string[];
 	overrides?: Record<string, string>;
+	omp?: { extensions?: string[] };
+	pi?: { extensions?: string[] };
 };
 const packageLock = require("../package-lock.json") as {
 	version: string;
@@ -77,11 +79,17 @@ describe("package metadata cutover baselines", () => {
 		expect(packageJson.overrides?.sqlite3).toBeUndefined();
 	});
 
-	it("pins pi validation baselines", () => {
+	it("pins omp validation baselines", () => {
 		for (const packageName of PI_PACKAGES) {
 			expect(packageJson.devDependencies[packageName]).toBe("16.5.0");
 			expect(lockPackageVersion(packageName)).toBe("16.5.0");
 		}
+	});
+
+	it("declares omp.extensions for the provider entrypoint", () => {
+		expect(packageJson.omp?.extensions).toEqual(["./src/index.ts"]);
+		// Benign mirror for omp's omp||pi manifest reader; docs/install remain omp-first.
+		expect(packageJson.pi?.extensions).toEqual(["./src/index.ts"]);
 	});
 
 	it("resolves @oh-my-pi/pi-ai package root for omp", () => {

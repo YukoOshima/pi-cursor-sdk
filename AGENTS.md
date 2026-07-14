@@ -2,9 +2,9 @@
 
 ## Purpose
 
-This repository is a pi/omp provider extension that registers Cursor SDK-backed models under the `cursor` provider. Agent work is successful when changes preserve host-native model/thinking/session behavior, keep Cursor API keys out of repo state and logs, and pass the local validation commands below.
+This repository is an **omp-only** provider extension that registers Cursor SDK-backed models under the `cursor` provider. Stock pi is not supported. Agent work is successful when changes preserve host-native model/thinking/session behavior, keep Cursor API keys out of repo state and logs, and pass the local validation commands below.
 
-Under omp, provider id `cursor` **replaces** omp's built-in Cursor models. Install with `pi install` / `omp install`, or link a checkout with `omp plugin link`. Host paths: `~/.pi/agent` or `~/.omp/agent`; project config `.pi/` or `.omp/`.
+Provider id `cursor` **overrides** omp's built-in Cursor catalog. Install with `omp install`, or link a checkout with `omp plugin link`. Host paths: `~/.omp/agent`; project config `.omp/`.
 
 ## Repository map
 
@@ -113,12 +113,12 @@ Under omp, provider id `cursor` **replaces** omp's built-in Cursor models. Insta
 - Typecheck tests/helpers: `npm run typecheck:tests`
 - Package-readiness check: `npm pack --dry-run`
 - Watch tests while developing: `npm run test:watch`
-- Host install (published): `pi install npm:pi-cursor-sdk` or `omp install npm:pi-cursor-sdk`
-- Host link (local checkout): `omp plugin link .` (omp) or `pi --approve -e . ...` (pi)
-- Local development run, requires a Cursor key: `CURSOR_API_KEY="your-key" pi --approve -e . --model cursor/composer-2-5` (or `omp` with the same flags after `omp plugin link`)
-- List Cursor models, requires the host CLI and usually a Cursor key: `pi --list-models cursor` or `omp --list-models cursor`
+- Host install (published): `omp install npm:pi-cursor-sdk`
+- Host link (local checkout): `omp plugin link .`
+- Local development run, requires a Cursor key: `omp plugin link .` then `CURSOR_API_KEY="your-key" omp --approve -e . --model cursor/composer-2-5`
+- List Cursor models, requires omp and usually a Cursor key: `omp --list-models cursor`
 - Capture provider/SDK event artifacts for one prompt, requires a Cursor key: `CURSOR_API_KEY="your-key" npm run debug:provider-events -- --prompt "hello"`
-- Auth/cache paths: `~/.pi/agent` (pi) or `~/.omp/agent` (omp); project config under `.pi/` or `.omp/`
+- Auth/cache paths: `~/.omp/agent`; project config under `.omp/`
 
 There is no lint or format script in `package.json` at this time.
 
@@ -156,11 +156,11 @@ When plans, reviews, investigations, or generated smoke/debug artifacts are no l
 
 ## Security and side effects
 
-- NEVER store Cursor API keys in repo files, `~/.pi/agent/cursor-sdk.json`, `~/.omp/agent/cursor-sdk.json`, tests, logs, snapshots, or docs examples.
+- NEVER store Cursor API keys in repo files, `~/.omp/agent/cursor-sdk.json`, tests, logs, snapshots, or docs examples.
 - Scrub Cursor SDK errors and output that may contain API keys, bearer tokens, cookies, sessions, or auth headers.
 - `PI_CURSOR_SDK_EVENT_DEBUG=1` and `npm run debug:provider-events` write raw local artifacts that may include prompts, tool args/results, local paths, or secrets; keep them under gitignored `.debug/`, do not print or commit them, and keep run-scoped debug state explicit rather than process-global.
 - Ambient Cursor settings/rules loading is enabled by default through `PI_CURSOR_SETTING_SOURCES=all`; keep SDK startup log filtering intact so settings/skills output does not corrupt pi's TUI. Users can narrow or disable Cursor setting sources explicitly when desired.
-- Live `pi`/`omp`/Cursor smoke tests may call external services and require Cursor auth in `~/.pi/agent/auth.json` or `~/.omp/agent/auth.json` and/or `CURSOR_API_KEY`; run them for Cursor provider/runtime changes. If auth is unavailable, report live smoke as release-blocked instead of skipped-ready. See `docs/cursor-testing-lessons.md` for isolated harness auth seeding.
+- Live `omp`/Cursor smoke tests may call external services and require Cursor auth in `~/.omp/agent/auth.json` and/or `CURSOR_API_KEY`; run them for Cursor provider/runtime changes. If auth is unavailable, report live smoke as release-blocked instead of skipped-ready. See `docs/cursor-testing-lessons.md` for isolated harness auth seeding.
 - For live runtime evidence, use `cursor/composer-2-5:slow` as much as needed. If Cursor Cloud does not support that exact model variant, use `cursor/composer-2-5`.
 - Live Cursor Cloud probes that create `bc-*` agents must capture agent/run IDs, verify archive/delete cleanup, and report any residual agent; do not assume cleanup from a passed smoke.
 - For Cursor provider/runtime changes, the canonical local runtime release and pre-commit gate is `npm run smoke:platform:all`; see `docs/platform-smoke.md`. That script runs doctor before the macOS/Ubuntu/Windows local-runtime matrix. Cloud runtime changes must also run the opt-in `npm run smoke:cloud` lane. The platform gate uses packed installs across macOS, Ubuntu, and Windows native with PTY/ConPTY capture, host-rendered xterm/PNG visual evidence, JSONL assertions, bridge diagnostics, usage/cache checks, abort cleanup, artifact manifests, and redaction scans. Use `docs/cursor-live-smoke-checklist.md`, `npm run smoke:visual`, `npm run smoke:live`, or direct `pi --approve -e . --cursor-no-fast --model cursor/composer-2-5` runs only for inner-loop debugging and focused visual/card audits before the full platform gate. Do not mark release-ready with optional/deferred/mostly-passing platform smoke items outstanding.
@@ -188,7 +188,7 @@ Before **every commit** that touches Cursor provider/runtime, prompt/session sen
 
 - Run the canonical local platform gate: `npm run smoke:platform:all` (see `docs/platform-smoke.md`; it runs doctor first). Also run `npm run smoke:cloud` when the commit touches actual cloud runtime execution.
 - Use `npm run smoke:live` (`scripts/tmux-live-smoke.sh`), `npm run smoke:visual` (`scripts/visual-tui-smoke.mjs`), `npm run smoke:isolated`, or direct `pi -e . --cursor-no-fast --model cursor/composer-2-5` only as inner-loop/debug helpers when narrowing a specific failure before the platform gate. For card/color claims, capture ANSI from the offscreen TUI, render it through the canonical browser/xterm path, save PNG evidence, and inspect JSONL.
-- If Cursor auth (`~/.pi/agent/auth.json`, `~/.omp/agent/auth.json`, or `CURSOR_API_KEY`) or required Crabbox/platform resources are unavailable, **do not commit**—report blocked, not skipped-ready.
+- If Cursor auth (`~/.omp/agent/auth.json` or `CURSOR_API_KEY`) or required Crabbox/platform resources are unavailable, **do not commit**—report blocked, not skipped-ready.
 - Unit tests (`npm test`, `npm run typecheck`) are necessary but not sufficient for these commits.
 
 ## Progress updates and handoff
@@ -201,12 +201,12 @@ Keep this file concise and repo-specific. Update it when commands, package layou
 
 ## Cursor Cloud specific instructions
 
-This is a `pi` provider extension (not a server/web app). "Running the app" means launching `pi` with this extension loaded. Standard commands live in `## Setup and commands`; only the non-obvious caveats are below.
+This is an omp provider extension (not a server/web app). "Running the app" means launching `omp` with this extension loaded. Standard commands live in `## Setup and commands`; only the non-obvious caveats are below.
 
-- Dependencies install with `npm install` (no build step; extension runs from `src/` via `pi -e .`).
-- Node: `engines` requires `>=22.19.0`. The VM's default `node` on `PATH` (`/exec-daemon/node`) is 22.14.0. Typecheck, tests, and live `pi` runs all work on it (engine check is advisory, not enforced), so no node switch is required. A compliant version is also available via `nvm use 22.22.2` if you want to match `engines` exactly.
+- Dependencies install with `npm install` (no build step; extension runs from `src/` via `omp -e .` after `omp plugin link .`).
+- Node: `engines` requires `>=22.19.0`. The VM's default `node` on `PATH` (`/exec-daemon/node`) is 22.14.0. Typecheck, tests, and live `omp` runs all work on it (engine check is advisory, not enforced), so no node switch is required. A compliant version is also available via `nvm use 22.22.2` if you want to match `engines` exactly.
 - `CURSOR_API_KEY` is provided as a cloud-agent secret, so live Cursor runs and full live model discovery work without `/login`. `npm test`, `npm run typecheck`, and `npm pack --dry-run` need no key.
-- Run the extension locally with `./node_modules/.bin/pi -e . --model cursor/composer-2-5` (the bare `pi` is not on `PATH`). Add `--approve` for interactive sessions; print-mode smoke: `./node_modules/.bin/pi -e . --model cursor/composer-2-5 --cursor-no-fast --no-session -p "..."`.
+- Run the extension locally with `omp -e . --model cursor/composer-2-5` (ensure `omp` is on `PATH`). Add `--approve` for interactive sessions; print-mode smoke: `omp -e . --model cursor/composer-2-5 --cursor-no-fast --no-session -p "..."`.
 - Cold-start gotcha: the *first* Cursor SDK run in a fresh VM can take several minutes (SDK/transport warm-up); subsequent runs complete in ~10s. Warm up with one throwaway run before any timing-sensitive or recorded demo, and don't treat a slow first run as a hang.
 - When capturing print-mode (`-p`) output, redirect stdout to a file rather than piping through `tail`/`head` — those pipes buffer until the process exits, hiding streaming progress.
 - Use sessionful runs (`--session-dir`/`--session-id`, not `--no-session`) when testing session ledgers, resume identity, branch/fork/clone/switch behavior, or slash commands such as `/cursor-cloud`; `--no-session` is only proof for one-shot provider behavior.
