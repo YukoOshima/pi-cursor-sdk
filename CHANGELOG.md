@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.1.58 - 2026-07-14
+
+### Fixed
+
+- Load under oh-my-pi (omp) by resolving missing host exports through a local `CONFIG_DIR_NAME` helper instead of depending on omp's coding-agent shim re-exports.
+
+### Changed
+
+- Import Cursor stream helpers from `@earendil-works/pi-ai` (package root) instead of `@earendil-works/pi-ai/compat`, so omp's remapper can resolve the module.
+- Dual-declare plugin manifests: keep `pi.extensions` and add `omp.extensions` pointing at `./src/index.ts`.
+- Document dual-host install and paths for stock pi (`~/.pi` / `.pi`) and omp (`~/.omp` / `.omp`), including that registering provider id `cursor` replaces omp's built-in Cursor models.
+
+### Validation
+
+- Docs/metadata release notes for omp compatibility; runtime verification belongs with the omp load smoke on the migration branch.
+
 ## 0.1.57 - 2026-07-10
 
 ### Changed

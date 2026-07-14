@@ -1,8 +1,10 @@
 # pi-cursor-sdk
 
-A pi provider extension that lets pi use Cursor models through the local-by-default `@cursor/sdk` agent runtime, with explicit minimal Cursor Cloud opt-in.
+A pi/omp provider extension that lets pi or oh-my-pi (omp) use Cursor models through the local-by-default `@cursor/sdk` agent runtime, with explicit minimal Cursor Cloud opt-in.
 
-Use this extension if you primarily use Cursor models inside pi and want Cursor's SDK agent loop preserved while pi adds native model selection, auth, thinking/context controls, session behavior, replay UI, optional local pi tool bridging, and explicit cloud runs when requested.
+Use this extension if you primarily use Cursor models inside pi or omp and want Cursor's SDK agent loop preserved while the host adds native model selection, auth, thinking/context controls, session behavior, replay UI, optional local pi tool bridging, and explicit cloud runs when requested.
+
+**omp note:** this package registers provider id `cursor`, which **replaces** omp's built-in Cursor model catalog with Cursor-SDK-backed models.
 
 ## Why use this instead of an OpenAI-compatible Cursor endpoint?
 
@@ -26,27 +28,41 @@ For pi users, that translation is usually the wrong abstraction. `pi-cursor-sdk`
 
 ## Quick start
 
-1. Install the package:
+1. Install the package (pi or omp):
 
 ```bash
 pi install npm:pi-cursor-sdk
+# or
+omp install npm:pi-cursor-sdk
 ```
 
 Or install from GitHub:
 
 ```bash
 pi install https://github.com/fitchmultz/pi-cursor-sdk
+# or
+omp install https://github.com/fitchmultz/pi-cursor-sdk
 ```
 
-2. Start pi with a Cursor model:
+For a local checkout under omp:
+
+```bash
+omp plugin link /path/to/pi-cursor-sdk
+```
+
+2. Start pi or omp with a Cursor model:
 
 ```bash
 pi --model cursor/composer-2-5
+# or
+omp --model cursor/composer-2-5
 ```
 
-3. In pi, run `/login`, choose `Use an API key`, choose `Cursor`, and paste your Cursor SDK API key.
+3. In the host, run `/login`, choose `Use an API key`, choose `Cursor`, and paste your Cursor SDK API key.
 
-If pi started without a key, run `/cursor-refresh-models` after `/login` to refresh the full live Cursor model catalog without restarting pi. Inside pi, use `/model` to choose another Cursor model.
+If the host started without a key, run `/cursor-refresh-models` after `/login` to refresh the full live Cursor model catalog without restarting. Inside the session, use `/model` to choose another Cursor model.
+
+Host paths differ by install: agent dir is `~/.pi/agent` (pi) or `~/.omp/agent` (omp); project config lives under `.pi/` or `.omp/`.
 
 ## Requirements
 
@@ -58,24 +74,34 @@ No global `@cursor/sdk` install is required. This package depends on exact `@cur
 
 ## Install
 
+Works with stock **pi** and **oh-my-pi (omp)**. Package manifests declare both `pi.extensions` and `omp.extensions`.
+
+**Warning:** under omp, registering provider id `cursor` replaces omp's built-in Cursor models with this extension's Cursor-SDK-backed catalog.
+
 ### Global install
 
 ```bash
 pi install npm:pi-cursor-sdk
+# or
+omp install npm:pi-cursor-sdk
 ```
 
 Alternative GitHub install:
 
 ```bash
 pi install https://github.com/fitchmultz/pi-cursor-sdk
+# or
+omp install https://github.com/fitchmultz/pi-cursor-sdk
 ```
 
 ### Project-local install
 
-Use `-l` if you want the package recorded in the current project's `.pi/settings.json` instead of your global pi settings:
+Use `-l` if you want the package recorded in the current project's `.pi/settings.json` (pi) or `.omp/settings.json` (omp) instead of your global host settings:
 
 ```bash
 pi install -l npm:pi-cursor-sdk
+# or
+omp install -l npm:pi-cursor-sdk
 ```
 
 ### Try from a local checkout
@@ -85,6 +111,9 @@ For development from this repository:
 ```bash
 npm install
 pi --approve -e . --model cursor/composer-2-5
+# or
+omp plugin link .
+omp --approve -e . --model cursor/composer-2-5
 ```
 
 ## Configure your Cursor SDK API key
@@ -105,7 +134,7 @@ Then, inside pi:
 2. Select `Use an API key`.
 3. Select `Cursor`.
 4. Paste your Cursor SDK API key.
-5. The key is saved in pi's native `~/.pi/agent/auth.json`.
+5. The key is saved in the host agent auth file: `~/.pi/agent/auth.json` (pi) or `~/.omp/agent/auth.json` (omp).
 
 If pi started without a key, fallback Cursor models still register so `/login` is reachable. After `/login`, fallback model runs can use the stored key, and `/cursor-refresh-models` refreshes the full live Cursor model catalog discovered from the Cursor SDK without restarting pi.
 
@@ -124,11 +153,11 @@ One-shot setup:
 pi --api-key "your-key" --model cursor/composer-2-5 --cursor-no-fast -p "Say ok only."
 ```
 
-Startup discovery intentionally does not parse Pi CLI arguments. It uses the stored `cursor` key in `~/.pi/agent/auth.json`, then `CURSOR_API_KEY`; without either, the bundled fallback catalog registers. Provider turns still receive Pi's resolved `--api-key`. `/cursor-refresh-models` and `/cursor-cloud` mutations ask Pi's ModelRegistry for provider `cursor`, so command-time auth follows Pi's provider-scoped resolution and is normalized through `CURSOR_API_KEY` placeholders before reaching the Cursor SDK.
+Startup discovery intentionally does not parse Pi CLI arguments. It uses the stored `cursor` key in `~/.pi/agent/auth.json` or `~/.omp/agent/auth.json`, then `CURSOR_API_KEY`; without either, the bundled fallback catalog registers. Provider turns still receive Pi's resolved `--api-key`. `/cursor-refresh-models` and `/cursor-cloud` mutations ask Pi's ModelRegistry for provider `cursor`, so command-time auth follows Pi's provider-scoped resolution and is normalized through `CURSOR_API_KEY` placeholders before reaching the Cursor SDK.
 
 ### Model catalog cache
 
-To avoid a live `Cursor.models.list` network round-trip on every pi startup, the discovered catalog is cached on disk at `~/.pi/agent/cursor-sdk-model-list.json` (written `0600`, keyed by an API-key fingerprint — the key itself is never stored). Warm startups within the cache TTL skip the network call and avoid loading `@cursor/sdk` until a Cursor turn needs it; `/cursor-refresh-models` always bypasses the cache and refreshes the live catalog. If a refresh fails, a previously cached catalog is preferred over the generic bundled fallback.
+To avoid a live `Cursor.models.list` network round-trip on every pi startup, the discovered catalog is cached on disk at `~/.pi/agent/cursor-sdk-model-list.json` or `~/.omp/agent/cursor-sdk-model-list.json` (written `0600`, keyed by an API-key fingerprint — the key itself is never stored). Warm startups within the cache TTL skip the network call and avoid loading `@cursor/sdk` until a Cursor turn needs it; `/cursor-refresh-models` always bypasses the cache and refreshes the live catalog. If a refresh fails, a previously cached catalog is preferred over the generic bundled fallback.
 
 ```bash
 # Cache lifetime in milliseconds (default 86400000 = 24h).
@@ -138,7 +167,7 @@ PI_CURSOR_SDK_MODEL_CACHE_TTL_MS=3600000 pi --model cursor/composer-2-5
 PI_CURSOR_SDK_DISABLE_MODEL_CACHE=1 pi --model cursor/composer-2-5
 ```
 
-Do not store the API key in `~/.pi/agent/cursor-sdk.json`. That file is only for non-secret extension state such as Cursor fast defaults. `PATH` is only for executable lookup and should not contain the API key.
+Do not store the API key in `~/.pi/agent/cursor-sdk.json` or `~/.omp/agent/cursor-sdk.json`. Those files are only for non-secret extension state such as Cursor fast defaults. `PATH` is only for executable lookup and should not contain the API key.
 
 ## Verify your setup
 
@@ -216,7 +245,7 @@ Use `/cursor-fast` to persistently toggle fast mode for the selected unsuffixed 
 Fast preferences are remembered per selected Cursor SDK model ID or alias and stored:
 
 - in the current session with `pi.appendEntry()`
-- globally in `~/.pi/agent/cursor-sdk.json`
+- globally in `~/.pi/agent/cursor-sdk.json` or `~/.omp/agent/cursor-sdk.json`
 
 For one run, force fast on or off without changing saved defaults:
 
@@ -306,7 +335,7 @@ PI_CURSOR_LOCAL_RESUME=0 pi --model cursor/composer-2-5
 
 Resume is strict: the current pi session file/id, branch path prefix, cwd/repo root, model/API/tool-surface pool key, and compaction generation must match. A trailing user message already present at process startup is crash-ambiguous and invalidates the old handle; only a user message appended in the current process may span a recorded handle, preventing restart from resending an already-submitted prompt. A successful process reattachment bootstraps the current pi transcript once while retaining the resumed Cursor agent's native state; later in-process turns remain incremental. If `Agent.resume()` fails, pi bootstraps a new local Cursor agent from the current transcript and streams one display-only continuity note. Superseded local agents can be cleaned up explicitly with `/cursor-local-resume-cleanup --dry-run` and `/cursor-local-resume-cleanup --yes`; cleanup only deletes exact recorded `agent-*` IDs. Cloud resume remains disabled; `/cursor-cloud list|archive|delete` only manages recorded cloud agents.
 
-Config can also set non-secret defaults in `~/.pi/agent/cursor-sdk.json` or trusted `.pi/cursor-sdk.json`:
+Config can also set non-secret defaults in `~/.pi/agent/cursor-sdk.json` / `~/.omp/agent/cursor-sdk.json` or trusted `.pi/cursor-sdk.json` / `.omp/cursor-sdk.json`:
 
 ```json
 {

@@ -1,7 +1,7 @@
 {
   "name": "pi-cursor-sdk",
-  "version": "0.1.57",
-  "description": "pi provider extension backed by @cursor/sdk local and cloud agents",
+  "version": "0.1.58",
+  "description": "pi/omp provider extension backed by @cursor/sdk local and cloud agents",
   "author": "Mitch Fultz (https://github.com/fitchmultz)",
   "license": "MIT",
   "keywords": [
@@ -162,6 +162,11 @@
     "vitest": "^4.1.6"
   },
   "pi": {
+    "extensions": [
+      "./src/index.ts"
+    ]
+  },
+  "omp": {
     "extensions": [
       "./src/index.ts"
     ]
