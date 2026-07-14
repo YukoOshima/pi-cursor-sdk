@@ -63,6 +63,8 @@ describe("cursor-api-key helpers", () => {
 
 		await writeStoredCursorApiKey("stored-key-123");
 		expect(await resolveCursorRuntimeApiKey()).toBe("stored-key-123");
+		expect(await resolveCursorRuntimeApiKey(CURSOR_API_KEY_CONFIG_VALUE)).toBe("stored-key-123");
+		expect(await resolveCursorRuntimeApiKey("explicit-key-123")).toBe("explicit-key-123");
 	});
 
 	it("resolves stored placeholders through env", async () => {

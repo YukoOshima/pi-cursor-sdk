@@ -9,7 +9,7 @@ import { registerCursorSessionScope } from "./cursor-session-scope.js";
 import { registerCursorSessionAgentLifecycle } from "./cursor-session-agent-lifecycle.js";
 import { registerCursorSessionAgentResume } from "./cursor-session-agent-resume.js";
 import { streamCursorLazy } from "./cursor-provider-lazy.js";
-import { CURSOR_API_KEY_CONFIG_VALUE, resolveCursorApiKey } from "./cursor-api-key.js";
+import { CURSOR_API_KEY_CONFIG_VALUE, resolveCursorApiKey } from "./cursor-api-key.js"
 import { registerCursorFallbackIssueWarning } from "./cursor-fallback-warning.js";
 import { registerCursorAgentsContextDedup } from "./cursor-agents-context-registration.js";
 import { registerCursorOverflowNormalization } from "./cursor-provider-overflow.js";
@@ -37,7 +37,7 @@ function createCursorProviderConfig(models: ProviderModelConfig[]): ProviderConf
 		api: "cursor-sdk",
 		models,
 		streamSimple: streamCursorLazy,
-	};
+	}
 }
 
 function registerCursorProvider(pi: Pick<ExtensionAPI, "registerProvider">, models: ProviderModelConfig[]): void {

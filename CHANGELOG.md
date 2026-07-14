@@ -5,6 +5,7 @@
 ### Fixed
 
 - Load under oh-my-pi (omp) by resolving missing host exports through a local `CONFIG_DIR_NAME` helper instead of depending on omp's coding-agent shim re-exports.
+- Resolve omp provider-registry key sentinels through the stored Cursor API-key credential before falling back to `CURSOR_API_KEY`, so user-linked SDK turns use `/login` credentials without exporting the key; honor cancellation after the asynchronous credential lookup before creating an SDK agent.
 
 ### Changed
 

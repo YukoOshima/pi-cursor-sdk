@@ -5,6 +5,7 @@ import ts from "typescript";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { fingerprintApiKey, saveModelListCache } from "../src/model-list-cache.js";
 import type { ModelListItem } from "@cursor/sdk";
+import { installTempAgentDir, restoreAgentDirFromEnv } from "./helpers/omp-agent-dir.js";
 
 function sourceFiles(dir: string): string[] {
 	return readdirSync(dir).flatMap((entry) => {
@@ -74,6 +75,7 @@ describe("Cursor SDK lazy runtime imports", () => {
 		if (tmpAgentDir) rmSync(tmpAgentDir, { recursive: true, force: true });
 		tmpAgentDir = undefined;
 		process.env = originalEnv;
+		restoreAgentDirFromEnv();
 		vi.doUnmock("@cursor/sdk");
 		vi.resetModules();
 	});
@@ -85,6 +87,7 @@ describe("Cursor SDK lazy runtime imports", () => {
 	it("serves a warm model catalog without evaluating @cursor/sdk", async () => {
 		tmpAgentDir = mkdtempSync(join(tmpdir(), "pi-cursor-sdk-lazy-import-"));
 		process.env = { ...originalEnv, PI_CODING_AGENT_DIR: tmpAgentDir, CURSOR_API_KEY: "warm-cache-key" };
+		installTempAgentDir(tmpAgentDir);
 		const model: ModelListItem = {
 			id: "composer-2",
 			displayName: "Composer 2",

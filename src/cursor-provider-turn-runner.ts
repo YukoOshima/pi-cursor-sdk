@@ -84,7 +84,8 @@ export class CursorProviderTurnRunner {
 			}
 			this.throwIfAborted();
 
-			this.resolvedApiKey = requireCursorApiKey(options);
+			this.resolvedApiKey = await requireCursorApiKey(options);
+			this.throwIfAborted();
 			prepared = await prepareCursorProviderTurn({
 				params: this.params,
 				cwd,

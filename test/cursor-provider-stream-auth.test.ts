@@ -23,6 +23,18 @@ import { writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
+const { mockedResolveCursorRuntimeApiKey } = vi.hoisted(() => ({
+	mockedResolveCursorRuntimeApiKey: vi.fn<(apiKey?: import("@oh-my-pi/pi-ai").ApiKey) => Promise<string | undefined>>(),
+}));
+
+vi.mock("../src/cursor-api-key.js", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("../src/cursor-api-key.js")>();
+	mockedResolveCursorRuntimeApiKey.mockImplementation(async (apiKey) =>
+		actual.resolveCursorApiKey(actual.coerceApiKeyString(apiKey)),
+	);
+	return { ...actual, resolveCursorRuntimeApiKey: mockedResolveCursorRuntimeApiKey };
+});
+
 function makeUnauthenticatedConnectError(): Error & { rawMessage: string; code: number } {
 	const error = new Error("[unauthenticated] Error") as Error & { rawMessage: string; code: number };
 	error.name = "ConnectError";
@@ -36,7 +48,9 @@ function makeUnauthenticatedConnectError(): Error & { rawMessage: string; code: 
 }
 
 describe("streamCursor auth and abort", () => {
-	beforeEach(resetCursorProviderTestState);
+	beforeEach(async () => {
+		await resetCursorProviderTestState();
+	});
 
 	it("emits start before abort when the signal is already cancelled", async () => {
 		const controller = new AbortController();
@@ -51,6 +65,31 @@ describe("streamCursor auth and abort", () => {
 		expect(events.findIndex((event) => event.type === "start")).toBeLessThan(
 			events.findIndex((event) => event.type === "error"),
 		);
+	});
+
+	it("aborts after a pending stored-key lookup without creating an agent", async () => {
+		const controller = new AbortController();
+		let releaseKey!: (value: string) => void;
+		mockedResolveCursorRuntimeApiKey.mockImplementationOnce(
+			() =>
+				new Promise<string>((resolve) => {
+					releaseKey = resolve;
+				}),
+		);
+
+		const eventsPromise = collectEvents(
+			streamCursor(makeModel(), makeContext(), {
+				apiKey: "pi-cursor-sdk-cursor-api-key-placeholder",
+				signal: controller.signal,
+			}),
+		);
+		await vi.waitFor(() => expect(mockedResolveCursorRuntimeApiKey).toHaveBeenCalledOnce());
+		controller.abort();
+		releaseKey("late-stored-key");
+		const events = await eventsPromise;
+
+		expect(getErrorEvent(events).reason).toBe("aborted");
+		expect(mockedCreate).not.toHaveBeenCalled();
 	});
 
 	it("aborts after agent creation without sending a prompt when already cancelled", async () => {
@@ -110,6 +149,29 @@ describe("streamCursor auth and abort", () => {
 			}
 		},
 	);
+
+	it("uses the stored omp key when the provider registry sentinel is unresolved", async () => {
+		delete process.env.CURSOR_API_KEY;
+		mockedResolveCursorRuntimeApiKey.mockResolvedValueOnce("stored-key-123");
+		const mockSend = vi.fn().mockResolvedValue({
+			id: "run-stored-key",
+			agentId: "agent-1",
+			status: "finished",
+			wait: vi.fn().mockResolvedValue({ id: "run-stored-key", status: "finished" }),
+			cancel: vi.fn(),
+			supports: () => true,
+			unsupportedReason: () => undefined,
+		});
+		mockCreatedAgent({ send: mockSend });
+
+		const stream = streamCursor(makeModel(), makeContext(), {
+			apiKey: "pi-cursor-sdk-cursor-api-key-placeholder",
+		});
+		await collectEvents(stream);
+
+		expect(mockedResolveCursorRuntimeApiKey).toHaveBeenCalledOnce();
+		expect(mockedCreate).toHaveBeenCalledWith(expect.objectContaining({ apiKey: "stored-key-123" }));
+	});
 
 	it.each(["CURSOR_API_KEY", "$CURSOR_API_KEY", "${CURSOR_API_KEY}", "pi-cursor-sdk-cursor-api-key-placeholder"])(
 		"resolves %s provider placeholders through the env var when present",

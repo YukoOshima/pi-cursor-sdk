@@ -120,7 +120,7 @@ Then, inside omp:
 2. Select `Use an API key`.
 3. Select `Cursor`.
 4. Paste your Cursor SDK API key.
-5. The key is saved in the omp agent auth file: `~/.omp/agent/auth.json`.
+5. The key is saved in omp's credential store under `~/.omp/agent/`.
 
 If omp started without a key, fallback Cursor models still register so `/login` is reachable. After `/login`, fallback model runs can use the stored key, and `/cursor-refresh-models` refreshes the full live Cursor model catalog discovered from the Cursor SDK without restarting omp.
 
@@ -139,7 +139,7 @@ One-shot setup:
 omp --api-key "your-key" --model cursor/composer-2-5 --cursor-no-fast -p "Say ok only."
 ```
 
-Startup discovery intentionally does not parse omp CLI arguments. It uses the stored `cursor` key in `~/.omp/agent/auth.json`, then `CURSOR_API_KEY`; without either, the bundled fallback catalog registers. Provider turns still receive omp's resolved `--api-key`. `/cursor-refresh-models` and `/cursor-cloud` mutations ask the host ModelRegistry for provider `cursor`, so command-time auth follows provider-scoped resolution and is normalized through `CURSOR_API_KEY` placeholders before reaching the Cursor SDK.
+Startup discovery intentionally does not parse omp CLI arguments. It uses the stored `cursor` credential under `~/.omp/agent/`, then `CURSOR_API_KEY`; without either, the bundled fallback catalog registers. Provider turns preserve an explicit omp-resolved key; when omp passes the provider-registry sentinel, the extension resolves the stored Cursor API-key credential first and then `CURSOR_API_KEY`. `/cursor-refresh-models` and `/cursor-cloud` mutations ask the host ModelRegistry for provider `cursor`, so command-time auth stays provider-scoped before reaching the Cursor SDK.
 
 ### Model catalog cache
 

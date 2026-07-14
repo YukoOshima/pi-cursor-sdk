@@ -57,6 +57,8 @@ async function getStoredCursorApiKey(): Promise<string | undefined> {
 	}
 }
 
-export async function resolveCursorRuntimeApiKey(): Promise<string | undefined> {
+export async function resolveCursorRuntimeApiKey(apiKey?: ApiKey): Promise<string | undefined> {
+	const candidate = coerceApiKeyString(apiKey)?.trim();
+	if (candidate && !CURSOR_API_KEY_PLACEHOLDERS.has(candidate)) return candidate;
 	return (await getStoredCursorApiKey()) ?? resolveCursorApiKey(process.env.CURSOR_API_KEY);
 }
