@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import type { Context, Message, ToolCall } from "@oh-my-pi/pi-ai";
 import { convertToLlm } from "@oh-my-pi/pi-coding-agent";
-import type { AgentModeOption, SDKImage } from "@cursor/sdk";
+import type { AgentModeOption, SDKImage } from "./cursor-sdk-types.js";
 import { CURSOR_PI_BRIDGE_PREFERENCE_TEXT } from "./cursor-bridge-contract.js";
 import { getCursorReplayPromptLabel } from "./cursor-tool-presentation-registry.js";
 

@@ -1,4 +1,4 @@
-import type { AgentModeOption } from "@cursor/sdk";
+import type { AgentModeOption } from "./cursor-sdk-types.js";
 import type { ExtensionAPI, ExtensionContext, SessionEntry } from "@oh-my-pi/pi-coding-agent";
 import {
 	buildCursorToolManifestText,

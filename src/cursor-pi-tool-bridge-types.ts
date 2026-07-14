@@ -1,4 +1,4 @@
-import type { McpServerConfig } from "@cursor/sdk";
+import type { McpServerConfig } from "./cursor-sdk-types.js";
 import type { Context, ToolResultMessage } from "@oh-my-pi/pi-ai";
 import type { CursorSdkEventDebugRecorder } from "./cursor-sdk-event-debug.js";
 import type {

@@ -1,4 +1,4 @@
-import type { RunError, RunResult } from "@cursor/sdk";
+import type { RunError, RunResult } from "./cursor-sdk-types.js";
 import { asRecord } from "./cursor-record-utils.js";
 import { scrubSensitiveText } from "./cursor-sensitive-text.js";
 

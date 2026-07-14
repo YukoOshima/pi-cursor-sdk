@@ -6,7 +6,7 @@ import type {
 	Model,
 	SimpleStreamOptions,
 } from "@oh-my-pi/pi-ai";
-import type { AgentModeOption, ModelSelection, SDKAgent, SDKImage } from "@cursor/sdk";
+import type { AgentModeOption, ModelSelection, SDKAgent, SDKImage } from "./cursor-sdk-types.js";
 import type { CursorLiveRun } from "./cursor-live-run-coordinator.js";
 import type { SessionCursorAgentLease } from "./cursor-session-agent.js";
 import type { planCursorSessionSend } from "./cursor-session-agent.js";

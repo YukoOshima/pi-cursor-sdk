@@ -1,4 +1,4 @@
-import type { SendOptions } from "@cursor/sdk";
+import type { SendOptions } from "./cursor-sdk-types.js";
 import { countCursorAgentMessages } from "./cursor-agent-message-web-tools.js";
 import {
 	createCursorCloudLifecyclePersistenceError,

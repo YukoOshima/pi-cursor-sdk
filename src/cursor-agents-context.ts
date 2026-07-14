@@ -10,7 +10,7 @@ import {
 	getEffectiveCursorSettingSources,
 	resolveCursorSettingSources,
 } from "./cursor-setting-sources.js";
-import type { SettingSource } from "@cursor/sdk";
+import type { SettingSource } from "./cursor-sdk-types.js";
 import type { CursorRuntime } from "./cursor-config.js";
 export { registerCursorAgentsContextDedup, type CursorAgentsContextExtensionApi } from "./cursor-agents-context-registration.js";
 

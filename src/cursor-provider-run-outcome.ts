@@ -1,4 +1,4 @@
-import type { RunError, RunResult } from "@cursor/sdk";
+import type { RunError, RunResult } from "./cursor-sdk-types.js";
 import { selectCursorFinalText } from "./cursor-run-final-text.js";
 import {
 	formatCursorSdkAbortMessage,

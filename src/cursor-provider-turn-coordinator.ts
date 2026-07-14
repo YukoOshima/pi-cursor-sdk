@@ -1,5 +1,5 @@
 import type { AssistantMessage, AssistantMessageEventStream } from "@oh-my-pi/pi-ai";
-import type { InteractionUpdate } from "@cursor/sdk";
+import type { InteractionUpdate } from "./cursor-sdk-types.js";
 import type { CursorLiveRun } from "./cursor-live-run-coordinator.js";
 import { cursorLiveRuns } from "./cursor-provider-live-run-drain.js";
 import { truncateCursorDisplayLine } from "./cursor-display-text.js";

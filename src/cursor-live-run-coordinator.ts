@@ -1,5 +1,5 @@
 import type { Context, ToolResultMessage } from "@oh-my-pi/pi-ai";
-import type { SDKAgent } from "@cursor/sdk";
+import type { SDKAgent } from "./cursor-sdk-types.js";
 import {
 	consumeCursorLiveToolResults,
 	createCursorLiveRunAccountingState,

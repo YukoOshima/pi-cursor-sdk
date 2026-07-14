@@ -3,7 +3,7 @@ import type {
 	ModelParameterDefinition,
 	ModelParameterValue,
 	ModelSelection,
-} from "@cursor/sdk";
+} from "./cursor-sdk-types.js";
 import type { ProviderModelConfig } from "@oh-my-pi/pi-coding-agent";
 import type { ModelThinkingLevel, ThinkingLevelMap } from "@oh-my-pi/pi-ai";
 import { loadContextWindowCache } from "./context-window-cache.js";

@@ -1,4 +1,4 @@
-import type { ModelListItem } from "@cursor/sdk";
+import type { ModelListItem } from "./cursor-sdk-types.js";
 
 // Generated with @cursor/sdk@1.0.23 from 34 Cursor models.
 // Refresh with: npm run refresh:cursor-snapshots -- --write

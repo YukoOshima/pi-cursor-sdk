@@ -1,4 +1,4 @@
-import type { InteractionUpdate } from "@cursor/sdk";
+import type { InteractionUpdate } from "./cursor-sdk-types.js";
 import { asRecord, getField, hasUsableText } from "./cursor-record-utils.js";
 import { scrubSensitiveText } from "./cursor-sensitive-text.js";
 import { truncateCursorDisplayLine } from "./cursor-display-text.js";

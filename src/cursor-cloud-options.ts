@@ -1,7 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
-import type { AgentModeOption, AgentOptions, ModelSelection } from "@cursor/sdk";
+import type { AgentModeOption, AgentOptions, ModelSelection } from "./cursor-sdk-types.js";
 import { isCursorCloudEnvironmentType, type CursorResolvedSdkConfig } from "./cursor-config.js";
 
 export interface CursorCloudLocalState {

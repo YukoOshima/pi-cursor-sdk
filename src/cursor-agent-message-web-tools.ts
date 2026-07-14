@@ -1,4 +1,4 @@
-import type { AgentMessage } from "@cursor/sdk";
+import type { AgentMessage } from "./cursor-sdk-types.js";
 import { asRecord, getArray, getString } from "./cursor-record-utils.js";
 import { stringifyUnknown } from "./cursor-transcript-utils.js";
 import { loadCursorSdk } from "./cursor-sdk-runtime.js";

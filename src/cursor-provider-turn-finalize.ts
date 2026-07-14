@@ -1,4 +1,4 @@
-import type { RunError, SDKAgent } from "@cursor/sdk";
+import type { RunError, SDKAgent } from "./cursor-sdk-types.js";
 import { loadCursorTranscriptWebToolCallsAfterOffset } from "./cursor-agent-message-web-tools.js";
 import {
 	collectCursorCloudRunReport,

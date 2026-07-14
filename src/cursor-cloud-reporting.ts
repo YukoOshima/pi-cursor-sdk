@@ -1,4 +1,4 @@
-import type { Run, RunResult, SDKAgent, SDKArtifact, TokenUsage } from "@cursor/sdk";
+import type { Run, RunResult, SDKAgent, SDKArtifact, TokenUsage } from "./cursor-sdk-types.js";
 import { truncateCursorDisplayLine } from "./cursor-display-text.js";
 import { scrubSensitiveText } from "./cursor-sensitive-text.js";
 import { asRecord, getArray, getNumber, getRecord, getString } from "./cursor-record-utils.js";

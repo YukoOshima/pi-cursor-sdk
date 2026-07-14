@@ -1,4 +1,4 @@
-import type { SettingSource } from "@cursor/sdk";
+import type { SettingSource } from "./cursor-sdk-types.js";
 /** Provider-facing wrapper; canonical parsing lives in shared/cursor-setting-sources.mjs. */
 import {
 	CURSOR_SETTING_SOURCES_ENV as CURSOR_SETTING_SOURCES_ENV_JS,
