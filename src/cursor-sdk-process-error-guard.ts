@@ -2,7 +2,6 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { classifyCursorConnectError, isCursorSdkAbortConnectError } from "./cursor-provider-errors.js";
 
 interface CursorSdkProcessErrorGuardToken {
-	suppressAbortErrors: boolean;
 	onLocalTransportClosedPipe?: () => void;
 }
 
@@ -34,13 +33,6 @@ function hasActiveGuard(): boolean {
 	return activeProviderTurns.size > 0 || activeSessions.size > 0;
 }
 
-function hasActiveAbortSuppression(): boolean {
-	for (const turn of activeProviderTurns) {
-		if (turn.suppressAbortErrors) return true;
-	}
-	return false;
-}
-
 function isCursorProvenance(source: string): boolean {
 	return source === "cursor-sdk-stack" || source === "cursor-extension-connect-stack" || source === "cursor-backend-details";
 }
@@ -62,6 +54,9 @@ function isCursorSdkWriteIterableClosedError(error: unknown): boolean {
 // DOMException is not `instanceof Error`, so match structurally on the
 // `AbortError` name plus the same `@cursor/sdk/dist` stack provenance the
 // WriteIterableClosedError recognizer uses, keeping unrelated AbortErrors fatal.
+// Suppression is session/turn-scoped (`hasActiveGuard`), not only after
+// `suppressAbortErrors()`, because stall cancel and multi-agent teardown can
+// emit the exception before that flag is set or after the turn guard disposes.
 function isCursorSdkAbortError(error: unknown): boolean {
 	if (typeof error !== "object" || error === null) return false;
 	const { name, stack } = error as { name?: unknown; stack?: unknown };
@@ -113,10 +108,15 @@ function shouldSuppressProcessError(event: string | symbol, args: readonly unkno
 		return containLocalTransportClosedPipeError();
 	}
 	if (isCursorSdkWriteIterableClosedError(error)) return activeSessions.size > 0;
-	if (isCursorSdkAbortError(error)) return hasActiveAbortSuppression();
+	// Raw AbortError (and Connect abort) can race past turn-scoped suppressAbortErrors():
+	// stall-detector cancel may emit before the abort listener runs, and multi-agent
+	// workflow teardown can emit after the originating turn guard is disposed. Match
+	// WriteIterableClosedError: keep Cursor-provenance aborts session/turn-scoped so
+	// they do not terminate pi; non-Cursor AbortErrors stay fatal below.
+	if (isCursorSdkAbortError(error)) return hasActiveGuard();
 	const classification = classifyCursorConnectError(error);
 	if (!classification) return false;
-	if (classification.kind === "abort") return hasActiveAbortSuppression();
+	if (classification.kind === "abort") return hasActiveGuard();
 	if (activeProviderTurns.size === 0) return false;
 	if (classification.kind === "network") return isCursorProvenance(classification.source) || classification.source === "connect-node-stack";
 	return isCursorProvenance(classification.source);
@@ -186,14 +186,15 @@ export const __testUtils = {
 export { isCursorSdkAbortConnectError };
 
 export function installCursorSdkProcessErrorGuard(): CursorSdkProcessErrorGuard {
-	const token: CursorSdkProcessErrorGuardToken = { suppressAbortErrors: false };
+	const token: CursorSdkProcessErrorGuardToken = {};
 	activeProviderTurns.add(token);
 	installProcessHooks();
 	let disposed = false;
 	return {
 		suppressAbortErrors(): void {
-			if (disposed) return;
-			token.suppressAbortErrors = true;
+			// Retained for call-site compatibility. Cursor-provenance abort
+			// process errors are gated by hasActiveGuard() (any active turn or
+			// session), so an explicit flag is no longer required.
 		},
 		containLocalTransportClosedPipe(onClosedPipe: () => void): void {
 			if (disposed) return;

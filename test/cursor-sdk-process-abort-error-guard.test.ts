@@ -56,10 +56,10 @@ describe("Cursor SDK raw AbortError process guard", () => {
 		}
 	});
 
-	it("does not suppress a provider turn that has not declared abort suppression", () => {
+	it("suppresses during a provider turn even before abort suppression is declared", () => {
 		const guard = installCursorSdkProcessErrorGuard();
 		try {
-			expect(processListenerCalled("uncaughtException", makeCursorSdkRawAbortDomException())).toBe(true);
+			expect(processListenerCalled("uncaughtException", makeCursorSdkRawAbortDomException())).toBe(false);
 		} finally {
 			guard.dispose();
 		}
@@ -87,12 +87,19 @@ describe("Cursor SDK raw AbortError process guard", () => {
 		}
 	});
 
-	it("does not suppress without an active provider turn", () => {
+	it("suppresses late Cursor AbortError while a session guard is still active", () => {
 		const guard = installCursorSdkSessionProcessErrorGuard();
 		try {
-			expect(processListenerCalled("uncaughtException", makeCursorSdkRawAbortDomException())).toBe(true);
+			expect(processListenerCalled("uncaughtException", makeCursorSdkRawAbortDomException())).toBe(false);
 		} finally {
 			guard.dispose();
 		}
+	});
+
+	it("does not suppress after all guards are disposed", () => {
+		const guard = installCursorSdkProcessErrorGuard();
+		guard.suppressAbortErrors();
+		guard.dispose();
+		expect(processListenerCalled("uncaughtException", makeCursorSdkRawAbortDomException())).toBe(true);
 	});
 });

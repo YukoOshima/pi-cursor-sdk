@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.63 - 2026-07-23
+
+### Fixed
+
+- Treat Cursor-provenance raw `AbortError` / Connect abort process failures as session-or-turn scoped (any active process-error guard), not only after `suppressAbortErrors()`. Stall-detector cancel and multi-agent workflow teardown could emit the exception before that flag was set or after the originating turn guard disposed, which still terminated pi with `DOMException [AbortError]: This operation was aborted`.
+
 ## 0.1.62 - 2026-07-23
 
 ### Fixed
