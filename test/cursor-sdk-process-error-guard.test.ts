@@ -711,12 +711,23 @@ setTimeout(() => {
 		expect(isUnauthenticatedConnectError(new Error("boom"))).toBe(false);
 	});
 
-	it("suppresses matching uncaught exceptions only after abort suppression is enabled", () => {
+	it("suppresses matching abort ConnectError while a provider turn is active", () => {
 		const suppression = installCursorSdkProcessErrorGuard();
 		let listenerCalled = false;
 		const listener = () => {
 			listenerCalled = true;
 		};
+		process.once("uncaughtException", listener);
+		try {
+			const emitted = process.emit("uncaughtException", makeCursorSdkAbortConnectError(), "uncaughtException");
+			expect(emitted).toBe(true);
+			expect(listenerCalled).toBe(false);
+		} finally {
+			process.removeListener("uncaughtException", listener);
+			suppression.dispose();
+		}
+
+		listenerCalled = false;
 		process.once("uncaughtException", listener);
 		try {
 			const unsuppressed = process.emit("uncaughtException", makeCursorSdkAbortConnectError(), "uncaughtException");
@@ -725,11 +736,16 @@ setTimeout(() => {
 		} finally {
 			process.removeListener("uncaughtException", listener);
 		}
+	});
 
-		listenerCalled = false;
+	it("suppresses matching abort ConnectError while only a session guard is active", () => {
+		const suppression = installCursorSdkSessionProcessErrorGuard();
+		let listenerCalled = false;
+		const listener = () => {
+			listenerCalled = true;
+		};
 		process.once("uncaughtException", listener);
 		try {
-			suppression.suppressAbortErrors();
 			const emitted = process.emit("uncaughtException", makeCursorSdkAbortConnectError(), "uncaughtException");
 			expect(emitted).toBe(true);
 			expect(listenerCalled).toBe(false);
