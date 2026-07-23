@@ -29,6 +29,16 @@ function makeProviderLoadErrorMessage(model: Model<Api>, error: unknown): Assist
 	};
 }
 
+/**
+ * Shared provider runtime load. Started once at module init so parallel
+ * streamCursorLazy calls (workflow fan-out) await the same promise instead of
+ * racing Pi's TS loader through a partially-evaluated circular module graph —
+ * which previously surfaced as `Cannot read properties of undefined (reading
+ * 'CursorProviderTurnRunner')` when in-process subagents stopped sharing one
+ * Cursor turn-queue scope.
+ */
+const cursorProviderRuntime = import("./cursor-provider.js");
+
 export function streamCursorLazy(
 	model: Model<Api>,
 	context: Context,
@@ -37,7 +47,7 @@ export function streamCursorLazy(
 	const outer = createAssistantMessageEventStream();
 	queueMicrotask(async () => {
 		try {
-			const { streamCursor } = await import("./cursor-provider.js");
+			const { streamCursor } = await cursorProviderRuntime;
 			for await (const event of streamCursor(model, context, options)) {
 				outer.push(event);
 			}

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.62 - 2026-07-23
+
+### Fixed
+
+- Allow in-process workflow / subagent `AgentSession`s to isolate Cursor turn queues via AsyncLocalStorage (`runWithCursorSessionScopeOverride` / `shared/cursor-session-scope-override.mjs`). Sessions that never fire `session_start` (e.g. pi-dynamic-workflows with `noExtensions: true`) previously inherited the host session scope and were FIFO-serialized behind one pooled SDK agent until `agentTimeoutMs` (regression surface of the 0.1.52 same-session turn lock).
+- Share one `import("./cursor-provider.js")` promise in `streamCursorLazy` so parallel first-use fan-out does not race Pi's TypeScript loader into a partially-evaluated provider module (`CursorProviderTurnRunner` / bridge constructor undefined).
+
 ## 0.1.61 - 2026-07-22
 
 ### Added

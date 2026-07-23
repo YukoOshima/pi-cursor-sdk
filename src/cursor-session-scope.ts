@@ -1,7 +1,41 @@
+import { AsyncLocalStorage } from "node:async_hooks";
 import { resolve } from "node:path";
 import { parseArgs } from "@earendil-works/pi-coding-agent";
 import type { ExtensionHandler, ProjectTrustHandler, SessionInfoChangedEvent, SessionStartEvent } from "@earendil-works/pi-coding-agent";
 import { truncateCursorDisplayLine } from "./cursor-display-text.js";
+
+/** Per-async-context Cursor session scope override (in-process subagent isolation). */
+export interface CursorSessionScopeOverride {
+	sessionId?: string;
+	sessionFile?: string;
+	cwd?: string;
+	projectTrusted?: boolean;
+	sessionName?: string;
+}
+
+const GLOBAL_ALS_KEY = "__pi_cursor_session_scope_als__";
+
+function getScopeOverrideAls(): AsyncLocalStorage<CursorSessionScopeOverride> {
+	const g = globalThis as typeof globalThis & {
+		[GLOBAL_ALS_KEY]?: AsyncLocalStorage<CursorSessionScopeOverride>;
+	};
+	if (!g[GLOBAL_ALS_KEY]) {
+		g[GLOBAL_ALS_KEY] = new AsyncLocalStorage<CursorSessionScopeOverride>();
+	}
+	return g[GLOBAL_ALS_KEY];
+}
+
+function getCursorSessionScopeOverride(): CursorSessionScopeOverride | undefined {
+	return getScopeOverrideAls().getStore();
+}
+
+/** Run `fn` with an isolated Cursor session scope (own turn queue + SDKAgent pool). */
+export function runWithCursorSessionScopeOverride<T>(
+	override: CursorSessionScopeOverride,
+	fn: () => T,
+): T {
+	return getScopeOverrideAls().run(override, fn);
+}
 
 interface CursorSessionScopeExtensionApi {
 	on(event: "project_trust", handler: ProjectTrustHandler): void;
@@ -31,16 +65,27 @@ let scopeChangeHandler: CursorSessionScopeChangeHandler | undefined;
 
 /**
  * Pi session file when known; used to scope reused Cursor SDK agents to one pi session.
+ * AsyncLocalStorage overrides (in-process subagent sessions) win over the host singleton.
  */
 export function getCursorSessionFile(): string | undefined {
+	const override = getCursorSessionScopeOverride();
+	if (override?.sessionFile) return override.sessionFile;
+	if (override?.sessionId) return undefined;
 	return state.sessionFile;
 }
 
 /**
  * Stable scope key for session-agent pooling. Falls back to a process-local anonymous key
  * before the first session_start (tests and early startup).
+ *
+ * Prefer an AsyncLocalStorage override when present so in-process AgentSessions that never
+ * fire `session_start` (e.g. pi-dynamic-workflows with `noExtensions: true`) each get their
+ * own turn queue + SDKAgent pool instead of serializing behind the host session.
  */
 export function getCursorSessionScopeKey(): string {
+	const override = getCursorSessionScopeOverride();
+	if (override?.sessionFile) return override.sessionFile;
+	if (override?.sessionId) return `${EPHEMERAL_SESSION_SCOPE_PREFIX}${override.sessionId}`;
 	if (state.sessionFile) return state.sessionFile;
 	if (state.sessionId) return `${EPHEMERAL_SESSION_SCOPE_PREFIX}${state.sessionId}`;
 	return ANONYMOUS_SESSION_SCOPE_KEY;
@@ -54,8 +99,11 @@ export function getCursorSessionScopeGeneration(scopeKey: string = getCursorSess
  * Pi session cwd when known; falls back to process.cwd() before session_start.
  * Updated on session_start only until pi threads cwd into streamSimple—mid-session cwd
  * changes without a new session_start event are not reflected here.
+ * AsyncLocalStorage overrides (workflow worktrees / isolated subagents) win.
  */
 export function getCursorSessionCwd(): string {
+	const override = getCursorSessionScopeOverride();
+	if (override?.cwd) return override.cwd;
 	return state.sessionCwd;
 }
 
