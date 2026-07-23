@@ -19,8 +19,8 @@ This repository is a pi provider extension that registers Cursor SDK-backed mode
 - `src/cursor-provider-run-finalizer.ts` owns live-run wait completion, outcome application, debug finalization, and SDK abort-suppression disposal.
 - `src/cursor-run-final-text.ts` owns final assistant text selection for run outcomes and live-run drain.
 - `src/cursor-provider-errors.ts` owns scrubbed Cursor SDK run failure detail, abort reason formatting, and provider error sanitization.
-- `src/cursor-provider-lazy.ts` owns the lazy `streamSimple` wrapper that defers Cursor provider runtime imports until the provider is invoked.
-- `src/cursor-session-scope.ts` owns pi session cwd, session file/id/name/generation scope keys, and `session_start` / `session_info_changed` registration for session-agent pooling, cloud agent names, and debug grouping.
+- `src/cursor-provider-lazy.ts` owns the lazy `streamSimple` wrapper that defers Cursor provider runtime imports until the provider is invoked (shared one-shot import promise for parallel fan-out).
+- `src/cursor-session-scope.ts` owns pi session cwd, session file/id/name/generation scope keys, AsyncLocalStorage scope overrides for in-process subagent isolation (`runWithCursorSessionScopeOverride`), and `session_start` / `session_info_changed` registration for session-agent pooling, cloud agent names, and debug grouping. `shared/cursor-session-scope-override.mjs` exposes the same ALS API for non-extension callers.
 - `src/cursor-session-store.ts` owns per-session Cursor SDK SQLite store identity derivation, open/disposal, temporary fileless stores, and guarded removal.
 - `src/cursor-http1.ts` owns branch-scoped local HTTP/1.1 session state, global-preference override tracking, and extension-owned SDK configuration/null reset.
 - `src/cursor-ripgrep-path.ts` owns bundled Cursor SDK platform ripgrep resolution and local-agent environment initialization.
