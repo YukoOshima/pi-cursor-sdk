@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.63 - 2026-07-24
+
+### Fixed
+
+- Rewrite local Cursor unauthenticated / unauthorized Connect failures as `Provider returned error` auth guidance so pi's agent-level auto-retry can recover transient unauthorized flaps with a still-valid API key. Missing-key and Cloud auth rejection messages stay non-retryable.
+
 ## 0.1.62 - 2026-07-23
 
 ### Fixed

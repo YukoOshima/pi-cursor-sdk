@@ -199,9 +199,10 @@ describe("cursor-provider-errors", () => {
 
 	it("scrubs secrets and maps generic startup errors to actionable auth guidance", () => {
 		expect(sanitizeCursorProviderError(new Error("Error"), "test-key")).toContain("Cursor SDK request failed");
-		expect(sanitizeCursorProviderError(new Error("Unauthorized Bearer secret-key"), "secret-key")).toContain(
-			"invalid or unauthorized",
-		);
+		const unauthorized = sanitizeCursorProviderError(new Error("Unauthorized Bearer secret-key"), "secret-key");
+		expect(unauthorized).toContain("Provider returned error");
+		expect(unauthorized).toContain("invalid or unauthorized");
+		expect(unauthorized).toContain("pi will retry automatically");
 		expect(sanitizeCursorProviderError(new Error("Bearer secret-key"), "secret-key")).not.toContain("secret-key");
 	});
 
@@ -292,9 +293,11 @@ describe("cursor-provider-errors", () => {
 		const message = sanitizeCursorProviderError(error, "secret-key");
 
 		expect(isUnauthenticatedConnectError(error)).toBe(true);
+		expect(message).toContain("Provider returned error");
 		expect(message).toContain("invalid or unauthorized");
 		expect(message).toContain("/login");
 		expect(message).toContain("CURSOR_API_KEY");
+		expect(message).toContain("pi will retry automatically");
 		expect(message).not.toContain("secret-key");
 		expect(message).not.toContain("Bearer");
 	});
