@@ -1,4 +1,4 @@
-import type { Context, ToolResultMessage } from "@earendil-works/pi-ai/compat";
+import type { Context, ToolResultMessage } from "@earendil-works/pi-ai";
 import type { SDKAgent } from "@cursor/sdk";
 import {
 	consumeCursorLiveToolResults,
@@ -43,6 +43,7 @@ export interface CursorLiveRun {
 	sdkRun?: CursorLiveSdkRun;
 	ignoreFutureSdkTurnUsage?: boolean;
 	accounting: CursorLiveRunAccountingState;
+	billedTurnUsage?: CursorSdkTurnUsage;
 	pendingEvents: CursorLiveQueuedEvent[];
 	textDeltas: string[];
 	emittedText: string;

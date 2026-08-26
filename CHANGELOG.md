@@ -1,23 +1,119 @@
 # Changelog
 
-## 0.1.64 - 2026-07-26
+## Unreleased
 
 ### Fixed
 
-- Treat Cursor-provenance raw `AbortError` / Connect abort process failures as session-or-turn scoped (any active process-error guard), not only after `suppressAbortErrors()`. Stall-detector cancel and multi-agent workflow teardown could emit the exception before that flag was set or after the originating turn guard disposed, which still terminated pi with `DOMException [AbortError]: This operation was aborted`.
+- Restore in-process workflow / subagent Cursor turn isolation via AsyncLocalStorage (`runWithCursorSessionScopeOverride` / `shared/cursor-session-scope-override.mjs`). Sessions that never fire `session_start` (for example pi-dynamic-workflows with `noExtensions: true`) no longer inherit the host session scope and FIFO-serialize behind one pooled SDK agent.
+- Keep local Cursor unauthenticated / unauthorized Connect failures as retryable `Provider returned error` auth guidance so pi's agent-level auto-retry can recover transient unauthorized flaps when the API key is still valid.
 
-## 0.1.63 - 2026-07-24
-
-### Fixed
-
-- Rewrite local Cursor unauthenticated / unauthorized Connect failures as `Provider returned error` auth guidance so pi's agent-level auto-retry can recover transient unauthorized flaps with a still-valid API key. Missing-key and Cloud auth rejection messages stay non-retryable.
-
-## 0.1.62 - 2026-07-23
+## 0.3.6 - 2026-08-18
 
 ### Fixed
 
-- Allow in-process workflow / subagent `AgentSession`s to isolate Cursor turn queues via AsyncLocalStorage (`runWithCursorSessionScopeOverride` / `shared/cursor-session-scope-override.mjs`). Sessions that never fire `session_start` (e.g. pi-dynamic-workflows with `noExtensions: true`) previously inherited the host session scope and were FIFO-serialized behind one pooled SDK agent until `agentTimeoutMs` (regression surface of the 0.1.52 same-session turn lock).
-- Share one `import("./cursor-provider.js")` promise in `streamCursorLazy` so parallel first-use fan-out does not race Pi's TypeScript loader into a partially-evaluated provider module (`CursorProviderTurnRunner` / bridge constructor undefined).
+- Isolate `smoke:visual` captures from the host: pi runs with `PI_CODING_AGENT_DIR=<out-dir>/pi-agent` (seeded `auth.json`, `quietStartup`, telemetry off), `PI_OFFLINE=1`, and `PI_SKIP_VERSION_CHECK=1`, so host extensions, skills, MCP config, update banners, and package-update notices no longer pollute visual evidence.
+- Start the visual-smoke tmux session in `--cwd` with a non-login shell, eliminating `shell-init: getcwd` noise from a stale tmux-server working directory.
+- Forward `--session-id` to pi only when explicitly provided, so fresh captures no longer show the new-session warning line; the HTML render labels pi-assigned sessions instead of failing.
+
+## 0.3.5 - 2026-08-18
+
+### Fixed
+
+- Keep billed `getUsage()` rows as spend only. Occupancy `totalTokens` uses local turn-ended usage only when it is below the latest compaction `tokensBefore`, so a stale or cumulative Cursor total cannot restick the footer or retrigger auto-compact (#204).
+- Leave local-resume persist suppressed across any `turn_end` that fires during compaction summarization; only `session_compact` clears the guard (#223).
+
+## 0.3.4 - 2026-08-18
+
+### Changed
+
+- Pin the runtime to exact `@cursor/sdk@1.0.27` and recapture installed-package ripgrep, stalled-connection, HTTP/1.1, PR-control, closed-writable, and `getUsage` contracts against that pin.
+- Refresh the 37-model Cursor fallback catalog and checkpoint-derived context-window snapshot from the live `@cursor/sdk@1.0.27` runtime, including Grok 4.6.
+- Make `cursor/grok-4.6` the recommended local/smoke default (`:slow` for live evidence). Composer 2.5 remains in the catalog.
+
+### Added
+
+- Apply billed `Agent.getUsage()` spend to pi assistant usage for local and cloud turns. Local billed rows are selected by unseen usage UUIDs (never by a client-minted `run-*` id). Cloud reports prefer mapped `AgentUsage` and keep the REST `/v1/agents/:id/usage` fallback.
+
+### Fixed
+
+- Keep billed token spend when cumulative `inputTokens + outputTokens` exceeds the model context window, while occupancy `totalTokens` still uses in-window turn-ended occupancy or the post-compaction estimate floor.
+- Ignore assistant occupancy at or before the latest `compactionSummary`, and ignore measurements at or above that summary's `tokensBefore`, so split-turn keep cannot restick the footer at the pre-compaction watermark.
+- Drop compaction-summarizer local-resume handles: `session_before_compact` suppresses persist, and `session_compact` clears any pending handle so the first later `turn_end` cannot flush the one-message summarizer lineage (#223).
+- Write smoke self-test fake `pi` helpers as ESM so Node 24 shebang execution can dump env without `require`.
+
+## 0.3.3 - 2026-08-14
+
+### Changed
+
+- Hardened the precompiled import guard for legacy and future Pi package aliases plus `createRequire()` / `require.resolve()` escape hatches, while preserving the intentional Cursor SDK ripgrep resolution path.
+
+## 0.3.2 - 2026-08-14
+
+### Fixed
+
+- Keep every Cursor runtime subtree that imports Pi host peers in Pi's static extension graph, preventing precompiled native `import()` from bypassing Pi's peer resolver after install-time dev-dependency pruning. This restores Cursor startup, native tool registration, provider turns, session-agent lifecycle, compaction, AGENTS.md deduplication, and stored Pi credential lookup from a pruned install.
+- Retain safe lazy boundaries for the installed Cursor SDK, SQLite store, MCP bridge implementation, and generated fallback catalog, with an import-graph regression test that rejects future native dynamic imports reaching Pi host peers.
+
+## 0.3.1 - 2026-08-14
+
+### Changed
+
+- `scripts/build.mjs` now reaps `dist.staging.<pid>` directories stranded by dead builds (SIGKILL or crash mid-emit) at the start of every build. Only pids already gone at the signal-0 probe are eligible; pid reuse in the tiny probe-to-remove window remains an inherent limitation. Reaping is best-effort: an unreapable strand warns instead of failing the build.
+- `dist/` is now published by retrying this build's own `rename` instead of waiting on another build. A rename failure yields only when `dist/` exists and is non-empty (an existence check, not an errno check, so platforms that report a different code for rename-onto-existing-directory still behave correctly); otherwise the staging tree is retained and the rename retried, so this build can publish its own output rather than wait on a concurrent winner's scheduling. This closes the review-identified windows where a losing build could exit 1 while a concurrent winner was mid-swap or descheduled.
+- `scripts/prepare.mjs` forwards build output on success too, so install-time diagnostics such as the concurrent-swap race-loss warning are no longer swallowed. If both the build and the final dev-dependency prune fail, the prune warning no longer masks the original build error (and may leave the dev toolchain for manual cleanup).
+- New automated coverage for the staging swap: failed TypeScript emits preserve the previous `dist/`; successful builds purge stale files; dead-pid staging dirs are reaped while live ones survive; the real-process smoke narrows from three twelve-wide rounds to one four-way round; empty directories are not accepted as winners; slow winners cannot time out another build; and publish failures exhaust a bounded retry, fail loudly, and may leave `dist/` absent after removing the old output.
+
+## 0.3.0 - 2026-08-13
+
+### Changed
+
+- The Pi extension manifest now loads precompiled `dist/index.js` instead of transpiling `src/index.ts` through jiti. This reduces load cost on cold starts and after cache invalidation (fresh installs, `pi update`, cache eviction); warm starts with a hot jiti cache were already near parity. A `prepare` lifecycle script builds `dist/` on install and update (including Pi's `npm install --omit=dev` flow) and prunes the dev toolchain back out afterwards.
+
+## 0.2.0 - 2026-08-06
+
+### Added
+
+- Add a dated, hash-verified evidence bundle for Cursor's persisted system messages and reconstructed tool guidance for Grok 4.5, Claude Opus/Fable 5, and GPT-5.6 Sol/Terra/Luna.
+
+### Changed
+
+- Require Pi 0.84.0 or later, pin the local Pi validation packages to exact 0.84.0 with TypeBox 1.3.7, move pi-ai imports from the temporary compatibility entrypoint to the supported root API, and update test harness contexts for Pi's scoped-model and native-provider registration types.
+- Bound Vitest concurrency to four workers so process and filesystem contract tests remain reliable on high-core platform-smoke hosts.
+- Refresh the 34-model Cursor fallback catalog and checkpoint-derived context-window snapshot from the live `@cursor/sdk` 1.0.23 runtime.
+
+### Security
+
+- Refresh vulnerable transitive releases within their existing ranges: bundled Hono, fast-uri, and ip-address plus development-only PostCSS and protobufjs. The remaining production audit findings are confined to the pinned Cursor SDK → ConnectRPC → undici chain, which has no compatible fix.
+
+### Fixed
+
+- Normalize checkpoint context-window keys to current selectable model identities, collapse redundant default `:fast`/`:slow` aliases, reject conflicting equivalent selections, remove stale or ambiguous aliases, and reuse base-model context evidence for unobserved equivalent aliases.
+- Give Windows platform-build checks the same 15-second Vitest scheduling headroom as the full Windows test run, while preserving normal local test timeouts.
+- Pass live PTY smoke prompts as direct Node argv through Pi's interactive initial-message contract, isolate unrelated startup probes with `PI_OFFLINE=1`, and keep final markers out of prompt echoes.
+- Run required platform targets sequentially so concurrent VM/container load and Cursor API calls cannot starve otherwise healthy smoke lanes.
+
+## 0.1.62 - 2026-07-29
+
+### Added
+
+- Emit `pi-cursor-sdk:ask-question:blocked` (`{ active: boolean }`) while `cursor_ask_question` awaits pi UI input, and clear it in `finally`. Consumers (e.g. Herdr) can subscribe and map it to blocked/working; listening is out of scope for this package.
+- Record each distinct local Cursor agent whose send is initiated once per native pi session in a non-resumable `cursor-sdk-agent-lineage` custom entry, including failed/cancelled runs and when local resume is disabled.
+
+### Fixed
+
+- Suppress Cursor SDK `DOMException [AbortError]` while any provider turn or session guard is active (stall detector / inter-turn timers), and treat installed SDK `RetriableError: Connection stalled repeatedly` as a retryable network failure (#194, #197).
+- Map observed local Cursor SDK prompt usage into pi-additive components (`input = inputTokens - cacheRead - cacheWrite`) with `totalTokens = inputTokens + outputTokens`, reject invalid cache partitions, and floor approximate occupancy at the last compatible same-model in-window assistant measurement; cloud raw usage remains display-only (#196).
+- Omit invariant Pi system instructions from incremental local Cursor prompts; bootstrap/rebootstrap still send the current system section, and system-prompt changes still force context-divergence bootstrap (#192).
+- Capture `pi --list-models cursor` fully before searching for `composer-2.5` in `smoke:live`, so large catalogs no longer SIGPIPE the prereq under `pipefail`.
+- Isolate ambient Git `HOME` and `XDG_CONFIG_HOME` in cloud local-state tests so host `url.*.insteadof` rewrites cannot poison remote-identity probes.
+
+### Security
+
+- Raise `@modelcontextprotocol/sdk` to exact `1.30.0` and `@hono/node-server` to exact `2.0.12`, and ship both as a published `bundledDependencies` closure so hostile host trees cannot force MCP onto vulnerable `@hono/node-server` `<2.0.5` (GHSA-frvp-7c67-39w9). Residual `npm audit --omit=dev` findings are the Cursor SDK → ConnectRPC → undici chain with no compatible fix.
+
+### Changed
+
+- Tighten Cursor Cloud AGENTS.md setup notes: durable Node/PATH/smoke prerequisites only; Linux-only checks are partial evidence and do not replace `smoke:platform:all`.
 
 ## 0.1.61 - 2026-07-22
 

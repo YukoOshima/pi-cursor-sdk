@@ -1,5 +1,5 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { classifyCursorConnectError, isCursorSdkAbortConnectError } from "./cursor-provider-errors.js";
+import { classifyCursorConnectError, isCursorSdkAbortConnectError, isCursorSdkConnectionStalledError } from "./cursor-provider-errors.js";
 
 interface CursorSdkProcessErrorGuardToken {
 	onLocalTransportClosedPipe?: () => void;
@@ -70,10 +70,12 @@ function isCursorSdkAbortError(error: unknown): boolean {
 // The exact observed incident: the Cursor SDK 1.0.23 local shell executor writes a
 // spawned child's stdin without a stream 'error' listener, so a child exiting while
 // a write is in flight surfaces a raw `write EPIPE` uncaught exception whose stack
-// is exactly the single async pipe-write completion frame. Pi's own piped-stdout or
-// dead-terminal EPIPE normally surfaces through the synchronous write-dispatch path
-// with multiple frames (afterWriteDispatched/Socket._writeGeneric) and must stay
-// fatal per Unix convention, so anything beyond this one-frame contract is rejected.
+// is exactly the single async pipe-write completion frame. Installed 1.0.27 attaches
+// a no-op `error` listener before that write; keep this guard as defense in depth.
+// Pi's own piped-stdout or dead-terminal EPIPE normally surfaces through the
+// synchronous write-dispatch path with multiple frames (afterWriteDispatched /
+// Socket._writeGeneric) and must stay fatal per Unix convention, so anything beyond
+// this one-frame contract is rejected.
 const OBSERVED_CLOSED_PIPE_STACK_FRAME =
 	/^\s+at WriteWrap\.onWriteComplete \[as oncomplete\] \(node:internal\/stream_base_commons:\d+:\d+\)$/;
 
@@ -108,12 +110,12 @@ function shouldSuppressProcessError(event: string | symbol, args: readonly unkno
 		return containLocalTransportClosedPipeError();
 	}
 	if (isCursorSdkWriteIterableClosedError(error)) return activeSessions.size > 0;
-	// Raw AbortError (and Connect abort) can race past turn-scoped suppressAbortErrors():
-	// stall-detector cancel may emit before the abort listener runs, and multi-agent
-	// workflow teardown can emit after the originating turn guard is disposed. Match
-	// WriteIterableClosedError: keep Cursor-provenance aborts session/turn-scoped so
-	// they do not terminate pi; non-Cursor AbortErrors stay fatal below.
+	// SDK stall timers, inter-turn teardown, and multi-agent workflow aborts can
+	// race past turn-scoped suppressAbortErrors(). Any active provider turn or
+	// session guard is enough — stack provenance already gates SDK-only AbortErrors.
 	if (isCursorSdkAbortError(error)) return hasActiveGuard();
+	// RetriableError "Connection stalled" / "Connection stalled repeatedly" is not a ConnectError; suppress during active turns only.
+	if (isCursorSdkConnectionStalledError(error)) return activeProviderTurns.size > 0;
 	const classification = classifyCursorConnectError(error);
 	if (!classification) return false;
 	if (classification.kind === "abort") return hasActiveGuard();

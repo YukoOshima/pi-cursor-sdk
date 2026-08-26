@@ -1,12 +1,66 @@
 import type { ModelListItem } from "@cursor/sdk";
 
-// Generated with @cursor/sdk@1.0.23 from 34 Cursor models.
+// Generated with @cursor/sdk@1.0.27 from 37 Cursor models.
 // Refresh with: npm run refresh:cursor-snapshots -- --write
 // Do not add secrets; this file stores public model metadata only.
 export const FALLBACK_MODEL_ITEMS = [
 	{
+		id: "auto-smart",
+		displayName: "Auto",
+		parameters: [
+			{
+				id: "optimize_for",
+				displayName: "Optimize For",
+				values: [
+					{
+						value: "intelligence",
+						displayName: "Intelligence"
+					},
+					{
+						value: "balanced",
+						displayName: "Balance"
+					},
+					{
+						value: "cost",
+						displayName: "Cost"
+					}
+				]
+			}
+		],
+		variants: [
+			{
+				params: [
+					{
+						id: "optimize_for",
+						value: "intelligence"
+					}
+				],
+				displayName: "Auto Intelligence"
+			},
+			{
+				params: [
+					{
+						id: "optimize_for",
+						value: "balanced"
+					}
+				],
+				displayName: "Auto Balance",
+				isDefault: true
+			},
+			{
+				params: [
+					{
+						id: "optimize_for",
+						value: "cost"
+					}
+				],
+				displayName: "Auto Cost"
+			}
+		]
+	},
+	{
 		id: "claude-fable-5",
-		displayName: "Fable 5",
+		displayName: "Claude Fable 5",
 		aliases: [
 			"fable",
 			"fable-5",
@@ -82,7 +136,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "low"
 					}
 				],
-				displayName: "Fable 5"
+				displayName: "Claude Fable 5"
 			},
 			{
 				params: [
@@ -99,7 +153,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "medium"
 					}
 				],
-				displayName: "Fable 5"
+				displayName: "Claude Fable 5"
 			},
 			{
 				params: [
@@ -116,7 +170,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "high"
 					}
 				],
-				displayName: "Fable 5"
+				displayName: "Claude Fable 5"
 			},
 			{
 				params: [
@@ -133,7 +187,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "xhigh"
 					}
 				],
-				displayName: "Fable 5"
+				displayName: "Claude Fable 5"
 			},
 			{
 				params: [
@@ -150,7 +204,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "max"
 					}
 				],
-				displayName: "Fable 5"
+				displayName: "Claude Fable 5"
 			},
 			{
 				params: [
@@ -167,7 +221,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "low"
 					}
 				],
-				displayName: "Fable 5"
+				displayName: "Claude Fable 5"
 			},
 			{
 				params: [
@@ -184,7 +238,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "medium"
 					}
 				],
-				displayName: "Fable 5"
+				displayName: "Claude Fable 5"
 			},
 			{
 				params: [
@@ -201,7 +255,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "high"
 					}
 				],
-				displayName: "Fable 5"
+				displayName: "Claude Fable 5"
 			},
 			{
 				params: [
@@ -218,7 +272,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "xhigh"
 					}
 				],
-				displayName: "Fable 5"
+				displayName: "Claude Fable 5"
 			},
 			{
 				params: [
@@ -235,7 +289,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "max"
 					}
 				],
-				displayName: "Fable 5"
+				displayName: "Claude Fable 5"
 			},
 			{
 				params: [
@@ -252,7 +306,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "low"
 					}
 				],
-				displayName: "Fable 5"
+				displayName: "Claude Fable 5"
 			},
 			{
 				params: [
@@ -269,7 +323,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "medium"
 					}
 				],
-				displayName: "Fable 5"
+				displayName: "Claude Fable 5"
 			},
 			{
 				params: [
@@ -286,7 +340,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "high"
 					}
 				],
-				displayName: "Fable 5"
+				displayName: "Claude Fable 5"
 			},
 			{
 				params: [
@@ -303,7 +357,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "xhigh"
 					}
 				],
-				displayName: "Fable 5"
+				displayName: "Claude Fable 5"
 			},
 			{
 				params: [
@@ -320,7 +374,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "max"
 					}
 				],
-				displayName: "Fable 5"
+				displayName: "Claude Fable 5"
 			},
 			{
 				params: [
@@ -337,7 +391,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "low"
 					}
 				],
-				displayName: "Fable 5"
+				displayName: "Claude Fable 5"
 			},
 			{
 				params: [
@@ -354,7 +408,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "medium"
 					}
 				],
-				displayName: "Fable 5"
+				displayName: "Claude Fable 5"
 			},
 			{
 				params: [
@@ -371,7 +425,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "high"
 					}
 				],
-				displayName: "Fable 5",
+				displayName: "Claude Fable 5",
 				isDefault: true
 			},
 			{
@@ -389,7 +443,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "xhigh"
 					}
 				],
-				displayName: "Fable 5"
+				displayName: "Claude Fable 5"
 			},
 			{
 				params: [
@@ -406,13 +460,13 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "max"
 					}
 				],
-				displayName: "Fable 5"
+				displayName: "Claude Fable 5"
 			}
 		]
 	},
 	{
 		id: "claude-haiku-4-5",
-		displayName: "Haiku 4.5",
+		displayName: "Claude Haiku 4.5",
 		aliases: [
 			"haiku-latest",
 			"haiku",
@@ -441,7 +495,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "false"
 					}
 				],
-				displayName: "Haiku 4.5"
+				displayName: "Claude Haiku 4.5"
 			},
 			{
 				params: [
@@ -450,14 +504,14 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "true"
 					}
 				],
-				displayName: "Haiku 4.5",
+				displayName: "Claude Haiku 4.5",
 				isDefault: true
 			}
 		]
 	},
 	{
 		id: "claude-opus-4-5",
-		displayName: "Opus 4.5",
+		displayName: "Claude Opus 4.5",
 		aliases: [
 			"opus",
 			"opus-4.5",
@@ -485,7 +539,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "false"
 					}
 				],
-				displayName: "Opus 4.5"
+				displayName: "Claude Opus 4.5"
 			},
 			{
 				params: [
@@ -494,14 +548,14 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "true"
 					}
 				],
-				displayName: "Opus 4.5",
+				displayName: "Claude Opus 4.5",
 				isDefault: true
 			}
 		]
 	},
 	{
 		id: "claude-opus-4-6",
-		displayName: "Opus 4.6",
+		displayName: "Claude Opus 4.6",
 		aliases: [
 			"opus",
 			"opus-4.6",
@@ -573,7 +627,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "low"
 					}
 				],
-				displayName: "Opus 4.6"
+				displayName: "Claude Opus 4.6"
 			},
 			{
 				params: [
@@ -590,7 +644,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "medium"
 					}
 				],
-				displayName: "Opus 4.6"
+				displayName: "Claude Opus 4.6"
 			},
 			{
 				params: [
@@ -607,7 +661,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "high"
 					}
 				],
-				displayName: "Opus 4.6"
+				displayName: "Claude Opus 4.6"
 			},
 			{
 				params: [
@@ -624,7 +678,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "max"
 					}
 				],
-				displayName: "Opus 4.6"
+				displayName: "Claude Opus 4.6"
 			},
 			{
 				params: [
@@ -641,7 +695,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "low"
 					}
 				],
-				displayName: "Opus 4.6"
+				displayName: "Claude Opus 4.6"
 			},
 			{
 				params: [
@@ -658,7 +712,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "medium"
 					}
 				],
-				displayName: "Opus 4.6"
+				displayName: "Claude Opus 4.6"
 			},
 			{
 				params: [
@@ -675,7 +729,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "high"
 					}
 				],
-				displayName: "Opus 4.6"
+				displayName: "Claude Opus 4.6"
 			},
 			{
 				params: [
@@ -692,7 +746,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "max"
 					}
 				],
-				displayName: "Opus 4.6"
+				displayName: "Claude Opus 4.6"
 			},
 			{
 				params: [
@@ -709,7 +763,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "low"
 					}
 				],
-				displayName: "Opus 4.6"
+				displayName: "Claude Opus 4.6"
 			},
 			{
 				params: [
@@ -726,7 +780,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "medium"
 					}
 				],
-				displayName: "Opus 4.6"
+				displayName: "Claude Opus 4.6"
 			},
 			{
 				params: [
@@ -743,7 +797,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "high"
 					}
 				],
-				displayName: "Opus 4.6"
+				displayName: "Claude Opus 4.6"
 			},
 			{
 				params: [
@@ -760,7 +814,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "max"
 					}
 				],
-				displayName: "Opus 4.6"
+				displayName: "Claude Opus 4.6"
 			},
 			{
 				params: [
@@ -777,7 +831,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "low"
 					}
 				],
-				displayName: "Opus 4.6"
+				displayName: "Claude Opus 4.6"
 			},
 			{
 				params: [
@@ -794,7 +848,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "medium"
 					}
 				],
-				displayName: "Opus 4.6"
+				displayName: "Claude Opus 4.6"
 			},
 			{
 				params: [
@@ -811,7 +865,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "high"
 					}
 				],
-				displayName: "Opus 4.6",
+				displayName: "Claude Opus 4.6",
 				isDefault: true
 			},
 			{
@@ -829,13 +883,13 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "max"
 					}
 				],
-				displayName: "Opus 4.6"
+				displayName: "Claude Opus 4.6"
 			}
 		]
 	},
 	{
 		id: "claude-opus-4-7",
-		displayName: "Opus 4.7",
+		displayName: "Claude Opus 4.7",
 		aliases: [
 			"opus-4.7",
 			"opus-4-7"
@@ -931,7 +985,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "false"
 					}
 				],
-				displayName: "Opus 4.7"
+				displayName: "Claude Opus 4.7"
 			},
 			{
 				params: [
@@ -956,7 +1010,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "true"
 					}
 				],
-				displayName: "Opus 4.7"
+				displayName: "Claude Opus 4.7"
 			},
 			{
 				params: [
@@ -981,7 +1035,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "false"
 					}
 				],
-				displayName: "Opus 4.7"
+				displayName: "Claude Opus 4.7"
 			},
 			{
 				params: [
@@ -1006,7 +1060,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "true"
 					}
 				],
-				displayName: "Opus 4.7"
+				displayName: "Claude Opus 4.7"
 			},
 			{
 				params: [
@@ -1031,7 +1085,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "false"
 					}
 				],
-				displayName: "Opus 4.7"
+				displayName: "Claude Opus 4.7"
 			},
 			{
 				params: [
@@ -1056,7 +1110,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "true"
 					}
 				],
-				displayName: "Opus 4.7"
+				displayName: "Claude Opus 4.7"
 			},
 			{
 				params: [
@@ -1081,7 +1135,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "false"
 					}
 				],
-				displayName: "Opus 4.7"
+				displayName: "Claude Opus 4.7"
 			},
 			{
 				params: [
@@ -1106,7 +1160,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "true"
 					}
 				],
-				displayName: "Opus 4.7"
+				displayName: "Claude Opus 4.7"
 			},
 			{
 				params: [
@@ -1131,7 +1185,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "false"
 					}
 				],
-				displayName: "Opus 4.7"
+				displayName: "Claude Opus 4.7"
 			},
 			{
 				params: [
@@ -1156,7 +1210,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "true"
 					}
 				],
-				displayName: "Opus 4.7"
+				displayName: "Claude Opus 4.7"
 			},
 			{
 				params: [
@@ -1181,7 +1235,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "false"
 					}
 				],
-				displayName: "Opus 4.7"
+				displayName: "Claude Opus 4.7"
 			},
 			{
 				params: [
@@ -1206,7 +1260,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "true"
 					}
 				],
-				displayName: "Opus 4.7"
+				displayName: "Claude Opus 4.7"
 			},
 			{
 				params: [
@@ -1231,7 +1285,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "false"
 					}
 				],
-				displayName: "Opus 4.7"
+				displayName: "Claude Opus 4.7"
 			},
 			{
 				params: [
@@ -1256,7 +1310,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "true"
 					}
 				],
-				displayName: "Opus 4.7"
+				displayName: "Claude Opus 4.7"
 			},
 			{
 				params: [
@@ -1281,7 +1335,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "false"
 					}
 				],
-				displayName: "Opus 4.7"
+				displayName: "Claude Opus 4.7"
 			},
 			{
 				params: [
@@ -1306,7 +1360,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "true"
 					}
 				],
-				displayName: "Opus 4.7"
+				displayName: "Claude Opus 4.7"
 			},
 			{
 				params: [
@@ -1331,7 +1385,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "false"
 					}
 				],
-				displayName: "Opus 4.7"
+				displayName: "Claude Opus 4.7"
 			},
 			{
 				params: [
@@ -1356,7 +1410,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "true"
 					}
 				],
-				displayName: "Opus 4.7"
+				displayName: "Claude Opus 4.7"
 			},
 			{
 				params: [
@@ -1381,7 +1435,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "false"
 					}
 				],
-				displayName: "Opus 4.7"
+				displayName: "Claude Opus 4.7"
 			},
 			{
 				params: [
@@ -1406,7 +1460,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "true"
 					}
 				],
-				displayName: "Opus 4.7"
+				displayName: "Claude Opus 4.7"
 			},
 			{
 				params: [
@@ -1431,7 +1485,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "false"
 					}
 				],
-				displayName: "Opus 4.7"
+				displayName: "Claude Opus 4.7"
 			},
 			{
 				params: [
@@ -1456,7 +1510,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "true"
 					}
 				],
-				displayName: "Opus 4.7"
+				displayName: "Claude Opus 4.7"
 			},
 			{
 				params: [
@@ -1481,7 +1535,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "false"
 					}
 				],
-				displayName: "Opus 4.7"
+				displayName: "Claude Opus 4.7"
 			},
 			{
 				params: [
@@ -1506,7 +1560,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "true"
 					}
 				],
-				displayName: "Opus 4.7"
+				displayName: "Claude Opus 4.7"
 			},
 			{
 				params: [
@@ -1531,7 +1585,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "false"
 					}
 				],
-				displayName: "Opus 4.7"
+				displayName: "Claude Opus 4.7"
 			},
 			{
 				params: [
@@ -1556,7 +1610,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "true"
 					}
 				],
-				displayName: "Opus 4.7"
+				displayName: "Claude Opus 4.7"
 			},
 			{
 				params: [
@@ -1581,7 +1635,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "false"
 					}
 				],
-				displayName: "Opus 4.7"
+				displayName: "Claude Opus 4.7"
 			},
 			{
 				params: [
@@ -1606,7 +1660,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "true"
 					}
 				],
-				displayName: "Opus 4.7"
+				displayName: "Claude Opus 4.7"
 			},
 			{
 				params: [
@@ -1631,7 +1685,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "false"
 					}
 				],
-				displayName: "Opus 4.7"
+				displayName: "Claude Opus 4.7"
 			},
 			{
 				params: [
@@ -1656,7 +1710,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "true"
 					}
 				],
-				displayName: "Opus 4.7"
+				displayName: "Claude Opus 4.7"
 			},
 			{
 				params: [
@@ -1681,7 +1735,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "false"
 					}
 				],
-				displayName: "Opus 4.7"
+				displayName: "Claude Opus 4.7"
 			},
 			{
 				params: [
@@ -1706,7 +1760,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "true"
 					}
 				],
-				displayName: "Opus 4.7"
+				displayName: "Claude Opus 4.7"
 			},
 			{
 				params: [
@@ -1731,7 +1785,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "false"
 					}
 				],
-				displayName: "Opus 4.7"
+				displayName: "Claude Opus 4.7"
 			},
 			{
 				params: [
@@ -1756,7 +1810,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "true"
 					}
 				],
-				displayName: "Opus 4.7"
+				displayName: "Claude Opus 4.7"
 			},
 			{
 				params: [
@@ -1781,7 +1835,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "false"
 					}
 				],
-				displayName: "Opus 4.7"
+				displayName: "Claude Opus 4.7"
 			},
 			{
 				params: [
@@ -1806,7 +1860,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "true"
 					}
 				],
-				displayName: "Opus 4.7"
+				displayName: "Claude Opus 4.7"
 			},
 			{
 				params: [
@@ -1831,7 +1885,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "false"
 					}
 				],
-				displayName: "Opus 4.7",
+				displayName: "Claude Opus 4.7",
 				isDefault: true
 			},
 			{
@@ -1857,7 +1911,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "true"
 					}
 				],
-				displayName: "Opus 4.7"
+				displayName: "Claude Opus 4.7"
 			},
 			{
 				params: [
@@ -1882,7 +1936,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "false"
 					}
 				],
-				displayName: "Opus 4.7"
+				displayName: "Claude Opus 4.7"
 			},
 			{
 				params: [
@@ -1907,13 +1961,13 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "true"
 					}
 				],
-				displayName: "Opus 4.7"
+				displayName: "Claude Opus 4.7"
 			}
 		]
 	},
 	{
 		id: "claude-opus-4-8",
-		displayName: "Opus 4.8",
+		displayName: "Claude Opus 4.8",
 		aliases: [
 			"opus-latest",
 			"opus",
@@ -2011,7 +2065,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "false"
 					}
 				],
-				displayName: "Opus 4.8"
+				displayName: "Claude Opus 4.8"
 			},
 			{
 				params: [
@@ -2036,7 +2090,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "true"
 					}
 				],
-				displayName: "Opus 4.8"
+				displayName: "Claude Opus 4.8"
 			},
 			{
 				params: [
@@ -2061,7 +2115,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "false"
 					}
 				],
-				displayName: "Opus 4.8"
+				displayName: "Claude Opus 4.8"
 			},
 			{
 				params: [
@@ -2086,7 +2140,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "true"
 					}
 				],
-				displayName: "Opus 4.8"
+				displayName: "Claude Opus 4.8"
 			},
 			{
 				params: [
@@ -2111,7 +2165,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "false"
 					}
 				],
-				displayName: "Opus 4.8"
+				displayName: "Claude Opus 4.8"
 			},
 			{
 				params: [
@@ -2136,7 +2190,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "true"
 					}
 				],
-				displayName: "Opus 4.8"
+				displayName: "Claude Opus 4.8"
 			},
 			{
 				params: [
@@ -2161,7 +2215,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "false"
 					}
 				],
-				displayName: "Opus 4.8"
+				displayName: "Claude Opus 4.8"
 			},
 			{
 				params: [
@@ -2186,7 +2240,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "true"
 					}
 				],
-				displayName: "Opus 4.8"
+				displayName: "Claude Opus 4.8"
 			},
 			{
 				params: [
@@ -2211,7 +2265,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "false"
 					}
 				],
-				displayName: "Opus 4.8"
+				displayName: "Claude Opus 4.8"
 			},
 			{
 				params: [
@@ -2236,7 +2290,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "true"
 					}
 				],
-				displayName: "Opus 4.8"
+				displayName: "Claude Opus 4.8"
 			},
 			{
 				params: [
@@ -2261,7 +2315,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "false"
 					}
 				],
-				displayName: "Opus 4.8"
+				displayName: "Claude Opus 4.8"
 			},
 			{
 				params: [
@@ -2286,7 +2340,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "true"
 					}
 				],
-				displayName: "Opus 4.8"
+				displayName: "Claude Opus 4.8"
 			},
 			{
 				params: [
@@ -2311,7 +2365,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "false"
 					}
 				],
-				displayName: "Opus 4.8"
+				displayName: "Claude Opus 4.8"
 			},
 			{
 				params: [
@@ -2336,7 +2390,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "true"
 					}
 				],
-				displayName: "Opus 4.8"
+				displayName: "Claude Opus 4.8"
 			},
 			{
 				params: [
@@ -2361,7 +2415,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "false"
 					}
 				],
-				displayName: "Opus 4.8"
+				displayName: "Claude Opus 4.8"
 			},
 			{
 				params: [
@@ -2386,7 +2440,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "true"
 					}
 				],
-				displayName: "Opus 4.8"
+				displayName: "Claude Opus 4.8"
 			},
 			{
 				params: [
@@ -2411,7 +2465,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "false"
 					}
 				],
-				displayName: "Opus 4.8"
+				displayName: "Claude Opus 4.8"
 			},
 			{
 				params: [
@@ -2436,7 +2490,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "true"
 					}
 				],
-				displayName: "Opus 4.8"
+				displayName: "Claude Opus 4.8"
 			},
 			{
 				params: [
@@ -2461,7 +2515,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "false"
 					}
 				],
-				displayName: "Opus 4.8"
+				displayName: "Claude Opus 4.8"
 			},
 			{
 				params: [
@@ -2486,7 +2540,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "true"
 					}
 				],
-				displayName: "Opus 4.8"
+				displayName: "Claude Opus 4.8"
 			},
 			{
 				params: [
@@ -2511,7 +2565,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "false"
 					}
 				],
-				displayName: "Opus 4.8"
+				displayName: "Claude Opus 4.8"
 			},
 			{
 				params: [
@@ -2536,7 +2590,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "true"
 					}
 				],
-				displayName: "Opus 4.8"
+				displayName: "Claude Opus 4.8"
 			},
 			{
 				params: [
@@ -2561,7 +2615,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "false"
 					}
 				],
-				displayName: "Opus 4.8"
+				displayName: "Claude Opus 4.8"
 			},
 			{
 				params: [
@@ -2586,7 +2640,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "true"
 					}
 				],
-				displayName: "Opus 4.8"
+				displayName: "Claude Opus 4.8"
 			},
 			{
 				params: [
@@ -2611,7 +2665,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "false"
 					}
 				],
-				displayName: "Opus 4.8"
+				displayName: "Claude Opus 4.8"
 			},
 			{
 				params: [
@@ -2636,7 +2690,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "true"
 					}
 				],
-				displayName: "Opus 4.8"
+				displayName: "Claude Opus 4.8"
 			},
 			{
 				params: [
@@ -2661,7 +2715,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "false"
 					}
 				],
-				displayName: "Opus 4.8"
+				displayName: "Claude Opus 4.8"
 			},
 			{
 				params: [
@@ -2686,7 +2740,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "true"
 					}
 				],
-				displayName: "Opus 4.8"
+				displayName: "Claude Opus 4.8"
 			},
 			{
 				params: [
@@ -2711,7 +2765,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "false"
 					}
 				],
-				displayName: "Opus 4.8"
+				displayName: "Claude Opus 4.8"
 			},
 			{
 				params: [
@@ -2736,7 +2790,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "true"
 					}
 				],
-				displayName: "Opus 4.8"
+				displayName: "Claude Opus 4.8"
 			},
 			{
 				params: [
@@ -2761,7 +2815,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "false"
 					}
 				],
-				displayName: "Opus 4.8"
+				displayName: "Claude Opus 4.8"
 			},
 			{
 				params: [
@@ -2786,7 +2840,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "true"
 					}
 				],
-				displayName: "Opus 4.8"
+				displayName: "Claude Opus 4.8"
 			},
 			{
 				params: [
@@ -2811,7 +2865,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "false"
 					}
 				],
-				displayName: "Opus 4.8"
+				displayName: "Claude Opus 4.8"
 			},
 			{
 				params: [
@@ -2836,7 +2890,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "true"
 					}
 				],
-				displayName: "Opus 4.8"
+				displayName: "Claude Opus 4.8"
 			},
 			{
 				params: [
@@ -2861,7 +2915,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "false"
 					}
 				],
-				displayName: "Opus 4.8",
+				displayName: "Claude Opus 4.8",
 				isDefault: true
 			},
 			{
@@ -2887,7 +2941,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "true"
 					}
 				],
-				displayName: "Opus 4.8"
+				displayName: "Claude Opus 4.8"
 			},
 			{
 				params: [
@@ -2912,7 +2966,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "false"
 					}
 				],
-				displayName: "Opus 4.8"
+				displayName: "Claude Opus 4.8"
 			},
 			{
 				params: [
@@ -2937,7 +2991,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "true"
 					}
 				],
-				displayName: "Opus 4.8"
+				displayName: "Claude Opus 4.8"
 			},
 			{
 				params: [
@@ -2962,7 +3016,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "false"
 					}
 				],
-				displayName: "Opus 4.8"
+				displayName: "Claude Opus 4.8"
 			},
 			{
 				params: [
@@ -2987,13 +3041,892 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "true"
 					}
 				],
-				displayName: "Opus 4.8"
+				displayName: "Claude Opus 4.8"
+			}
+		]
+	},
+	{
+		id: "claude-opus-5",
+		displayName: "Claude Opus 5",
+		aliases: [
+			"opus-latest",
+			"opus",
+			"opus-5"
+		],
+		parameters: [
+			{
+				id: "thinking",
+				displayName: "Thinking",
+				values: [
+					{
+						value: "false"
+					},
+					{
+						value: "true"
+					}
+				]
+			},
+			{
+				id: "context",
+				displayName: "Context",
+				values: [
+					{
+						value: "300k",
+						displayName: "300K"
+					},
+					{
+						value: "1m",
+						displayName: "1M"
+					}
+				]
+			},
+			{
+				id: "effort",
+				displayName: "Effort",
+				values: [
+					{
+						value: "low",
+						displayName: "Low"
+					},
+					{
+						value: "medium",
+						displayName: "Medium"
+					},
+					{
+						value: "high",
+						displayName: "High"
+					},
+					{
+						value: "xhigh",
+						displayName: "Extra High"
+					},
+					{
+						value: "max",
+						displayName: "Max"
+					}
+				]
+			},
+			{
+				id: "fast",
+				displayName: "Fast",
+				values: [
+					{
+						value: "false"
+					},
+					{
+						value: "true",
+						displayName: "Fast"
+					}
+				]
+			}
+		],
+		variants: [
+			{
+				params: [
+					{
+						id: "cyber",
+						value: "false"
+					},
+					{
+						id: "thinking",
+						value: "false"
+					},
+					{
+						id: "context",
+						value: "300k"
+					},
+					{
+						id: "effort",
+						value: "low"
+					},
+					{
+						id: "fast",
+						value: "false"
+					}
+				],
+				displayName: "Claude Opus 5"
+			},
+			{
+				params: [
+					{
+						id: "cyber",
+						value: "false"
+					},
+					{
+						id: "thinking",
+						value: "false"
+					},
+					{
+						id: "context",
+						value: "300k"
+					},
+					{
+						id: "effort",
+						value: "low"
+					},
+					{
+						id: "fast",
+						value: "true"
+					}
+				],
+				displayName: "Claude Opus 5"
+			},
+			{
+				params: [
+					{
+						id: "cyber",
+						value: "false"
+					},
+					{
+						id: "thinking",
+						value: "false"
+					},
+					{
+						id: "context",
+						value: "300k"
+					},
+					{
+						id: "effort",
+						value: "medium"
+					},
+					{
+						id: "fast",
+						value: "false"
+					}
+				],
+				displayName: "Claude Opus 5"
+			},
+			{
+				params: [
+					{
+						id: "cyber",
+						value: "false"
+					},
+					{
+						id: "thinking",
+						value: "false"
+					},
+					{
+						id: "context",
+						value: "300k"
+					},
+					{
+						id: "effort",
+						value: "medium"
+					},
+					{
+						id: "fast",
+						value: "true"
+					}
+				],
+				displayName: "Claude Opus 5"
+			},
+			{
+				params: [
+					{
+						id: "cyber",
+						value: "false"
+					},
+					{
+						id: "thinking",
+						value: "false"
+					},
+					{
+						id: "context",
+						value: "300k"
+					},
+					{
+						id: "effort",
+						value: "high"
+					},
+					{
+						id: "fast",
+						value: "false"
+					}
+				],
+				displayName: "Claude Opus 5"
+			},
+			{
+				params: [
+					{
+						id: "cyber",
+						value: "false"
+					},
+					{
+						id: "thinking",
+						value: "false"
+					},
+					{
+						id: "context",
+						value: "300k"
+					},
+					{
+						id: "effort",
+						value: "high"
+					},
+					{
+						id: "fast",
+						value: "true"
+					}
+				],
+				displayName: "Claude Opus 5"
+			},
+			{
+				params: [
+					{
+						id: "cyber",
+						value: "false"
+					},
+					{
+						id: "thinking",
+						value: "false"
+					},
+					{
+						id: "context",
+						value: "1m"
+					},
+					{
+						id: "effort",
+						value: "low"
+					},
+					{
+						id: "fast",
+						value: "false"
+					}
+				],
+				displayName: "Claude Opus 5"
+			},
+			{
+				params: [
+					{
+						id: "cyber",
+						value: "false"
+					},
+					{
+						id: "thinking",
+						value: "false"
+					},
+					{
+						id: "context",
+						value: "1m"
+					},
+					{
+						id: "effort",
+						value: "low"
+					},
+					{
+						id: "fast",
+						value: "true"
+					}
+				],
+				displayName: "Claude Opus 5"
+			},
+			{
+				params: [
+					{
+						id: "cyber",
+						value: "false"
+					},
+					{
+						id: "thinking",
+						value: "false"
+					},
+					{
+						id: "context",
+						value: "1m"
+					},
+					{
+						id: "effort",
+						value: "medium"
+					},
+					{
+						id: "fast",
+						value: "false"
+					}
+				],
+				displayName: "Claude Opus 5"
+			},
+			{
+				params: [
+					{
+						id: "cyber",
+						value: "false"
+					},
+					{
+						id: "thinking",
+						value: "false"
+					},
+					{
+						id: "context",
+						value: "1m"
+					},
+					{
+						id: "effort",
+						value: "medium"
+					},
+					{
+						id: "fast",
+						value: "true"
+					}
+				],
+				displayName: "Claude Opus 5"
+			},
+			{
+				params: [
+					{
+						id: "cyber",
+						value: "false"
+					},
+					{
+						id: "thinking",
+						value: "false"
+					},
+					{
+						id: "context",
+						value: "1m"
+					},
+					{
+						id: "effort",
+						value: "high"
+					},
+					{
+						id: "fast",
+						value: "false"
+					}
+				],
+				displayName: "Claude Opus 5"
+			},
+			{
+				params: [
+					{
+						id: "cyber",
+						value: "false"
+					},
+					{
+						id: "thinking",
+						value: "false"
+					},
+					{
+						id: "context",
+						value: "1m"
+					},
+					{
+						id: "effort",
+						value: "high"
+					},
+					{
+						id: "fast",
+						value: "true"
+					}
+				],
+				displayName: "Claude Opus 5"
+			},
+			{
+				params: [
+					{
+						id: "cyber",
+						value: "false"
+					},
+					{
+						id: "thinking",
+						value: "true"
+					},
+					{
+						id: "context",
+						value: "300k"
+					},
+					{
+						id: "effort",
+						value: "low"
+					},
+					{
+						id: "fast",
+						value: "false"
+					}
+				],
+				displayName: "Claude Opus 5"
+			},
+			{
+				params: [
+					{
+						id: "cyber",
+						value: "false"
+					},
+					{
+						id: "thinking",
+						value: "true"
+					},
+					{
+						id: "context",
+						value: "300k"
+					},
+					{
+						id: "effort",
+						value: "low"
+					},
+					{
+						id: "fast",
+						value: "true"
+					}
+				],
+				displayName: "Claude Opus 5"
+			},
+			{
+				params: [
+					{
+						id: "cyber",
+						value: "false"
+					},
+					{
+						id: "thinking",
+						value: "true"
+					},
+					{
+						id: "context",
+						value: "300k"
+					},
+					{
+						id: "effort",
+						value: "medium"
+					},
+					{
+						id: "fast",
+						value: "false"
+					}
+				],
+				displayName: "Claude Opus 5"
+			},
+			{
+				params: [
+					{
+						id: "cyber",
+						value: "false"
+					},
+					{
+						id: "thinking",
+						value: "true"
+					},
+					{
+						id: "context",
+						value: "300k"
+					},
+					{
+						id: "effort",
+						value: "medium"
+					},
+					{
+						id: "fast",
+						value: "true"
+					}
+				],
+				displayName: "Claude Opus 5"
+			},
+			{
+				params: [
+					{
+						id: "cyber",
+						value: "false"
+					},
+					{
+						id: "thinking",
+						value: "true"
+					},
+					{
+						id: "context",
+						value: "300k"
+					},
+					{
+						id: "effort",
+						value: "high"
+					},
+					{
+						id: "fast",
+						value: "false"
+					}
+				],
+				displayName: "Claude Opus 5"
+			},
+			{
+				params: [
+					{
+						id: "cyber",
+						value: "false"
+					},
+					{
+						id: "thinking",
+						value: "true"
+					},
+					{
+						id: "context",
+						value: "300k"
+					},
+					{
+						id: "effort",
+						value: "high"
+					},
+					{
+						id: "fast",
+						value: "true"
+					}
+				],
+				displayName: "Claude Opus 5"
+			},
+			{
+				params: [
+					{
+						id: "cyber",
+						value: "false"
+					},
+					{
+						id: "thinking",
+						value: "true"
+					},
+					{
+						id: "context",
+						value: "300k"
+					},
+					{
+						id: "effort",
+						value: "xhigh"
+					},
+					{
+						id: "fast",
+						value: "false"
+					}
+				],
+				displayName: "Claude Opus 5"
+			},
+			{
+				params: [
+					{
+						id: "cyber",
+						value: "false"
+					},
+					{
+						id: "thinking",
+						value: "true"
+					},
+					{
+						id: "context",
+						value: "300k"
+					},
+					{
+						id: "effort",
+						value: "xhigh"
+					},
+					{
+						id: "fast",
+						value: "true"
+					}
+				],
+				displayName: "Claude Opus 5"
+			},
+			{
+				params: [
+					{
+						id: "cyber",
+						value: "false"
+					},
+					{
+						id: "thinking",
+						value: "true"
+					},
+					{
+						id: "context",
+						value: "300k"
+					},
+					{
+						id: "effort",
+						value: "max"
+					},
+					{
+						id: "fast",
+						value: "false"
+					}
+				],
+				displayName: "Claude Opus 5"
+			},
+			{
+				params: [
+					{
+						id: "cyber",
+						value: "false"
+					},
+					{
+						id: "thinking",
+						value: "true"
+					},
+					{
+						id: "context",
+						value: "300k"
+					},
+					{
+						id: "effort",
+						value: "max"
+					},
+					{
+						id: "fast",
+						value: "true"
+					}
+				],
+				displayName: "Claude Opus 5"
+			},
+			{
+				params: [
+					{
+						id: "cyber",
+						value: "false"
+					},
+					{
+						id: "thinking",
+						value: "true"
+					},
+					{
+						id: "context",
+						value: "1m"
+					},
+					{
+						id: "effort",
+						value: "low"
+					},
+					{
+						id: "fast",
+						value: "false"
+					}
+				],
+				displayName: "Claude Opus 5"
+			},
+			{
+				params: [
+					{
+						id: "cyber",
+						value: "false"
+					},
+					{
+						id: "thinking",
+						value: "true"
+					},
+					{
+						id: "context",
+						value: "1m"
+					},
+					{
+						id: "effort",
+						value: "low"
+					},
+					{
+						id: "fast",
+						value: "true"
+					}
+				],
+				displayName: "Claude Opus 5"
+			},
+			{
+				params: [
+					{
+						id: "cyber",
+						value: "false"
+					},
+					{
+						id: "thinking",
+						value: "true"
+					},
+					{
+						id: "context",
+						value: "1m"
+					},
+					{
+						id: "effort",
+						value: "medium"
+					},
+					{
+						id: "fast",
+						value: "false"
+					}
+				],
+				displayName: "Claude Opus 5"
+			},
+			{
+				params: [
+					{
+						id: "cyber",
+						value: "false"
+					},
+					{
+						id: "thinking",
+						value: "true"
+					},
+					{
+						id: "context",
+						value: "1m"
+					},
+					{
+						id: "effort",
+						value: "medium"
+					},
+					{
+						id: "fast",
+						value: "true"
+					}
+				],
+				displayName: "Claude Opus 5"
+			},
+			{
+				params: [
+					{
+						id: "cyber",
+						value: "false"
+					},
+					{
+						id: "thinking",
+						value: "true"
+					},
+					{
+						id: "context",
+						value: "1m"
+					},
+					{
+						id: "effort",
+						value: "high"
+					},
+					{
+						id: "fast",
+						value: "false"
+					}
+				],
+				displayName: "Claude Opus 5",
+				isDefault: true
+			},
+			{
+				params: [
+					{
+						id: "cyber",
+						value: "false"
+					},
+					{
+						id: "thinking",
+						value: "true"
+					},
+					{
+						id: "context",
+						value: "1m"
+					},
+					{
+						id: "effort",
+						value: "high"
+					},
+					{
+						id: "fast",
+						value: "true"
+					}
+				],
+				displayName: "Claude Opus 5"
+			},
+			{
+				params: [
+					{
+						id: "cyber",
+						value: "false"
+					},
+					{
+						id: "thinking",
+						value: "true"
+					},
+					{
+						id: "context",
+						value: "1m"
+					},
+					{
+						id: "effort",
+						value: "xhigh"
+					},
+					{
+						id: "fast",
+						value: "false"
+					}
+				],
+				displayName: "Claude Opus 5"
+			},
+			{
+				params: [
+					{
+						id: "cyber",
+						value: "false"
+					},
+					{
+						id: "thinking",
+						value: "true"
+					},
+					{
+						id: "context",
+						value: "1m"
+					},
+					{
+						id: "effort",
+						value: "xhigh"
+					},
+					{
+						id: "fast",
+						value: "true"
+					}
+				],
+				displayName: "Claude Opus 5"
+			},
+			{
+				params: [
+					{
+						id: "cyber",
+						value: "false"
+					},
+					{
+						id: "thinking",
+						value: "true"
+					},
+					{
+						id: "context",
+						value: "1m"
+					},
+					{
+						id: "effort",
+						value: "max"
+					},
+					{
+						id: "fast",
+						value: "false"
+					}
+				],
+				displayName: "Claude Opus 5"
+			},
+			{
+				params: [
+					{
+						id: "cyber",
+						value: "false"
+					},
+					{
+						id: "thinking",
+						value: "true"
+					},
+					{
+						id: "context",
+						value: "1m"
+					},
+					{
+						id: "effort",
+						value: "max"
+					},
+					{
+						id: "fast",
+						value: "true"
+					}
+				],
+				displayName: "Claude Opus 5"
 			}
 		]
 	},
 	{
 		id: "claude-sonnet-4",
-		displayName: "Sonnet 4",
+		displayName: "Claude Sonnet 4",
 		aliases: [
 			"sonnet",
 			"sonnet-4"
@@ -3034,7 +3967,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "200k"
 					}
 				],
-				displayName: "Sonnet 4",
+				displayName: "Claude Sonnet 4",
 				isDefault: true
 			},
 			{
@@ -3048,13 +3981,13 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "200k"
 					}
 				],
-				displayName: "Sonnet 4"
+				displayName: "Claude Sonnet 4"
 			}
 		]
 	},
 	{
 		id: "claude-sonnet-4-5",
-		displayName: "Sonnet 4.5",
+		displayName: "Claude Sonnet 4.5",
 		aliases: [
 			"sonnet",
 			"sonnet-4.5",
@@ -3096,7 +4029,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "200k"
 					}
 				],
-				displayName: "Sonnet 4.5"
+				displayName: "Claude Sonnet 4.5"
 			},
 			{
 				params: [
@@ -3109,14 +4042,14 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "200k"
 					}
 				],
-				displayName: "Sonnet 4.5",
+				displayName: "Claude Sonnet 4.5",
 				isDefault: true
 			}
 		]
 	},
 	{
 		id: "claude-sonnet-4-6",
-		displayName: "Sonnet 4.6",
+		displayName: "Claude Sonnet 4.6",
 		aliases: [
 			"sonnet-latest",
 			"sonnet",
@@ -3189,7 +4122,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "low"
 					}
 				],
-				displayName: "Sonnet 4.6"
+				displayName: "Claude Sonnet 4.6"
 			},
 			{
 				params: [
@@ -3206,7 +4139,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "medium"
 					}
 				],
-				displayName: "Sonnet 4.6"
+				displayName: "Claude Sonnet 4.6"
 			},
 			{
 				params: [
@@ -3223,7 +4156,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "high"
 					}
 				],
-				displayName: "Sonnet 4.6"
+				displayName: "Claude Sonnet 4.6"
 			},
 			{
 				params: [
@@ -3240,7 +4173,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "max"
 					}
 				],
-				displayName: "Sonnet 4.6"
+				displayName: "Claude Sonnet 4.6"
 			},
 			{
 				params: [
@@ -3257,7 +4190,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "low"
 					}
 				],
-				displayName: "Sonnet 4.6"
+				displayName: "Claude Sonnet 4.6"
 			},
 			{
 				params: [
@@ -3274,7 +4207,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "medium"
 					}
 				],
-				displayName: "Sonnet 4.6"
+				displayName: "Claude Sonnet 4.6"
 			},
 			{
 				params: [
@@ -3291,7 +4224,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "high"
 					}
 				],
-				displayName: "Sonnet 4.6"
+				displayName: "Claude Sonnet 4.6"
 			},
 			{
 				params: [
@@ -3308,7 +4241,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "max"
 					}
 				],
-				displayName: "Sonnet 4.6"
+				displayName: "Claude Sonnet 4.6"
 			},
 			{
 				params: [
@@ -3325,7 +4258,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "low"
 					}
 				],
-				displayName: "Sonnet 4.6"
+				displayName: "Claude Sonnet 4.6"
 			},
 			{
 				params: [
@@ -3342,7 +4275,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "medium"
 					}
 				],
-				displayName: "Sonnet 4.6"
+				displayName: "Claude Sonnet 4.6"
 			},
 			{
 				params: [
@@ -3359,7 +4292,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "high"
 					}
 				],
-				displayName: "Sonnet 4.6"
+				displayName: "Claude Sonnet 4.6"
 			},
 			{
 				params: [
@@ -3376,7 +4309,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "max"
 					}
 				],
-				displayName: "Sonnet 4.6"
+				displayName: "Claude Sonnet 4.6"
 			},
 			{
 				params: [
@@ -3393,7 +4326,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "low"
 					}
 				],
-				displayName: "Sonnet 4.6"
+				displayName: "Claude Sonnet 4.6"
 			},
 			{
 				params: [
@@ -3410,7 +4343,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "medium"
 					}
 				],
-				displayName: "Sonnet 4.6",
+				displayName: "Claude Sonnet 4.6",
 				isDefault: true
 			},
 			{
@@ -3428,7 +4361,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "high"
 					}
 				],
-				displayName: "Sonnet 4.6"
+				displayName: "Claude Sonnet 4.6"
 			},
 			{
 				params: [
@@ -3445,13 +4378,13 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "max"
 					}
 				],
-				displayName: "Sonnet 4.6"
+				displayName: "Claude Sonnet 4.6"
 			}
 		]
 	},
 	{
 		id: "claude-sonnet-5",
-		displayName: "Sonnet 5",
+		displayName: "Claude Sonnet 5",
 		aliases: [
 			"sonnet-latest",
 			"sonnet-5"
@@ -3526,7 +4459,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "low"
 					}
 				],
-				displayName: "Sonnet 5"
+				displayName: "Claude Sonnet 5"
 			},
 			{
 				params: [
@@ -3543,7 +4476,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "medium"
 					}
 				],
-				displayName: "Sonnet 5"
+				displayName: "Claude Sonnet 5"
 			},
 			{
 				params: [
@@ -3560,7 +4493,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "high"
 					}
 				],
-				displayName: "Sonnet 5"
+				displayName: "Claude Sonnet 5"
 			},
 			{
 				params: [
@@ -3577,7 +4510,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "xhigh"
 					}
 				],
-				displayName: "Sonnet 5"
+				displayName: "Claude Sonnet 5"
 			},
 			{
 				params: [
@@ -3594,7 +4527,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "max"
 					}
 				],
-				displayName: "Sonnet 5"
+				displayName: "Claude Sonnet 5"
 			},
 			{
 				params: [
@@ -3611,7 +4544,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "low"
 					}
 				],
-				displayName: "Sonnet 5"
+				displayName: "Claude Sonnet 5"
 			},
 			{
 				params: [
@@ -3628,7 +4561,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "medium"
 					}
 				],
-				displayName: "Sonnet 5"
+				displayName: "Claude Sonnet 5"
 			},
 			{
 				params: [
@@ -3645,7 +4578,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "high"
 					}
 				],
-				displayName: "Sonnet 5"
+				displayName: "Claude Sonnet 5"
 			},
 			{
 				params: [
@@ -3662,7 +4595,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "xhigh"
 					}
 				],
-				displayName: "Sonnet 5"
+				displayName: "Claude Sonnet 5"
 			},
 			{
 				params: [
@@ -3679,7 +4612,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "max"
 					}
 				],
-				displayName: "Sonnet 5"
+				displayName: "Claude Sonnet 5"
 			},
 			{
 				params: [
@@ -3696,7 +4629,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "low"
 					}
 				],
-				displayName: "Sonnet 5"
+				displayName: "Claude Sonnet 5"
 			},
 			{
 				params: [
@@ -3713,7 +4646,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "medium"
 					}
 				],
-				displayName: "Sonnet 5"
+				displayName: "Claude Sonnet 5"
 			},
 			{
 				params: [
@@ -3730,7 +4663,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "high"
 					}
 				],
-				displayName: "Sonnet 5"
+				displayName: "Claude Sonnet 5"
 			},
 			{
 				params: [
@@ -3747,7 +4680,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "xhigh"
 					}
 				],
-				displayName: "Sonnet 5"
+				displayName: "Claude Sonnet 5"
 			},
 			{
 				params: [
@@ -3764,7 +4697,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "max"
 					}
 				],
-				displayName: "Sonnet 5"
+				displayName: "Claude Sonnet 5"
 			},
 			{
 				params: [
@@ -3781,7 +4714,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "low"
 					}
 				],
-				displayName: "Sonnet 5"
+				displayName: "Claude Sonnet 5"
 			},
 			{
 				params: [
@@ -3798,7 +4731,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "medium"
 					}
 				],
-				displayName: "Sonnet 5"
+				displayName: "Claude Sonnet 5"
 			},
 			{
 				params: [
@@ -3815,7 +4748,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "high"
 					}
 				],
-				displayName: "Sonnet 5",
+				displayName: "Claude Sonnet 5",
 				isDefault: true
 			},
 			{
@@ -3833,7 +4766,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "xhigh"
 					}
 				],
-				displayName: "Sonnet 5"
+				displayName: "Claude Sonnet 5"
 			},
 			{
 				params: [
@@ -3850,7 +4783,7 @@ export const FALLBACK_MODEL_ITEMS = [
 						value: "max"
 					}
 				],
-				displayName: "Sonnet 5"
+				displayName: "Claude Sonnet 5"
 			}
 		]
 	},
@@ -4011,6 +4944,135 @@ export const FALLBACK_MODEL_ITEMS = [
 		]
 	},
 	{
+		id: "gemini-3.6-flash",
+		displayName: "Gemini 3.6 Flash",
+		aliases: [
+			"gemini-flash-latest",
+			"gemini-flash"
+		],
+		parameters: [
+			{
+				id: "effort",
+				displayName: "Effort",
+				values: [
+					{
+						value: "minimal",
+						displayName: "Minimal"
+					},
+					{
+						value: "low",
+						displayName: "Low"
+					},
+					{
+						value: "medium",
+						displayName: "Medium"
+					},
+					{
+						value: "high",
+						displayName: "High"
+					}
+				]
+			}
+		],
+		variants: [
+			{
+				params: [
+					{
+						id: "effort",
+						value: "minimal"
+					}
+				],
+				displayName: "Gemini 3.6 Flash"
+			},
+			{
+				params: [
+					{
+						id: "effort",
+						value: "low"
+					}
+				],
+				displayName: "Gemini 3.6 Flash"
+			},
+			{
+				params: [
+					{
+						id: "effort",
+						value: "medium"
+					}
+				],
+				displayName: "Gemini 3.6 Flash"
+			},
+			{
+				params: [
+					{
+						id: "effort",
+						value: "high"
+					}
+				],
+				displayName: "Gemini 3.6 Flash",
+				isDefault: true
+			}
+		]
+	},
+	{
+		id: "gemini-3.7-flash",
+		displayName: "Gemini 3.7 Flash",
+		aliases: [
+			"gemini-flash-latest",
+			"gemini-flash"
+		],
+		parameters: [
+			{
+				id: "effort",
+				displayName: "Effort",
+				values: [
+					{
+						value: "low",
+						displayName: "Low"
+					},
+					{
+						value: "medium",
+						displayName: "Medium"
+					},
+					{
+						value: "high",
+						displayName: "High"
+					}
+				]
+			}
+		],
+		variants: [
+			{
+				params: [
+					{
+						id: "effort",
+						value: "low"
+					}
+				],
+				displayName: "Gemini 3.7 Flash"
+			},
+			{
+				params: [
+					{
+						id: "effort",
+						value: "medium"
+					}
+				],
+				displayName: "Gemini 3.7 Flash"
+			},
+			{
+				params: [
+					{
+						id: "effort",
+						value: "high"
+					}
+				],
+				displayName: "Gemini 3.7 Flash",
+				isDefault: true
+			}
+		]
+	},
+	{
 		id: "glm-5.2",
 		displayName: "GLM 5.2",
 		parameters: [
@@ -4119,216 +5181,6 @@ export const FALLBACK_MODEL_ITEMS = [
 					}
 				],
 				displayName: "GPT-5.1"
-			}
-		]
-	},
-	{
-		id: "gpt-5.1-codex-max",
-		displayName: "Codex 5.1 Max",
-		aliases: [
-			"codex",
-			"codex-5.1-max"
-		],
-		parameters: [
-			{
-				id: "reasoning",
-				displayName: "Reasoning",
-				values: [
-					{
-						value: "low",
-						displayName: "Low"
-					},
-					{
-						value: "medium",
-						displayName: "Medium"
-					},
-					{
-						value: "high",
-						displayName: "High"
-					},
-					{
-						value: "extra-high",
-						displayName: "Extra High"
-					}
-				]
-			},
-			{
-				id: "fast",
-				displayName: "Fast",
-				values: [
-					{
-						value: "false"
-					},
-					{
-						value: "true",
-						displayName: "Fast"
-					}
-				]
-			}
-		],
-		variants: [
-			{
-				params: [
-					{
-						id: "reasoning",
-						value: "low"
-					},
-					{
-						id: "fast",
-						value: "false"
-					}
-				],
-				displayName: "Codex 5.1 Max"
-			},
-			{
-				params: [
-					{
-						id: "reasoning",
-						value: "low"
-					},
-					{
-						id: "fast",
-						value: "true"
-					}
-				],
-				displayName: "Codex 5.1 Max"
-			},
-			{
-				params: [
-					{
-						id: "reasoning",
-						value: "medium"
-					},
-					{
-						id: "fast",
-						value: "false"
-					}
-				],
-				displayName: "Codex 5.1 Max"
-			},
-			{
-				params: [
-					{
-						id: "reasoning",
-						value: "medium"
-					},
-					{
-						id: "fast",
-						value: "true"
-					}
-				],
-				displayName: "Codex 5.1 Max"
-			},
-			{
-				params: [
-					{
-						id: "reasoning",
-						value: "high"
-					},
-					{
-						id: "fast",
-						value: "false"
-					}
-				],
-				displayName: "Codex 5.1 Max"
-			},
-			{
-				params: [
-					{
-						id: "reasoning",
-						value: "high"
-					},
-					{
-						id: "fast",
-						value: "true"
-					}
-				],
-				displayName: "Codex 5.1 Max",
-				isDefault: true
-			},
-			{
-				params: [
-					{
-						id: "reasoning",
-						value: "extra-high"
-					},
-					{
-						id: "fast",
-						value: "false"
-					}
-				],
-				displayName: "Codex 5.1 Max"
-			},
-			{
-				params: [
-					{
-						id: "reasoning",
-						value: "extra-high"
-					},
-					{
-						id: "fast",
-						value: "true"
-					}
-				],
-				displayName: "Codex 5.1 Max"
-			}
-		]
-	},
-	{
-		id: "gpt-5.1-codex-mini",
-		displayName: "Codex 5.1 Mini",
-		aliases: [
-			"codex-mini-latest",
-			"codex-mini"
-		],
-		parameters: [
-			{
-				id: "reasoning",
-				displayName: "Reasoning",
-				values: [
-					{
-						value: "low",
-						displayName: "Low"
-					},
-					{
-						value: "medium",
-						displayName: "Medium"
-					},
-					{
-						value: "high",
-						displayName: "High"
-					}
-				]
-			}
-		],
-		variants: [
-			{
-				params: [
-					{
-						id: "reasoning",
-						value: "low"
-					}
-				],
-				displayName: "Codex 5.1 Mini"
-			},
-			{
-				params: [
-					{
-						id: "reasoning",
-						value: "medium"
-					}
-				],
-				displayName: "Codex 5.1 Mini",
-				isDefault: true
-			},
-			{
-				params: [
-					{
-						id: "reasoning",
-						value: "high"
-					}
-				],
-				displayName: "Codex 5.1 Mini"
 			}
 		]
 	},
@@ -4480,158 +5332,6 @@ export const FALLBACK_MODEL_ITEMS = [
 					}
 				],
 				displayName: "GPT-5.2"
-			}
-		]
-	},
-	{
-		id: "gpt-5.2-codex",
-		displayName: "Codex 5.2",
-		aliases: [
-			"codex",
-			"codex-5.2"
-		],
-		parameters: [
-			{
-				id: "reasoning",
-				displayName: "Reasoning",
-				values: [
-					{
-						value: "low",
-						displayName: "Low"
-					},
-					{
-						value: "medium",
-						displayName: "Medium"
-					},
-					{
-						value: "high",
-						displayName: "High"
-					},
-					{
-						value: "extra-high",
-						displayName: "Extra High"
-					}
-				]
-			},
-			{
-				id: "fast",
-				displayName: "Fast",
-				values: [
-					{
-						value: "false"
-					},
-					{
-						value: "true",
-						displayName: "Fast"
-					}
-				]
-			}
-		],
-		variants: [
-			{
-				params: [
-					{
-						id: "reasoning",
-						value: "low"
-					},
-					{
-						id: "fast",
-						value: "false"
-					}
-				],
-				displayName: "Codex 5.2"
-			},
-			{
-				params: [
-					{
-						id: "reasoning",
-						value: "low"
-					},
-					{
-						id: "fast",
-						value: "true"
-					}
-				],
-				displayName: "Codex 5.2"
-			},
-			{
-				params: [
-					{
-						id: "reasoning",
-						value: "medium"
-					},
-					{
-						id: "fast",
-						value: "false"
-					}
-				],
-				displayName: "Codex 5.2"
-			},
-			{
-				params: [
-					{
-						id: "reasoning",
-						value: "medium"
-					},
-					{
-						id: "fast",
-						value: "true"
-					}
-				],
-				displayName: "Codex 5.2"
-			},
-			{
-				params: [
-					{
-						id: "reasoning",
-						value: "high"
-					},
-					{
-						id: "fast",
-						value: "false"
-					}
-				],
-				displayName: "Codex 5.2"
-			},
-			{
-				params: [
-					{
-						id: "reasoning",
-						value: "high"
-					},
-					{
-						id: "fast",
-						value: "true"
-					}
-				],
-				displayName: "Codex 5.2",
-				isDefault: true
-			},
-			{
-				params: [
-					{
-						id: "reasoning",
-						value: "extra-high"
-					},
-					{
-						id: "fast",
-						value: "false"
-					}
-				],
-				displayName: "Codex 5.2"
-			},
-			{
-				params: [
-					{
-						id: "reasoning",
-						value: "extra-high"
-					},
-					{
-						id: "fast",
-						value: "true"
-					}
-				],
-				displayName: "Codex 5.2"
 			}
 		]
 	},
@@ -6843,6 +7543,154 @@ export const FALLBACK_MODEL_ITEMS = [
 		]
 	},
 	{
+		id: "grok-4.6",
+		displayName: "Cursor Grok 4.6",
+		parameters: [
+			{
+				id: "effort",
+				displayName: "Effort",
+				values: [
+					{
+						value: "low",
+						displayName: "Low"
+					},
+					{
+						value: "medium",
+						displayName: "Medium"
+					},
+					{
+						value: "high",
+						displayName: "High"
+					},
+					{
+						value: "xhigh",
+						displayName: "Extra High"
+					}
+				]
+			},
+			{
+				id: "fast",
+				displayName: "Fast",
+				values: [
+					{
+						value: "false"
+					},
+					{
+						value: "true",
+						displayName: "Fast​​"
+					}
+				]
+			}
+		],
+		variants: [
+			{
+				params: [
+					{
+						id: "effort",
+						value: "low"
+					},
+					{
+						id: "fast",
+						value: "false"
+					}
+				],
+				displayName: "Cursor Grok 4.6"
+			},
+			{
+				params: [
+					{
+						id: "effort",
+						value: "low"
+					},
+					{
+						id: "fast",
+						value: "true"
+					}
+				],
+				displayName: "Cursor Grok 4.6"
+			},
+			{
+				params: [
+					{
+						id: "effort",
+						value: "medium"
+					},
+					{
+						id: "fast",
+						value: "false"
+					}
+				],
+				displayName: "Cursor Grok 4.6"
+			},
+			{
+				params: [
+					{
+						id: "effort",
+						value: "medium"
+					},
+					{
+						id: "fast",
+						value: "true"
+					}
+				],
+				displayName: "Cursor Grok 4.6"
+			},
+			{
+				params: [
+					{
+						id: "effort",
+						value: "high"
+					},
+					{
+						id: "fast",
+						value: "false"
+					}
+				],
+				displayName: "Cursor Grok 4.6"
+			},
+			{
+				params: [
+					{
+						id: "effort",
+						value: "high"
+					},
+					{
+						id: "fast",
+						value: "true"
+					}
+				],
+				displayName: "Cursor Grok 4.6",
+				isDefault: true
+			},
+			{
+				params: [
+					{
+						id: "effort",
+						value: "xhigh"
+					},
+					{
+						id: "fast",
+						value: "false"
+					}
+				],
+				displayName: "Cursor Grok 4.6"
+			},
+			{
+				params: [
+					{
+						id: "effort",
+						value: "xhigh"
+					},
+					{
+						id: "fast",
+						value: "true"
+					}
+				],
+				displayName: "Cursor Grok 4.6"
+			}
+		]
+	},
+	{
 		id: "kimi-k2.7-code",
 		displayName: "Kimi K2.7 Code",
 		aliases: [
@@ -6853,6 +7701,60 @@ export const FALLBACK_MODEL_ITEMS = [
 			{
 				params: [],
 				displayName: "Kimi K2.7 Code",
+				isDefault: true
+			}
+		]
+	},
+	{
+		id: "kimi-k3",
+		displayName: "Kimi K3",
+		parameters: [
+			{
+				id: "reasoning",
+				displayName: "Reasoning",
+				values: [
+					{
+						value: "low",
+						displayName: "Low"
+					},
+					{
+						value: "high",
+						displayName: "High"
+					},
+					{
+						value: "max",
+						displayName: "Max"
+					}
+				]
+			}
+		],
+		variants: [
+			{
+				params: [
+					{
+						id: "reasoning",
+						value: "low"
+					}
+				],
+				displayName: "Kimi K3"
+			},
+			{
+				params: [
+					{
+						id: "reasoning",
+						value: "high"
+					}
+				],
+				displayName: "Kimi K3"
+			},
+			{
+				params: [
+					{
+						id: "reasoning",
+						value: "max"
+					}
+				],
+				displayName: "Kimi K3",
 				isDefault: true
 			}
 		]

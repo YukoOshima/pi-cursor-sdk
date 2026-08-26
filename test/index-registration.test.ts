@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createAssistantMessageEventStream } from "@earendil-works/pi-ai/compat";
+import { createAssistantMessageEventStream, type AssistantMessageEvent } from "@earendil-works/pi-ai";
 import {
 	createExtensionCommandContext,
 	createExtensionRegistrationPi,
@@ -33,7 +33,11 @@ import { __testUtils as cursorSessionScopeTestUtils } from "../src/cursor-sessio
 import { streamCursor } from "../src/cursor-provider.js";
 import { streamCursorLazy } from "../src/cursor-provider-lazy.js";
 import { buildCursorPiToolBridgeSnapshot } from "../src/cursor-pi-tool-bridge.js";
-import { CURSOR_ASK_QUESTION_TOOL_NAME, resolveCursorAskQuestionEnabled } from "../src/cursor-question-tool.js";
+import {
+	CURSOR_ASK_QUESTION_BLOCKED_EVENT,
+	CURSOR_ASK_QUESTION_TOOL_NAME,
+	resolveCursorAskQuestionEnabled,
+} from "../src/cursor-question-tool.js";
 import { CURSOR_ACTIVATE_SKILL_TOOL_NAME } from "../src/cursor-skill-tool.js";
 import { __testUtils as cursorSdkProcessErrorGuardTestUtils } from "../src/cursor-sdk-process-error-guard.js";
 
@@ -249,6 +253,31 @@ describe("extension registration and discovery", () => {
 		expect(mockedStreamCursor).toHaveBeenCalledOnce();
 	});
 
+	it("reports and scrubs synchronous Cursor provider runtime failures through the stream", async () => {
+		const apiKey = "cursor-dogfood-secret-key";
+		mockedStreamCursor.mockImplementationOnce(() => {
+			throw new Error(`synchronous provider failure: Bearer ${apiKey}`);
+		});
+		const stream = streamCursorLazy(makeModel("composer-2"), makeContext(), { apiKey });
+		const events: AssistantMessageEvent[] = [];
+		const consumeEvents = (async () => {
+			for await (const event of stream) events.push(event);
+		})();
+
+		const result = await stream.result();
+		await consumeEvents;
+
+		expect(events).toHaveLength(1);
+		const [errorEvent] = events;
+		expect(errorEvent).toMatchObject({ type: "error", reason: "error" });
+		if (errorEvent?.type !== "error") throw new Error("Expected a provider error event");
+		expect(errorEvent.error).toBe(result);
+		expect(result.stopReason).toBe("error");
+		expect(result.errorMessage).toMatch(/^Cursor provider runtime failed: /);
+		expect(result.errorMessage).toContain("[redacted]");
+		expect(result.errorMessage).not.toContain(apiKey);
+	});
+
 	it("keeps only canonical Cursor replay tools active for Cursor models", async () => {
 		process.env.PI_CURSOR_NATIVE_TOOL_DISPLAY = "1";
 		mockedDiscover.mockResolvedValueOnce([]);
@@ -405,6 +434,90 @@ describe("extension registration and discovery", () => {
 			cancelled: false,
 			answers: [{ id: "question_1", answer: "Web app", value: "web", cancelled: false }],
 		});
+		expect(pi._eventsEmitted.filter((entry) => entry.channel === CURSOR_ASK_QUESTION_BLOCKED_EVENT)).toEqual([
+			{ channel: CURSOR_ASK_QUESTION_BLOCKED_EVENT, data: { active: true } },
+			{ channel: CURSOR_ASK_QUESTION_BLOCKED_EVENT, data: { active: false } },
+		]);
+		expect(tool!.executionMode).toBe("sequential");
+		const listenerPayloads: unknown[] = [];
+		const unsubscribe = pi.events.on(CURSOR_ASK_QUESTION_BLOCKED_EVENT, (payload) => {
+			listenerPayloads.push(payload);
+		});
+		// Re-run once more to prove createEventBus delivery
+		const selectAgain = vi.fn().mockResolvedValue("Yes");
+		const deliveryResult = await tool!.execute(
+			"question-2",
+			{ question: "Again?", options: ["Yes"], allowCustom: false },
+			undefined,
+			undefined,
+			createExtensionTestContext({ ui: { notify: vi.fn(), setStatus: vi.fn(), select: selectAgain, input: vi.fn() } }),
+		);
+		unsubscribe();
+		expect(listenerPayloads).toEqual([{ active: true }, { active: false }]);
+		expect(selectAgain).toHaveBeenCalledWith("Again?", ["Yes"]);
+		expect(deliveryResult.content).toEqual([{ type: "text", text: "User answered: Yes" }]);
+		expect(deliveryResult.details).toMatchObject({
+			uiAvailable: true,
+			cancelled: false,
+			answers: [{ id: "question_1", answer: "Yes", value: "Yes", cancelled: false }],
+		});
+	});
+
+	it("clears pi-cursor-sdk:ask-question:blocked when the Cursor question UI is cancelled", async () => {
+		process.env.PI_CURSOR_NATIVE_TOOL_DISPLAY = "0";
+		mockedDiscover.mockResolvedValueOnce([]);
+		const pi = createExtensionPi();
+		await extensionFactory(pi);
+		await pi.runSessionStart();
+
+		const select = vi.fn().mockResolvedValue(undefined);
+		const tool = pi._tools.find((candidate) => candidate.name === CURSOR_ASK_QUESTION_TOOL_NAME);
+		const result = await tool!.execute(
+			"question-cancel",
+			{
+				question: "Proceed?",
+				options: ["Yes", "No"],
+				allowCustom: false,
+			},
+			undefined,
+			undefined,
+			createExtensionTestContext({ ui: { notify: vi.fn(), setStatus: vi.fn(), select, input: vi.fn() } }),
+		);
+
+		expect(result.details).toMatchObject({ cancelled: true });
+		expect(pi._eventsEmitted.filter((entry) => entry.channel === CURSOR_ASK_QUESTION_BLOCKED_EVENT)).toEqual([
+			{ channel: CURSOR_ASK_QUESTION_BLOCKED_EVENT, data: { active: true } },
+			{ channel: CURSOR_ASK_QUESTION_BLOCKED_EVENT, data: { active: false } },
+		]);
+	});
+
+	it("clears pi-cursor-sdk:ask-question:blocked when the Cursor question UI rejects", async () => {
+		process.env.PI_CURSOR_NATIVE_TOOL_DISPLAY = "0";
+		mockedDiscover.mockResolvedValueOnce([]);
+		const pi = createExtensionPi();
+		await extensionFactory(pi);
+		await pi.runSessionStart();
+
+		const select = vi.fn().mockRejectedValue(new Error("UI failed"));
+		const tool = pi._tools.find((candidate) => candidate.name === CURSOR_ASK_QUESTION_TOOL_NAME);
+		await expect(
+			tool!.execute(
+				"question-reject",
+				{
+					question: "Proceed?",
+					options: ["Yes", "No"],
+					allowCustom: false,
+				},
+				undefined,
+				undefined,
+				createExtensionTestContext({ ui: { notify: vi.fn(), setStatus: vi.fn(), select, input: vi.fn() } }),
+			),
+		).rejects.toThrow("UI failed");
+
+		expect(pi._eventsEmitted.filter((entry) => entry.channel === CURSOR_ASK_QUESTION_BLOCKED_EVENT)).toEqual([
+			{ channel: CURSOR_ASK_QUESTION_BLOCKED_EVENT, data: { active: true } },
+			{ channel: CURSOR_ASK_QUESTION_BLOCKED_EVENT, data: { active: false } },
+		]);
 	});
 
 	it("registers Cursor pi tool bridge state and activates the Cursor question tool", async () => {

@@ -1,5 +1,6 @@
 import { vi } from "vitest";
-import type { ExtensionAPI, ProviderConfig, ToolInfo } from "@earendil-works/pi-coding-agent";
+import type { Provider } from "@earendil-works/pi-ai";
+import { createEventBus, type ExtensionAPI, type ProviderConfig, type ToolInfo } from "@earendil-works/pi-coding-agent";
 import type { CursorNativeToolDisplayExtensionApi } from "../../src/cursor-native-tool-display-registration.js";
 import type cursorExtensionFactory from "../../src/index.js";
 import { createExtensionCommandContext } from "./context-fixtures.js";
@@ -60,15 +61,29 @@ export function createPiHarness(options: PiHarnessOptions = {}): PiHarness {
 		await command.handler(args, createExtensionCommandContext(ctxOverrides));
 	};
 
+	const registerProvider = vi.fn((providerOrName: Provider | string, config?: ProviderConfig) => {
+		if (typeof providerOrName !== "string" || !config) {
+			throw new Error("Native providers are outside this harness's registration contract");
+		}
+		registered.push({ name: providerOrName, config });
+	});
 	const registerTool = vi.fn<ExtensionAPI["registerTool"]>((tool) => {
 		tools.push(tool as RegisteredTool);
 	}) as PiHarness["registerTool"];
 
+	const eventsEmitted: Array<{ channel: string; data: unknown }> = [];
+	const eventBus = createEventBus();
+	const events: ExtensionAPI["events"] = {
+		emit: (channel: string, data: unknown) => {
+			eventsEmitted.push({ channel, data });
+			eventBus.emit(channel, data);
+		},
+		on: (channel, handler) => eventBus.on(channel, handler),
+	};
+
 	return {
 		...eventApi,
-		registerProvider: vi.fn<ExtensionAPI["registerProvider"]>((name: string, config: ProviderConfig) => {
-			registered.push({ name, config });
-		}),
+		registerProvider,
 		registerFlag: vi.fn<ExtensionAPI["registerFlag"]>(),
 		registerCommand: vi.fn<ExtensionAPI["registerCommand"]>((name: string, command) => {
 			commands.set(name, command);
@@ -94,6 +109,8 @@ export function createPiHarness(options: PiHarnessOptions = {}): PiHarness {
 		sendMessage: vi.fn<ExtensionAPI["sendMessage"]>(),
 		getFlag: vi.fn<ExtensionAPI["getFlag"]>((name: string) => resolveFlagValue(name)),
 		appendEntry: vi.fn<ExtensionAPI["appendEntry"]>(),
+		events,
+		_eventsEmitted: eventsEmitted,
 		runCommand,
 		_registered: registered,
 		_commands: commands,

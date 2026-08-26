@@ -4,6 +4,15 @@ import {
 	installCursorSdkSessionProcessErrorGuard,
 } from "../src/cursor-sdk-process-error-guard.js";
 
+function makeCursorSdkStalledRepeatedlyRetriableError(): Error {
+	const error = new Error("Connection stalled repeatedly");
+	error.name = "RetriableError";
+	error.stack =
+		"RetriableError: Connection stalled repeatedly\n" +
+		"    at fe (/repo/node_modules/@cursor/sdk/dist/esm/357.js:1:62073)";
+	return error;
+}
+
 function makeCursorSdkRawAbortDomException(): DOMException {
 	const error = new DOMException("This operation was aborted", "AbortError");
 	error.stack =
@@ -56,7 +65,7 @@ describe("Cursor SDK raw AbortError process guard", () => {
 		}
 	});
 
-	it("suppresses during a provider turn even before abort suppression is declared", () => {
+	it("suppresses a provider turn even without explicit abort suppression (stall/timer path)", () => {
 		const guard = installCursorSdkProcessErrorGuard();
 		try {
 			expect(processListenerCalled("uncaughtException", makeCursorSdkRawAbortDomException())).toBe(false);
@@ -87,7 +96,7 @@ describe("Cursor SDK raw AbortError process guard", () => {
 		}
 	});
 
-	it("suppresses late Cursor AbortError while a session guard is still active", () => {
+	it("suppresses during an active session between provider turns", () => {
 		const guard = installCursorSdkSessionProcessErrorGuard();
 		try {
 			expect(processListenerCalled("uncaughtException", makeCursorSdkRawAbortDomException())).toBe(false);
@@ -96,10 +105,25 @@ describe("Cursor SDK raw AbortError process guard", () => {
 		}
 	});
 
-	it("does not suppress after all guards are disposed", () => {
-		const guard = installCursorSdkProcessErrorGuard();
-		guard.suppressAbortErrors();
-		guard.dispose();
+	it("does not suppress without any active session or provider turn", () => {
 		expect(processListenerCalled("uncaughtException", makeCursorSdkRawAbortDomException())).toBe(true);
+	});
+
+	it("suppresses RetriableError Connection stalled repeatedly during an active provider turn", () => {
+		const guard = installCursorSdkProcessErrorGuard();
+		try {
+			expect(processListenerCalled("uncaughtException", makeCursorSdkStalledRepeatedlyRetriableError())).toBe(false);
+		} finally {
+			guard.dispose();
+		}
+	});
+
+	it("does not suppress RetriableError Connection stalled repeatedly with only a session guard", () => {
+		const guard = installCursorSdkSessionProcessErrorGuard();
+		try {
+			expect(processListenerCalled("uncaughtException", makeCursorSdkStalledRepeatedlyRetriableError())).toBe(true);
+		} finally {
+			guard.dispose();
+		}
 	});
 });

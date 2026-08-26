@@ -165,6 +165,7 @@ Session summaries can hide per-message usage bugs. When investigating token or c
 
 - `usage.input`, `usage.output`, `usage.cacheRead`, and `usage.cacheWrite` are additive spend-style counters for the assistant turn.
 - `usage.totalTokens` is pi context occupancy for that turn, not a value to sum across all assistant messages.
+- Distinguish published SDK `TokenUsage` from observed raw local `turn-ended.usage`: installed `@cursor/sdk` `toTokenUsage` sets `totalTokens = input+output+cacheRead+cacheWrite`, but captured local raw `turn-ended.usage` keeps `inputTokens` as the full prompt while cache fields partition it (see `test/fixtures/cursor-sdk-turn-ended-usage-1.0.23.json` / issue #196). Map raw turn-ended samples to pi as uncached `input = inputTokens - cacheReadTokens - cacheWriteTokens` and `totalTokens = inputTokens + outputTokens`.
 - No single assistant message should persist SDK/full-agent-context-sized usage outside the selected model window.
 - Real bad-session evidence should be reduced to a sanitized fixture, like `test/fixtures/cursor-run-usage-compaction-poison.jsonl`, instead of committing raw session JSONL.
 
@@ -189,7 +190,7 @@ Simulate plan-mode execute stripping with the repo fixture:
 It sets active tools to `read`, `bash`, `edit`, `write` on each `turn_start`. Run pi with:
 
 ```bash
-pi --approve -e scripts/fixtures/plan-strip-shim --cursor-no-fast --model cursor/composer-2-5 \
+pi --approve -e scripts/fixtures/plan-strip-shim --cursor-no-fast --model cursor/grok-4.6 \
   --session-dir "$SMOKE_DIR/plan-strip" \
   -p 'After reset, read README.md and answer PLAN_STRIP_OK=yes.'
 ```
@@ -256,7 +257,7 @@ The script writes timestamped artifacts under `--out` (default `/tmp/pi-cursor-s
 
 Stdout prints artifact paths and summary counts only. Raw payloads stay on disk and may contain local paths, project text, tool args/results, or secrets — do not commit or share them.
 
-Hard repo rule: Cursor SDK behavior claims must come from the installed `@cursor/sdk` package and/or https://cursor.com/docs/sdk/typescript, not from memory or ad-hoc probes alone. Current cutover validation targets exact `@cursor/sdk@1.0.23` and pi 0.80.9 local packages.
+Hard repo rule: Cursor SDK behavior claims must come from the installed `@cursor/sdk` package and/or https://cursor.com/docs/sdk/typescript, not from memory or ad-hoc probes alone. Current cutover validation targets exact `@cursor/sdk@1.0.27` and Pi 0.84.0 local packages.
 
 ## Pi provider SDK event capture
 
@@ -267,7 +268,7 @@ One-shot maintainer script (RPC pi run, gitignored artifacts by default):
 ```bash
 CURSOR_API_KEY=... npm run debug:provider-events -- \
   --cwd . \
-  --model cursor/composer-2-5 \
+  --model cursor/grok-4.6 \
   --prompt 'Repro prompt here' \
   --out .debug/cursor-sdk-events/manual-repro
 ```
@@ -307,7 +308,7 @@ Artifacts under `--out` (default `.debug/cursor-sdk-events/<timestamp>/` under `
 During any normal pi session you can also opt in with:
 
 ```bash
-PI_CURSOR_SDK_EVENT_DEBUG=1 pi --approve -e . --model cursor/composer-2-5
+PI_CURSOR_SDK_EVENT_DEBUG=1 pi --approve -e . --model cursor/grok-4.6
 ```
 
 Multi-turn sessions group automatically by pi session file:
@@ -358,7 +359,7 @@ Ask the reporter (or capture yourself) for:
 | Field | Why |
 | --- | --- |
 | `pi --version` and installed `pi-cursor-sdk` version | Confirms extension/runtime in use |
-| Model ID (for example `cursor/composer-2-5`) | Routing/replay behavior is model-scoped |
+| Model ID (for example `cursor/grok-4.6`) | Routing/replay behavior is model-scoped |
 | Exact repro prompt and prior turns | Multi-turn replay history affects prompt text |
 | Flags: `--cursor-no-fast`, `PI_CURSOR_PI_TOOL_BRIDGE`, `PI_CURSOR_EXPOSE_BUILTIN_TOOLS`, `PI_CURSOR_SETTING_SOURCES`, `PI_CURSOR_TOOL_MANIFEST` | Bridge vs native-only vs narrowed settings; bootstrap callable-surface manifest |
 | Whether the listed names are `pi__*` bridge MCP, Cursor-native (`browser_navigate`, `WebSearch`), or `cursor-replay-*` replay IDs | Three different surfaces (see [Cursor native tool replay](./cursor-native-tool-replay.md#live-bridge-vs-replay)) |
@@ -379,7 +380,7 @@ chmod 600 "$SMOKE_DIR/home/.pi/agent/auth.json"
 env -i HOME="$SMOKE_DIR/home" PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin" \
   MISE_DISABLE=1 \
   PI_CURSOR_PI_TOOL_BRIDGE_DEBUG=1 \
-  pi --approve -e . --cursor-no-fast --model cursor/composer-2-5 \
+  pi --approve -e . --cursor-no-fast --model cursor/grok-4.6 \
   --session-dir "$SMOKE_DIR/session" \
   -p '<exact reporter prompt>'
 ```
@@ -391,7 +392,7 @@ For pi parsing, replay routing, or bridge timing, prefer:
 ```bash
 npm run debug:provider-events -- \
   --cwd "$PWD" \
-  --model cursor/composer-2-5 \
+  --model cursor/grok-4.6 \
   --prompt '<exact reporter prompt>' \
   --out "$SMOKE_DIR/provider-events"
 ```
@@ -412,7 +413,7 @@ npm run debug:sdk-events -- \
 
 Start with whether pi stayed alive:
 
-0. **pi process exited / shell returned with an uncaught SDK transport error** — examples include `ConnectError` with `ETIMEDOUT`/`ECONNRESET` and `WriteIterableClosedError: WritableIterable is closed`. Current code keeps Connect/network/abort suppression scoped to active provider turns. The exact SDK-provenance closed-writable shape is guarded for the Pi session lifecycle because `@cursor/sdk` 1.0.23 controlled-exec can reject after the originating provider turn when it attempts to write a `throw` frame after its internal output iterable has already closed; Bun requires an explicit rejection listener because it bypasses the patched `process.emit` path. The observed raw `write EPIPE` uncaught exception (code `EPIPE`, syscall `write`, stack exactly the single async `WriteWrap.onWriteComplete` frame) from the SDK 1.0.23 local shell executor writing a spawned child's stdin without a stream error listener is guarded only while a local Cursor provider turn is active; containment marks that turn's pooled/resumable agent transport dead so the next acquire disposes it with a bounded wait and recreates it. Idle pooled agents do not suppress EPIPE, and the multi-frame synchronous write-path shape (piped stdout, dead terminal) stays fatal. The Windows sibling surfaces as `write EOF` and intentionally stays fatal because it does not match the observed Node EPIPE contract. Unrelated failures remain fatal. This proves the secondary process-killing write, not the earlier condition that first closed the SDK iterable. Treat a fresh process exit as a process-guard regression, capture the stack/session tail, and route it separately from #40 model text echo. If tools were mid-flight, note whether session JSONL ends abruptly and whether the final tool call lacks a result.
+0. **pi process exited / shell returned with an uncaught SDK transport error** — examples include `ConnectError` with `ETIMEDOUT`/`ECONNRESET` and `WriteIterableClosedError: WritableIterable is closed`. Current code keeps Connect/network suppression scoped to active provider turns; raw Cursor SDK `AbortError` DOMExceptions are suppressed while any provider turn or session process-error guard is active. The exact SDK-provenance closed-writable shape is guarded for the Pi session lifecycle because `@cursor/sdk` 1.0.23 controlled-exec can reject after the originating provider turn when it attempts to write a `throw` frame after its internal output iterable has already closed; Bun requires an explicit rejection listener because it bypasses the patched `process.emit` path. The observed raw `write EPIPE` uncaught exception (code `EPIPE`, syscall `write`, stack exactly the single async `WriteWrap.onWriteComplete` frame) from the SDK 1.0.23 local shell executor writing a spawned child's stdin without a stream error listener is guarded only while a local Cursor provider turn is active; containment marks that turn's pooled/resumable agent transport dead so the next acquire disposes it with a bounded wait and recreates it. Idle pooled agents do not suppress EPIPE, and the multi-frame synchronous write-path shape (piped stdout, dead terminal) stays fatal. The Windows sibling surfaces as `write EOF` and intentionally stays fatal because it does not match the observed Node EPIPE contract. Unrelated failures remain fatal. This proves the secondary process-killing write, not the earlier condition that first closed the SDK iterable. Treat a fresh process exit as a process-guard regression, capture the stack/session tail, and route it separately from #40 model text echo. If tools were mid-flight, note whether session JSONL ends abruptly and whether the final tool call lacks a result.
 
 Then inspect the failing assistant turn in `$SMOKE_DIR/session/*.jsonl`:
 
@@ -432,7 +433,7 @@ rg '"type": "toolCall"|Tool call \(Cursor|cursor-replay-' "$SMOKE_DIR/session"/*
 
 ### When to file follow-ups
 
-- **#43/#107** — pi exited from an uncaught Cursor SDK transport failure (hard crash, not a scrubbed #55 toast). Observed Connect/network/abort shapes remain guarded only during active provider turns; the exact local-turn `write EPIPE` shape is guarded only during active local Cursor provider turns and invalidates only that turn's local agent transport. The exact SDK-provenance `WriteIterableClosedError` is guarded for the Pi session lifecycle because controlled-exec can reject after a turn. Unrelated failures remain fatal, and new exits need stack/session evidence.
+- **#43/#107** — pi exited from an uncaught Cursor SDK transport failure (hard crash, not a scrubbed #55 toast). Observed Connect/network shapes remain guarded only during active provider turns. Raw SDK-provenance `AbortError` DOMExceptions are guarded while a provider turn or session guard is active; the exact local-turn `write EPIPE` shape remains scoped to active local provider turns and invalidates only that turn's local agent transport. The exact SDK-provenance `WriteIterableClosedError` is guarded for the Pi session lifecycle because controlled-exec can reject after a turn. Unrelated failures remain fatal, and new exits need stack/session evidence.
 - **#55** — caught SDK run failure or abort with missing/opaque detail (already addressed on main for surfacing).
 - **#52** — stale/inactive native replay routing after plan-strip or stale `context.tools` snapshot (`Tool * not found` in JSONL, `inactive_trace` in `display-decisions.jsonl`); or maintainer needs an explicit "started X, never completed" debug line when JSONL shows no completion and no model text echo.
 - **New issue** — bridge dispatch failure with `[pi-cursor-sdk:bridge]` evidence, or proven provider bug with JSONL showing missing `toolCall` despite SDK `tool-call-completed` in `on-delta.jsonl` from `debug:provider-events` or `debug:sdk-events` artifacts.
