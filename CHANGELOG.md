@@ -1,6 +1,10 @@
 # Changelog
 
-## Unreleased
+## 0.3.7 - 2026-08-26
+
+### Added
+
+- Register this extension in pi-maestro-teammate's child-extension registry when that package is loaded, so teammate subprocesses started with `--no-extensions` still load the Cursor provider and can inherit `cursor/*` models. The registry is written through `globalThis` without a package dependency on `pi-maestro-teammate`. Registration retries on `before_agent_start` because maestro-flow plants the registry at the end of its own `session_start` handler, after this package's `session_start` listeners have already run.
 
 ### Fixed
 

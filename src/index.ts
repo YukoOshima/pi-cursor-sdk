@@ -16,6 +16,7 @@ import { registerCursorAgentsContextDedup } from "./cursor-agents-context-regist
 import { registerCursorOverflowNormalization } from "./cursor-provider-overflow.js";
 import { registerCursorSdkSessionProcessErrorGuard } from "./cursor-sdk-process-error-guard.js";
 import { prepareCursorSessionForCompaction } from "./cursor-session-compaction-prep.js";
+import { registerCursorTeammateChildExtensionLifecycle } from "./cursor-teammate-child-extension.js";
 
 type CursorExtensionApi =
 	& Pick<ExtensionAPI, "registerProvider" | "registerCommand" | "on">
@@ -98,6 +99,7 @@ export default async function (pi: CursorExtensionApi) {
 	});
 
 	registerCursorProvider(pi, models);
+	registerCursorTeammateChildExtensionLifecycle(pi, import.meta.url);
 	// Register last so session_shutdown cleanup remains protected until other Cursor handlers finish.
 	registerCursorSdkSessionProcessErrorGuard(pi);
 }

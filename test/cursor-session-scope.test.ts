@@ -7,8 +7,10 @@ import {
 	getCursorSessionCwd,
 	getCursorSessionName,
 	getCursorSessionProjectTrusted,
+	getCursorSessionScopeKey,
 	MAX_CURSOR_SESSION_NAME_LENGTH,
 	registerCursorSessionScope,
+	runWithCursorSessionScopeOverride,
 } from "../src/cursor-session-scope.js";
 import { createEventHarness } from "./helpers/pi-harness.js";
 
@@ -99,6 +101,18 @@ describe("cursor-session-scope cwd", () => {
 		expect(MAX_CURSOR_SESSION_NAME_LENGTH).toBe(100);
 		expect(getCursorSessionName()).toHaveLength(MAX_CURSOR_SESSION_NAME_LENGTH);
 		expect(getCursorSessionName()?.endsWith("…")).toBe(true);
+	});
+
+	it("isolates in-process subagent sessions via AsyncLocalStorage overrides", async () => {
+		const pi = createEventHarness();
+		registerCursorSessionScope(pi);
+		await pi.runSessionStart({ sessionManager: { getSessionId: vi.fn(() => "host-session") } });
+		const hostKey = getCursorSessionScopeKey();
+
+		const isolatedKey = runWithCursorSessionScopeOverride({ sessionId: "workflow-child" }, () => getCursorSessionScopeKey());
+		expect(isolatedKey).toBe(`${cursorSessionScopeTestUtils.EPHEMERAL_SESSION_SCOPE_PREFIX}workflow-child`);
+		expect(isolatedKey).not.toBe(hostKey);
+		expect(getCursorSessionScopeKey()).toBe(hostKey);
 	});
 
 	it("updates cwd on subsequent session_start events", async () => {
