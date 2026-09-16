@@ -33,7 +33,7 @@ When changing provider/runtime behavior, ask whether the bug spans **pi extensio
 Native replay routing intentionally uses two layers:
 
 1. **Extension resync** (`before_agent_start`, `turn_start`) updates pi's active tool set via `syncRegisteredNativeCursorToolsForModel`. This fixes the common case where plan-mode execute strips `grep`/`find`/`cursor` before the next turn.
-2. **Provider routing** uses the **`context.tools` snapshot** captured when `streamCursor()` starts (`getActiveContextToolNames` in `src/cursor-context-tools.ts`). It does not read live `pi.getActiveTools()` mid-stream.
+2. **Provider routing** uses the **request tool snapshot** captured when `streamCursor()` starts (`getActiveContextToolNames` in `src/cursor-context-tools.ts`): legacy `context.tools` on stock Pi 0.84/0.85, or tools replayed by the host's public helpers on transcript-only Pi. An explicit empty snapshot is not an absent legacy snapshot. It does not read live `pi.getActiveTools()` mid-stream. The bridge intentionally retains its separate registry-owned surface.
 
 `src/cursor-native-replay-routing.ts` centralizes provider-side routing against the same `context.tools` snapshot:
 
@@ -47,6 +47,12 @@ Disposition outcomes:
 - `transcript_trace` — native replay off or non-native tool
 
 If resync runs but `context.tools` is still stale (e.g. only `read` listed), the provider must **not** emit `toolUse` for inactive tools. `test/cursor-native-replay-stress.test.ts` covers that stale-snapshot path.
+
+## Stock/transcript provider contract
+
+`test/cursor-provider-pi-context.test.ts` drives real `ModelRuntime` / `ModelRegistry` requests into `streamCursor`, with only Cursor SDK execution mocked. Run it against each supported host with all Pi peer imports pinned to that host (including nested native imports); a top-level package version alone is not resolution evidence. Cover stock 0.84.0, stock 0.85.1, and the transcript host. Transcript-only cases are not stock features and are skipped there.
+
+The test covers bootstrap/incremental prompts, empty-vs-absent request tools, native replay/drain, cloud fresh/bootstrap selection, and actual host prompt serialization for context files and skills. It is offline contract evidence, not a replacement for the required live platform/cloud release gates.
 
 ## Auth: use `auth.json`, not only env
 

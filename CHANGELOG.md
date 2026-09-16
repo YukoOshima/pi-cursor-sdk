@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.7 - 2026-09-16
+
+### Fixed
+
+- Preserve completed Cursor SDK assistant-message boundaries in streamed and persisted output: separate progress messages from the next message without splitting token chunks, duplicating the SDK final result, or adding whitespace to an exact final answer. Carry boundaries through local native-replay drain as well as direct/cloud turns.
+
+- Support transcript-only Pi provider requests via the host's public replay helpers, without requiring those exports on stock Pi 0.84.0 or 0.85.1. Preserve current instructions, section updates, and explicit empty replay-tool snapshots.
+- Fingerprint replayed instructions and tool definitions plus individual system-message content/section/tool deltas, so unchanged transcripts stay incremental and changed context reboots correctly.
+- Preserve current Pi instructions in fresh cloud prompts, and ignore system updates when finding pending replay/bridge tool results and steering input.
+- Handle Pi's XML-wrapped tool/rule/skill sections and project-context serialization without duplicating local rules or skill catalogs. Cloud keeps project instructions and omits the local skill catalog.
+
 ## 0.3.6 - 2026-08-18
 
 ### Fixed
