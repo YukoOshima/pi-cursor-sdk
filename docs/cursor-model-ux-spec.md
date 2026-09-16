@@ -8,6 +8,8 @@ Implemented design target. This file describes the intended Cursor model UX and 
 
 Current implementation notes:
 
+- Provider contexts support stock Pi 0.84.0/0.85.1 shorthand fields and transcript-only hosts. `cursor-pi-context.ts` feature-detects public Pi replay helpers through a static namespace import; no new export is required from stock Pi. Current instructions and tools are replayed natively, system deltas are fingerprinted, and system messages are excluded from Cursor conversation formatting and trailing-result scans. Fresh cloud context preserves current instructions while excluding history. Native replay uses the request tool snapshot (including empty); the pi bridge retains its separate registry-owned surface. XML prompt sections are sanitized/deduplicated alongside the stock format.
+
 - Cursor context variants use `base@context` pi model IDs.
 - Cursor `reasoning`, `effort`, and boolean `thinking` parameters are driven by pi native thinking when the Cursor SDK exposes those controls.
 - Cursor `fast` is extension state by default; models that expose `fast` also get selection-only `:fast` / `:slow` virtual aliases for per-agent overrides.

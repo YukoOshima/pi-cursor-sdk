@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { getCursorConversationMessages, resolveCursorPiContext } from "./cursor-pi-context.js";
 import type { Context, Message, ToolCall } from "@earendil-works/pi-ai";
 import { convertToLlm } from "@earendil-works/pi-coding-agent";
 import type { AgentModeOption, SDKImage } from "@cursor/sdk";
@@ -85,7 +86,7 @@ function getCursorBootstrapTailSections(
 }
 
 function normalizePiContextMessages(messages: Context["messages"]): Message[] {
-	return convertToLlm(messages as Parameters<typeof convertToLlm>[0]);
+	return convertToLlm(getCursorConversationMessages({ messages }) as Parameters<typeof convertToLlm>[0]);
 }
 
 function isTextBlock(block: { type: string }): block is { type: "text"; text: string } {
@@ -137,6 +138,15 @@ function formatToolCall(toolCall: ToolCall): string {
 
 function sanitizeSystemPromptForCursor(systemPrompt: string): string {
 	let sanitized = systemPrompt;
+	// Transcript-era Pi wraps its built-in tool catalog/rules in XML sections.
+	sanitized = sanitized.replace(
+		/<tools>\n[\s\S]*?\n\nIn addition to the tools above, you may have access to other custom tools depending on the project\.\n<\/tools>/g,
+		"Pi tool catalog omitted: Cursor can call only Cursor SDK tools exposed in this run.",
+	);
+	sanitized = sanitized.replace(
+		/<rules>\n[\s\S]*?\n<\/rules>\n\n(?=<docs>\nPi documentation )/g,
+		"<rules>\n- Be concise in your responses.\n- Show file paths clearly when working with files.\n</rules>\n\n",
+	);
 	sanitized = sanitized.replace(
 		/Available tools:\n[\s\S]*?\n\nIn addition to the tools above, you may have access to other custom tools depending on the project\.\n\n/g,
 		"Pi tool catalog omitted: Cursor can call only Cursor SDK tools exposed in this run.\n\n",
@@ -279,12 +289,24 @@ function serializeMessageForFingerprint(message: Message, index: number): string
 			return hashCursorContextValue(
 				`toolResult:${message.timestamp ?? index}:${message.toolCallId}:${message.toolName}:${JSON.stringify(message.content)}:${message.isError === true}`,
 			);
+		default:
+			// System messages are handled by serializeRawPiMessageForFingerprint.
+			throw new Error("Unsupported Pi message role in Cursor context fingerprint.");
 	}
 }
 
 function serializeRawPiMessageForFingerprint(message: Context["messages"][number], index: number): string {
 	const role = (message as { role?: string }).role;
 	switch (role) {
+		case "system": {
+			const entry = message as {
+				content: unknown; sections?: unknown; toolsAdded?: unknown; toolsRemoved?: unknown;
+			};
+			return hashCursorContextValue(JSON.stringify({
+				role, content: entry.content, sections: entry.sections,
+				toolsAdded: entry.toolsAdded, toolsRemoved: entry.toolsRemoved,
+			}));
+		}
 		case "branchSummary": {
 			const entry = message as { summary?: string; fromId?: string; timestamp?: number };
 			return hashCursorContextValue(
@@ -337,7 +359,7 @@ function parseCursorContextFingerprint(fingerprint: string): CursorContextFinger
 
 export function computeCursorContextFingerprint(context: Context): string {
 	const payload: CursorContextFingerprintPayload = {
-		systemHash: hashCursorContextValue(context.systemPrompt ?? ""),
+		systemHash: hashCursorContextValue(JSON.stringify(resolveCursorPiContext(context))),
 		messageHashes: context.messages.map((message, index) => serializeRawPiMessageForFingerprint(message, index)),
 	};
 	return JSON.stringify(payload);
@@ -412,8 +434,9 @@ export function buildCursorPrompt(context: Context, options: CursorPromptOptions
 		sectionsBeforeMessages.push(options.toolManifest);
 	}
 
-	if (context.systemPrompt) {
-		sectionsBeforeMessages.push(`System instructions from pi:\n${sanitizeSystemPromptForCursor(context.systemPrompt)}`);
+	const { systemPrompt } = resolveCursorPiContext(context);
+	if (systemPrompt) {
+		sectionsBeforeMessages.push(`System instructions from pi:\n${sanitizeSystemPromptForCursor(systemPrompt)}`);
 	}
 
 	const messages = normalizePiContextMessages(context.messages);

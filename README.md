@@ -51,10 +51,10 @@ If pi started without a key, run `/cursor-refresh-models` after `/login` to refr
 ## Requirements
 
 - Node.js 22.19+
-- Pi 0.84.0 or later; pi core peer metadata remains optional and uses `"*"` ranges per Pi package guidance
+- Pi 0.84.0 or later; stock Pi 0.84.0 and 0.85.1 are supported without a fork. Pi core peer metadata remains optional and uses `"*"` ranges per Pi package guidance
 - a Cursor SDK API key saved through `/login`, available as `CURSOR_API_KEY`, or passed with pi's `--api-key`
 
-No global `@cursor/sdk` install is required. This package depends on exact `@cursor/sdk@1.0.27`, so normal package installation brings in the SDK version this extension was built and tested against. Cursor SDK 1.0.27 declares its Node ConnectRPC transport dependency directly, so npm installs place `@connectrpc/connect-node` where the SDK can resolve it. The extension intentionally does not bundle `@cursor/sdk` or its platform packages, because packing from one maintainer OS can otherwise ship the wrong optional SDK binary for another OS. Cursor SDK 1.0.27 keeps the older `sqlite3 -> node-gyp@8` dependency chain out of the runtime tree, so deprecated install warnings for `inflight`, `rimraf`, `glob@7`, `npmlog`, `gauge`, `are-we-there-yet`, and `tar@6` from that chain are not expected. Older Pi and Cursor SDK compatibility paths are not maintained.
+No global `@cursor/sdk` install is required. This package depends on exact `@cursor/sdk@1.0.27`, so normal package installation brings in the SDK version this extension was built and tested against. Cursor SDK 1.0.27 declares its Node ConnectRPC transport dependency directly, so npm installs place `@connectrpc/connect-node` where the SDK can resolve it. The extension intentionally does not bundle `@cursor/sdk` or its platform packages, because packing from one maintainer OS can otherwise ship the wrong optional SDK binary for another OS. Cursor SDK 1.0.27 keeps the older `sqlite3 -> node-gyp@8` dependency chain out of the runtime tree, so deprecated install warnings for `inflight`, `rimraf`, `glob@7`, `npmlog`, `gauge`, `are-we-there-yet`, and `tar@6` from that chain are not expected. Pi hosts that pass transcript-only provider contexts are also supported through their public replay helpers, detected at runtime; no fork-only API or dependency is required. Older Pi (before 0.84.0) and Cursor SDK compatibility paths are not maintained.
 
 ## Install
 
