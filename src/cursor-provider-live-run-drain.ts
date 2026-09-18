@@ -28,6 +28,7 @@ import { formatCursorSdkAbortMessage, resolveCursorSdkAbortCause } from "./curso
 import { formatInactiveCursorReplayTrace } from "./cursor-native-replay-trace.js";
 import { partitionNativeToolsByActiveContext } from "./cursor-native-replay-routing.js";
 import type { CursorSdkEventDebugRecorder } from "./cursor-sdk-event-debug.js";
+import { isJsonObject } from "./cursor-record-utils.js";
 
 export const DEFAULT_CURSOR_NATIVE_REPLAY_IDLE_DISPOSE_MS = 5 * 60 * 1000;
 const CURSOR_NATIVE_REPLAY_TOOL_ID_PATTERN = /^(cursor-replay-\d+-\d+)-tool-\d+$/;
@@ -180,6 +181,7 @@ function emitCursorNativeToolUseTurn(
 ): void {
 	const shouldTerminate = run.done && !run.finalText?.trim() && !cursorLiveRuns.peekEvent(run);
 	for (const tool of tools) {
+		if (!isJsonObject(tool.args)) throw new Error("Cursor replay tool arguments must be a JSON object");
 		const contentIndex = partial.content.length;
 		partial.content.push({
 			type: "toolCall",
@@ -236,6 +238,7 @@ function emitCursorBridgeToolUseTurn(
 	requests: CursorPiBridgeToolRequest[],
 ): void {
 	for (const request of requests) {
+		if (!isJsonObject(request.args)) throw new Error("Cursor bridge tool arguments must be a JSON object");
 		const contentIndex = partial.content.length;
 		partial.content.push({
 			type: "toolCall",

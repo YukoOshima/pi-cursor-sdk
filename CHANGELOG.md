@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- Narrow SDK replay and MCP bridge arguments to JSON objects before emitting Pi tool calls, preserving valid payloads without serialization or casts. This supports Pi's tightened transcript types and reports non-JSON arguments before dispatch.
+- Compile source and test fixtures against published Pi 0.85.1, pinned official source, and the fork. Native packed-host checks exercise host-owned section/tool replay and legacy replacement checkpoints.
+
 ## 0.3.7 - 2026-09-16
 
 ### Fixed
