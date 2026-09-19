@@ -1,4 +1,4 @@
-import type { BuildSystemPromptOptions } from "@earendil-works/pi-coding-agent";
+import type { BeforeAgentStartEvent } from "@earendil-works/pi-coding-agent";
 import {
 	PI_PROJECT_INSTRUCTIONS_OPEN_PREFIX,
 	serializePiProjectContextSection,
@@ -11,8 +11,9 @@ export { PI_PROJECT_INSTRUCTIONS_OPEN_PREFIX, serializePiProjectContextSection, 
 export function makeSystemPromptOptions(
 	contextFiles: PiAgentsContextFile[],
 	cwd = "/repo",
-): BuildSystemPromptOptions {
-	return { cwd, contextFiles, selectedTools: [] };
+): BeforeAgentStartEvent["systemPromptOptions"] {
+	const options = { cwd, contextFiles, selectedTools: [], toolSnippets: {}, toolGuidelines: {}, promptGuidelines: [], appendSystemPrompt: "", sections: {}, skills: [] };
+	return options;
 }
 
 /** Minimal pi-like system prompt containing only the project_context subset this feature owns. */

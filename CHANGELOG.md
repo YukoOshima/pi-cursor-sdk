@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.3.8 - 2026-09-19
+
+### Fixed
+
+- Narrow SDK replay and MCP bridge arguments to JSON objects before emitting Pi tool calls, preserving valid payloads without serialization or casts. This supports Pi's tightened transcript types and reports non-JSON arguments before dispatch.
+- Compile source and test fixtures against published Pi 0.85.1, pinned official source, and the fork. Native packed-host checks require common provider, replay, and runtime behavior on every host. The fork additionally qualifies legacy `SystemMessage.replace` checkpoints; current official Pi removed that host feature, which is not required by this extension.
+- Load the already-shipped TypeScript source graph through Pi's native loader so provider streams and replay helpers remain host-owned even with local Pi peer packages installed. Keep compiled output for scripts and programmatic consumers.
+- Preserve hyperlink text and split terminal control sequences when checking platform-smoke read cards, using Node's terminal-control stripping rather than a custom regular expression.
+
+### Changed
+
+- Native source loading fixes host peer identity at the cost of more initial startup/load work. On macOS/Node 24.21.0/Pi fork `90e6`, three fresh-process, warm-cache loader runs measured 0.85–1.24 s for source versus 0.08–0.13 s for dist; these are not TUI startup timings or guarantees for other environments or repeated `/reload`.
+- **Filter migration required:** update old dist-targeting extension filters to preserve include/exclude intent (`+dist/index.js` → `+src/index.ts`, `-dist/index.js` → `-src/index.ts`, `!dist/**` → `!src/**`). The old exclusion alone no longer disables Cursor; retain `-dist/index.js` alongside `-src/index.ts` for rollback. See README's “Existing extension filters”; settings are not rewritten automatically.
+
 ## 0.3.7 - 2026-09-16
 
 ### Fixed

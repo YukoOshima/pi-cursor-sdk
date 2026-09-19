@@ -4,7 +4,7 @@ import type { AssistantMessage, AssistantMessageEvent, Context } from "@earendil
 import {
 	ModelRegistry,
 	ModelRuntime,
-	type BuildSystemPromptOptions,
+	type BeforeAgentStartEvent,
 	type ExtensionCommandContext,
 	type ExtensionContext,
 } from "@earendil-works/pi-coding-agent";
@@ -21,11 +21,13 @@ function getSharedTestModelRegistry(): ModelRegistry {
 	return sharedTestModelRegistry;
 }
 
-export function createDefaultSystemPromptOptions(cwd: string): BuildSystemPromptOptions {
-	return {
+export function createDefaultSystemPromptOptions(cwd: string): BeforeAgentStartEvent["systemPromptOptions"] {
+	const options = {
 		cwd,
 		selectedTools: ["read", "bash", "edit", "write"],
+		toolSnippets: {}, toolGuidelines: {}, promptGuidelines: [], appendSystemPrompt: "", sections: {}, contextFiles: [], skills: [],
 	};
+	return options;
 }
 
 function createMinimalSessionManager(cwd: string, overrides: Partial<ExtensionContext["sessionManager"]> = {}): ExtensionContext["sessionManager"] {
@@ -42,6 +44,7 @@ function createMinimalSessionManager(cwd: string, overrides: Partial<ExtensionCo
 		buildContextEntries: vi.fn(() => []),
 		getHeader: vi.fn(() => null),
 		getEntries: vi.fn(() => []),
+		...{ getEntriesRevision: vi.fn(() => 0) },
 		getTree: vi.fn(() => []),
 		getSessionName: vi.fn(() => undefined),
 		...overrides,
@@ -84,6 +87,14 @@ function createMinimalExtensionUi(): ExtensionContext["ui"] {
 function createMinimalExtensionContextInternal(overrides: ExtensionContextOverrides = {}): ExtensionContext {
 	const cwd = overrides.cwd ?? process.cwd();
 	const base: ExtensionContext = {
+		...{
+			isBashRunning: vi.fn(() => false),
+			hasPendingSteeringMessages: vi.fn(() => false),
+			getPendingNextTurnCount: vi.fn(() => 0),
+			getPendingInputCount: vi.fn(() => 0),
+			getCompactionSettings: vi.fn(() => ({ enabled: true, reserveTokens: 16384, keepRecentTokens: 20000 })),
+			newContext: vi.fn(() => { throw new Error("newContext is not implemented in this harness"); }),
+		},
 		ui: createMinimalExtensionUi(),
 		mode: "tui",
 		hasUI: true,
