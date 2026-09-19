@@ -115,10 +115,9 @@ This repository is a pi provider extension that registers Cursor SDK-backed mode
 
 ## Setup and commands
 
-- Install dependencies: `npm install` (runs `prepare`, which compiles `src/` into `dist/` for scripts and programmatic consumers). Pi's manifest loads the shipped `src/index.ts` graph through its native TypeScript loader so Pi imports use host-owned peers even with local peer packages installed.
-- Build after editing `src/`: `npm run build` remains required for validation, packaging, and compiled-script consumers. Restart Pi to pick up source changes. The cloud/steering/local-resume/provider-debug launchers rebuild automatically (even when run directly with `node scripts/...`), `smoke:live`/`smoke:visual`/`smoke:isolated` build via their npm scripts, and `smoke:platform*` builds inside its packed installs.
+- Install dependencies: `npm install` (runs `prepare`, which compiles `src/` into `dist/` — the manifest entry pi loads)
+- Build after editing `src/`: `npm run build` — required before any direct `pi -e .` run, or pi loads the previous build. The cloud/steering/local-resume/provider-debug launchers rebuild automatically (even when run directly with `node scripts/...`), `smoke:live`/`smoke:visual`/`smoke:isolated` build via their npm scripts, and `smoke:platform*` builds inside its packed installs; only direct `pi -e .` runs need a manual build.
 - Run tests: `npm test`
-- The real npm package regression (`test/native-package-host.test.ts`) needs registry access or a warm npm cache for its package installs.
 - Typecheck (src + tests): `npm run typecheck`
 - Typecheck src only: `npm run typecheck:src`
 - Typecheck tests/helpers: `npm run typecheck:tests`
@@ -211,7 +210,7 @@ Keep this file concise and repo-specific. Update it when commands, package layou
 
 This is a `pi` provider extension (not a server/web app). "Running the app" means launching `pi` with this extension loaded. Standard commands live in `## Setup and commands`; only the non-obvious caveats are below.
 
-- Dependencies install with `npm install` (this triggers `prepare`, which compiles `src/` to `dist/` for scripts and programmatic consumers; Pi loads the shipped `src/index.ts` graph). After editing `src/`, run `npm run build` for validation and compiled consumers, then restart Pi.
+- Dependencies install with `npm install` (this triggers `prepare`, which compiles `src/` to `dist/`; the pi manifest loads `dist/index.js`). After editing `src/`, run `npm run build` before any `pi -e .` run or the extension loads the previous build.
 - Node: `engines` requires `>=22.19.0`. Prefer a compliant Node on `PATH` for tests and live `pi` (for example `nvm use 22.22.2`). Older Node may run some commands but is unsupported.
 - `CURSOR_API_KEY` is provided as a cloud-agent secret, so live Cursor runs and full live model discovery work without `/login`. `npm test`, `npm run typecheck`, and `npm pack --dry-run` need no key.
 - Run the extension locally with `./node_modules/.bin/pi -e . --model cursor/grok-4.6` (the bare `pi` is not on `PATH`). Add `--approve` for interactive sessions; print-mode smoke: `./node_modules/.bin/pi -e . --model cursor/grok-4.6 --cursor-no-fast --no-session -p "..."`.

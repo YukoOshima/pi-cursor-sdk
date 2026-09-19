@@ -8,6 +8,7 @@ import {
 	assistantEntryContaining,
 	buildLocalResumeSmokeEnv,
 	cleanupArtifactRoot,
+	compactionEntryCount,
 	createRunContext,
 	fail,
 	getEntries,
@@ -16,7 +17,6 @@ import {
 	parseTimeout,
 	promptAbortAndRead,
 	promptAndRead,
-	readMetadataSince,
 	reportFailure,
 	resumeEntries,
 	scrubSmokeText,
@@ -514,33 +514,10 @@ async function runCompactionSmoke() {
 			});
 			assertTurnMetadata("compaction baseline", baseline, { resumedAgent: false });
 			preCompactionAgentId = baseline.metadata.run.agentId;
-			const originalUser = userEntryContaining(await getEntries(rpc), marker);
-			if (!originalUser) fail("compaction baseline did not persist the marker-bearing user message");
 			const result = await rpcData(rpc, "compact", { customInstructions: `Preserve the exact marker ${marker}.` }, timeoutMs);
+			if (!result.summary || typeof result.tokensBefore !== "number") fail("manual compaction did not return a summary result", JSON.stringify(result, null, 2));
 			const compactedEntries = await getEntries(rpc);
-			const compaction = compactedEntries.entries.findLast((entry) => entry.type === "compaction");
-			const active = await rpcData(rpc, "get_messages");
-			const summarizerTurns = readMetadataSince(artifactRoot, seenMetadata);
-			// Save the native boundary before assertions or any recall turn can inspect files.
-			const boundaryPath = join(artifactRoot, "compaction-boundary.json");
-			writeFileSync(boundaryPath, JSON.stringify({ result, compaction, originalUserEntryId: originalUser.id, activeMessages: active.messages, summarizerTurns }, null, 2));
-			if (typeof result.summary !== "string" || typeof result.tokensBefore !== "number") fail("manual compaction did not return a summary result", boundaryPath);
-			if (!result.summary.includes(marker)) fail("returned compaction summary lost the exact marker", boundaryPath);
-			if (!compaction) fail("manual compaction did not append a compaction entry", boundaryPath);
-			if (typeof compaction.summary !== "string" || !compaction.summary.includes(marker)) fail("persisted compaction summary lost the exact marker", boundaryPath);
-			if (compaction.summary !== result.summary || compaction.firstKeptEntryId !== result.firstKeptEntryId) fail("returned and persisted compaction boundaries disagree", boundaryPath);
-			const originalIndex = compactedEntries.entries.findIndex((entry) => entry.id === originalUser.id);
-			const keptIndex = compactedEntries.entries.findIndex((entry) => entry.id === compaction.firstKeptEntryId);
-			const compactionIndex = compactedEntries.entries.indexOf(compaction);
-			if (originalIndex < 0 || keptIndex <= originalIndex || keptIndex >= compactionIndex) fail("compaction did not move the kept boundary past the original marker-bearing user", boundaryPath);
-			// Ask the host for its active messages; do not reproduce its cut/replay algorithm.
-			const summaryMessage = active.messages.find((message) => message.role === "compactionSummary" && message.summary === compaction.summary);
-			if (!summaryMessage) fail("native active context does not contain the persisted compaction summary", boundaryPath);
-			if (active.messages.some((message) => message !== summaryMessage && JSON.stringify(message).includes(marker))) fail("kept context independently supplies the compaction marker", boundaryPath);
-			for (const turn of summarizerTurns) {
-				assertNotResumedFrom("compaction summarizer", turn, preCompactionAgentId);
-				seenMetadata.add(turn.metadataPath);
-			}
+			if (compactionEntryCount(compactedEntries) < 1) fail("manual compaction did not append a compaction entry");
 
 			const postCompaction = await promptAndRead({
 				rpc,
@@ -550,19 +527,6 @@ async function runCompactionSmoke() {
 				seenMetadata,
 			});
 			assertNotResumedFrom("post-compaction turn", postCompaction, preCompactionAgentId);
-			for (const turn of summarizerTurns) assertNotResumedFrom("post-compaction turn versus summarizer", postCompaction, turn.metadata.run.agentId);
-			if (postCompaction.metadata.providerMeta?.sendPlan?.mode !== "bootstrap") fail("post-compaction turn did not bootstrap the compacted context", postCompaction.metadataPath);
-			// Inspect the actual provider inputs too: the native summary must be the only marker source.
-			const postDir = dirname(postCompaction.metadataPath);
-			const escapedSummary = JSON.stringify(compaction.summary).slice(1, -1);
-			for (const file of ["context-snapshot.json", "send-payload.json"]) {
-				const path = join(postDir, file);
-				const input = JSON.stringify(JSON.parse(readFileSync(path, "utf8")));
-				if (!input.includes(escapedSummary)) fail("post-compaction input omitted the persisted summary", path);
-				if (input.replace(escapedSummary, "").includes(marker)) fail("post-compaction input independently supplies the marker outside the summary", path);
-			}
-			const postSteps = readFileSync(join(postDir, "on-step.jsonl"), "utf8").split("\n").filter(Boolean).map(JSON.parse);
-			if (postSteps.some((row) => row.step?.type === "toolCall")) fail("post-compaction recall used tools instead of summary-only recall", postCompaction.metadataPath);
 			if (!postCompaction.text.includes(`MARKER=${marker}`)) fail("post-compaction turn did not recall marker", JSON.stringify({ expected: `MARKER=${marker}`, actual: postCompaction.text }, null, 2));
 			postCompactionAgentId = postCompaction.metadata.run.agentId;
 			const postHandle = latestResumeEntry(await getEntries(rpc));
@@ -580,14 +544,11 @@ async function runCompactionSmoke() {
 			});
 			assertTurnMetadata("post-compaction restart", restart, { resumedAgent: true });
 			if (restart.metadata.run.agentId !== postCompactionAgentId) fail("post-compaction restart did not resume the post-compaction agent", JSON.stringify({ expected: postCompactionAgentId, actual: restart.metadata.run.agentId }, null, 2));
-			const restartSteps = readFileSync(join(dirname(restart.metadataPath), "on-step.jsonl"), "utf8").split("\n").filter(Boolean).map(JSON.parse);
-			if (restartSteps.some((row) => row.step?.type === "toolCall")) fail("post-compaction restart used tools instead of recalling the marker", restart.metadataPath);
-			if (!restart.text.includes(`MARKER=${marker}`)) fail("post-compaction restart did not recall marker", JSON.stringify({ expected: `MARKER=${marker}`, actual: restart.text }, null, 2));
 		});
 		console.log("local-resume-compaction-smoke-ok");
 		console.error(scrubSmokeText(`[local-resume-smoke] pre-compaction ${preCompactionAgentId} replaced by and resumed post-compaction ${postCompactionAgentId}`));
 	} finally {
-		console.error(scrubSmokeText(`[local-resume-smoke] retained compaction evidence: ${artifactRoot}`));
+		cleanupArtifactRoot(artifactRoot);
 	}
 }
 

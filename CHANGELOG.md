@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.9 - 2026-09-19
+
+### Changed
+
+- Restore the compiled `dist/index.js` Pi entrypoint and the pre-0.3.8 tool-argument handling. Released Pi 0.85.1 did not require the source-loader or newer transcript-type changes.
+- Remove the additional source-host compatibility matrix, probes, and compaction qualification added with 0.3.8. Keep the terminal capture detector fix, which corrects QA evidence rather than runtime rendering.
+- Extension filters changed for 0.3.8 must target `dist/index.js` again. Keep exclusions for both entrypoints when disabling Cursor across versions; see README's “Existing extension filters”.
+
 ## 0.3.8 - 2026-09-19
 
 ### Fixed

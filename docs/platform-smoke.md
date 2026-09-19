@@ -206,7 +206,7 @@ The copy/switch lane copies a session file containing resume custom entries, swi
 
 The fallback lane rewrites a persisted handle to a missing local SDK `agent-*`, verifies create+bootstrap fallback, and asserts the continuity notice is emitted in `pi-stream-events.jsonl`.
 
-The compaction lane uses an isolated temp pi settings file with `compaction.keepRecentTokens: 1` to force manual compaction without huge dummy prompts. Before recall, it requires the exact marker in both the returned and native persisted summary, agreement on the kept boundary, and removal of the original marker-bearing user from the kept context. Native `get_messages` and the subsequent captured provider inputs must supply the marker only through that summary. The post-compaction agent must bootstrap without reusing the baseline or captured summarizer agents, persist `compactionGeneration: 1`, and resume as the same agent after restart. Both recall turns must return the marker without tool calls, so searching retained QA files cannot satisfy continuity. The lane retains its journals/debug artifacts and `compaction-boundary.json` on success and failure.
+The compaction lane uses an isolated temp pi settings file with `compaction.keepRecentTokens: 1` to force manual compaction without huge dummy prompts. It verifies the pre-compaction SDK agent is not reused, the new handle records `compactionGeneration: 1`, and restart resumes the post-compaction agent.
 
 The default/opt-out lane verifies the built-in local resume default resumes, then verifies `PI_CURSOR_LOCAL_RESUME=0` opts out and creates a new agent while bootstrapping the transcript.
 

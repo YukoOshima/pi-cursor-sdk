@@ -243,8 +243,7 @@ describe("extension registration and discovery", () => {
 		await extensionFactory(pi);
 
 		expect(mockedStreamCursor).not.toHaveBeenCalled();
-		expect(pi._registered[0].config.streamSimple).toBe(streamCursorLazy);
-		const stream = streamCursorLazy(makeModel("composer-2"), makeContext(), { apiKey: "test-key" });
+		const stream = pi._registered[0].config.streamSimple!(makeModel("composer-2"), makeContext(), { apiKey: "test-key" });
 		const resultPromise = stream.result();
 		await Promise.resolve();
 		const message = makeAssistantMessage("done");

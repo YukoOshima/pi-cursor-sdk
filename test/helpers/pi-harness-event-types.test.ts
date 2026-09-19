@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import {
 	createEventHarness,
-	createDefaultSystemPromptOptions,
 	type HarnessEventInvokeResult,
 	type HarnessEventMap,
 } from "./pi-harness.js";
@@ -26,7 +25,7 @@ describe("pi-harness before_agent_start results", () => {
 			type: "before_agent_start",
 			prompt: "hello",
 			systemPrompt: "base",
-			systemPromptOptions: createDefaultSystemPromptOptions("/repo"),
+			systemPromptOptions: { cwd: "/repo", selectedTools: [] },
 		});
 
 		expect(result?.systemPrompt).toBe("base-first-second");
@@ -48,7 +47,7 @@ describe("pi-harness before_agent_start results", () => {
 			type: "before_agent_start",
 			prompt: "hello",
 			systemPrompt: "base",
-			systemPromptOptions: createDefaultSystemPromptOptions("/repo"),
+			systemPromptOptions: { cwd: "/repo", selectedTools: [] },
 		});
 
 		expect(seenPrompts).toEqual(["base", "after-first"]);
@@ -63,7 +62,7 @@ describe("pi-harness before_agent_start results", () => {
 			type: "before_agent_start",
 			prompt: "hello",
 			systemPrompt: "base",
-			systemPromptOptions: createDefaultSystemPromptOptions("/repo"),
+			systemPromptOptions: { cwd: "/repo", selectedTools: [] },
 		});
 
 		expect(result).toBeUndefined();
@@ -88,7 +87,7 @@ describe("pi-harness before_agent_start results", () => {
 			type: "before_agent_start",
 			prompt: "hello",
 			systemPrompt: "base",
-			systemPromptOptions: createDefaultSystemPromptOptions("/repo"),
+			systemPromptOptions: { cwd: "/repo", selectedTools: [] },
 		});
 
 		expect(result?.messages).toEqual([firstMessage, secondMessage]);

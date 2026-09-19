@@ -105,7 +105,7 @@ describe("extension session cwd integration", () => {
 			const streamSimple = pi._registered[0]?.config.streamSimple;
 			expect(streamSimple).toBe(streamCursorLazy);
 
-			await collectEvents(streamCursorLazy(makeModel("composer-2.5"), makeContext(), { apiKey: "test-key" }));
+			await collectEvents(streamSimple!(makeModel("composer-2.5"), makeContext(), { apiKey: "test-key" }));
 
 			expect(mockedAgentCreate).toHaveBeenCalledWith(
 				expect.objectContaining({

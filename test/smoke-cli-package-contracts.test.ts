@@ -382,10 +382,8 @@ if (!windows.includes("for($i=0;$i -lt 10") || !windows.includes("$w=$e.Replace(
 		// pi silently drops manifest entries whose file is missing; assert the
 		// manifest target exists on disk after the pack-triggered build.
 		const manifest = JSON.parse(readFileSync("package.json", "utf8")) as { pi?: { extensions?: string[] } };
-		expect(manifest.pi?.extensions).toEqual(["./src/index.ts"]);
 		for (const entry of manifest.pi?.extensions ?? []) {
 			expect(existsSync(entry), `pi.extensions entry missing on disk: ${entry}`).toBe(true);
-			expect(paths.has(entry.replace(/^\.\//, "")), `pi.extensions entry missing from tarball: ${entry}`).toBe(true);
 		}
 		expect(paths.has("tsconfig.build.json")).toBe(true);
 		expect(paths.has("scripts/build.mjs")).toBe(true);
