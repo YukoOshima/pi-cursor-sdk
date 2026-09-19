@@ -54,6 +54,22 @@ If resync runs but `context.tools` is still stale (e.g. only `read` listed), the
 
 The test covers bootstrap/incremental prompts, empty-vs-absent request tools, native replay/drain, cloud fresh/bootstrap selection, and actual host prompt serialization for context files and skills. It is offline contract evidence, not a replacement for the required live platform/cloud release gates.
 
+### Native package identity regression
+
+Pi's manifest loads the shipped `src/index.ts` graph, while scripts and programmatic consumers retain `dist/`. Native ESM imports of compiled JS can bypass Pi's host-peer aliases when another Pi version is installed beside the extension. A TypeScript wrapper around compiled JS does not fix transitive ownership. Do not remove local peers or use an import hook to turn this regression green.
+
+`test/native-package-host.test.ts` packs and normally installs the package with both 0.84.0 and 0.85.1 peers, then exercises the actual manifest via the installed development host's SDK and CLI (including the bundled CLI when shipped by that host; Pi 0.84 ships only the modular CLI). It also checks a minimal native managed install. For each additional pinned host, run the same offline probe against the installed tarball (not this checkout):
+
+```bash
+node scripts/check-pi-host-runtime.mjs /path/to/pi-coding-agent /path/to/installed/pi-cursor-sdk --out=/new/evidence/sdk
+node scripts/check-pi-host-runtime.mjs /path/to/pi-coding-agent /path/to/installed/pi-cursor-sdk --cli=modular --out=/new/evidence/modular
+node scripts/check-pi-host-runtime.mjs /path/to/pi-coding-agent /path/to/installed/pi-cursor-sdk --cli=bundled --out=/new/evidence/bundled
+```
+
+The probe asserts host stream identity, ordinary prompt/tool replay, recorded native tool emission and replay execution without reading the fixture path, final drain, lazy bridge/SDK/SQLite imports and bundled ripgrep lookup. The SDK lane also invokes the actual manifest-registered provider callback with no key, requiring the expected auth preflight error before SDK execution. It uses no import redirection and makes no Cursor requests. The recorded tool fixture is offline replay evidence, not a claim of a live SDK tool call.
+
+Every host must pass the common provider, context and replay checks. Add `--verify-fork-checkpoints` only to qualify the fork's native `SystemMessage.replace` support; explicit qualification fails on hosts lacking those semantics or transcript helpers. This additional host check is not a Cursor requirement. Published Pi 0.85.1 uses its supported shorthand context instead of synthetic transcript messages. None of these probes replaces the live platform gate.
+
 ## Auth: use `auth.json`, not only env
 
 pi resolves Cursor auth in this order:
@@ -176,6 +192,8 @@ Session summaries can hide per-message usage bugs. When investigating token or c
 - Real bad-session evidence should be reduced to a sanitized fixture, like `test/fixtures/cursor-run-usage-compaction-poison.jsonl`, instead of committing raw session JSONL.
 
 The compaction poison fixture mirrors the observed failure shape: one assistant message with `RunResult`-sized input/cache-read counts near 1M immediately before compaction. Regression coverage should prove that such usage falls back to bounded pi estimates before it reaches `AssistantMessage.usage`.
+
+Compaction continuity needs content evidence, not just a new agent ID or a successful recall reply. The compaction smoke checks the returned and persisted summaries for the exact marker before recall, verifies the original user was cut and the native kept context has no other marker source, and checks the actual bootstrap inputs too. Both post-compaction and restart recall reject tool calls: retained session/debug files must not become a filesystem fallback. Keep the raw summary and journals on failure as well as success; an unchanged later model success does not erase an earlier summary-content failure or prove a deterministic provider fix.
 
 ### False-positive edge case (2026-05-23)
 

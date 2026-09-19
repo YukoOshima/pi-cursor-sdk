@@ -70,6 +70,15 @@ Alternative GitHub install:
 pi install https://github.com/fitchmultz/pi-cursor-sdk
 ```
 
+### Existing extension filters
+
+The Pi entrypoint is now `src/index.ts`. Update any filters in this package's `extensions` setting that target the old `dist/` entry, preserving their include/exclude intent:
+
+- Exact filters: `+dist/index.js` → `+src/index.ts`; `-dist/index.js` → `-src/index.ts`.
+- Glob filters: for example, `dist/**` → `src/**` and `!dist/**` → `!src/**`. Adjust other old-dist patterns to match the new entrypoint with the same intent.
+
+To keep Cursor disabled across upgrades and rollback, retain `-dist/index.js` and add `-src/index.ts`; the old exclusion alone no longer disables Cursor. The package does not rewrite user or project settings.
+
 ### Project-local install
 
 Use `-l` if you want the package recorded in the current project's `.pi/settings.json` instead of your global pi settings:
@@ -91,11 +100,13 @@ Without `--approve`, the project-local extension still runs after Pi trusts the 
 For development from this repository:
 
 ```bash
-npm install   # runs prepare, which compiles src/ into dist/ (the manifest entry pi loads)
+npm install   # runs prepare to build dist/ for scripts and programmatic consumers
 pi --approve -e . --model cursor/grok-4.6
 ```
 
-After editing `src/`, run `npm run build` before the next `pi -e .` run, or pi loads the previous build.
+Pi loads the packaged `src/index.ts` graph through its native TypeScript loader. This keeps Pi imports bound to the running host even when another Pi version is installed alongside the extension. `dist/` remains shipped for scripts and programmatic consumers. After editing `src/`, run `npm run build` for validation and compiled consumers, then restart Pi.
+
+The host-identity fix adds initial startup/load work: three fresh-process loader measurements on macOS with Node 24.21.0, Pi fork `90e6`, a warm Jiti disk cache, and network denied took 0.85–1.24 s for source versus 0.08–0.13 s for dist. These are environment-specific loader timings, not full TUI startup measurements or timing guarantees. That host caches extension factories for the same cwd; the initial-load cost does not describe every in-process `/reload`.
 
 ## Configure your Cursor SDK API key
 
@@ -708,7 +719,7 @@ npm install
 CURSOR_API_KEY="your-key" pi --approve -e . --model cursor/grok-4.6
 ```
 
-After editing `src/`, run `npm run build` before the next `pi -e .` run, or pi loads the previous build.
+After editing `src/`, run `npm run build` for validation and compiled consumers, then restart Pi to load the changed source graph.
 
 Maintainer design notes live in [`docs/cursor-model-ux-spec.md`](docs/cursor-model-ux-spec.md).
 

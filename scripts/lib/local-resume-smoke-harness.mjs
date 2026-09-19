@@ -307,7 +307,7 @@ function metadataFiles(artifactDir) {
 	return files.sort((a, b) => statSync(a).mtimeMs - statSync(b).mtimeMs);
 }
 
-function readMetadataSince(artifactDir, seenPaths) {
+export function readMetadataSince(artifactDir, seenPaths) {
 	return metadataFiles(artifactDir)
 		.filter((metadataPath) => !seenPaths.has(metadataPath))
 		.map((metadataPath) => ({
@@ -381,11 +381,6 @@ export async function waitForCleanupEntryCount(rpc, count, timeoutMs) {
 
 export function resumeEntryCount(entries) {
 	return resumeEntries(entries).length;
-}
-
-export function compactionEntryCount(entries) {
-	return (entries.entries ?? []).filter((entry) => entry?.type === "compaction")
-		.length;
 }
 
 function entryText(entry) {

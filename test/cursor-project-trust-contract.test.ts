@@ -137,11 +137,15 @@ describe("non-interactive project trust CLI/provider contract", () => {
 		expect(extract.status, extract.stderr).toBe(0);
 		packedPackageRoot = join(extractDir, "package");
 		expect(existsSync(join(packedPackageRoot, "src", "index.ts"))).toBe(true);
+		const packageJsonPath = join(packedPackageRoot, "package.json");
+		const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8")) as { pi?: { extensions?: string[] } };
+		expect(packageJson.pi?.extensions).toHaveLength(1);
+		const entrypoint = resolve(packedPackageRoot, packageJson.pi!.extensions![0]);
 		probeExtensionPath = join(packedPackageRoot, "src", "project-trust-contract-probe.ts");
 		writeFileSync(probeExtensionPath, `
 import { appendFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import cursorExtension from "./index.js";
+import cursorExtension from ${JSON.stringify(pathToFileURL(entrypoint).href)};
 import { resolveCursorProviderTurnConfig } from "./cursor-provider-turn-prepare.js";
 const mark = (event: unknown) => appendFileSync(process.env.PI_CURSOR_CONTRACT_MARKER!, JSON.stringify(event) + "\\n");
 export default async function (pi: any) {
@@ -173,8 +177,8 @@ export default async function (pi: any) {
 	});
 }
 `);
-		const packageJsonPath = join(packedPackageRoot, "package.json");
-		const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8")) as { pi?: { extensions?: string[] } };
+		// Trust observation wraps the actual packed entry; the package-host test
+		// separately loads the unmodified manifest through native discovery.
 		packageJson.pi = { ...packageJson.pi, extensions: ["./src/project-trust-contract-probe.ts"] };
 		writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
 	}, 120_000);

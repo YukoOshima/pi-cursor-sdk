@@ -14,14 +14,13 @@ jobs:
       matrix:
         include:
           - host: published-0.85.1
-            repository: earendil-works/pi
-            ref: e4ce7b449f4d91589c8760d6fbfa6eaaf82b05fe
           - host: official-e4ce7b449
             repository: earendil-works/pi
             ref: e4ce7b449f4d91589c8760d6fbfa6eaaf82b05fe
-          - host: fork-58715e4e
+          - host: fork-b10a8c23
             repository: fitchmultz/pi
-            ref: 58715e4e73fb53897a0452ee740e3905b5d1b7fd
+            ref: b10a8c236df2ae366ec04bc07aa65f76f512397b
+            runtime-flags: --verify-fork-checkpoints
     steps:
       - uses: actions/checkout@v5
         with:
@@ -53,8 +52,10 @@ jobs:
       - name: Compile actual source and tests against selected host declarations
         working-directory: extension
         run: node scripts/check-pi-host.mjs "$PI_TEST_HOST" tsconfig.json tsconfig.test.json test/tsconfig.json
-      - name: Native compiled manifest and host-owned replay (network blocked)
+      - name: Native packed manifest and host-owned replay
         working-directory: extension
+        env:
+          PI_HOST_RUNTIME_FLAGS: ${{ matrix.runtime-flags || '' }}
         run: |
           npm run build
           mkdir -p "$RUNNER_TEMP/cursor-packed"
@@ -64,4 +65,7 @@ jobs:
           export HOME="$RUNNER_TEMP/pi-host-home"
           export PI_CODING_AGENT_DIR="$HOME/agent" PI_OFFLINE=1
           mkdir -p "$PI_CODING_AGENT_DIR"
-          node scripts/check-pi-host-runtime.mjs "$PI_TEST_HOST" "$RUNNER_TEMP/cursor-packed/package"
+          # Every host must pass the common contract; only the fork also qualifies legacy checkpoints.
+          runtime_flags=()
+          if [ -n "$PI_HOST_RUNTIME_FLAGS" ]; then runtime_flags+=("$PI_HOST_RUNTIME_FLAGS"); fi
+          node scripts/check-pi-host-runtime.mjs "$PI_TEST_HOST" "$RUNNER_TEMP/cursor-packed/package" "${runtime_flags[@]}"
