@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 /**
- * Purpose: Produce compiled runtime files for scripts and programmatic consumers.
- * Pi's manifest loads the shipped source graph through its native TypeScript loader.
+ * Purpose: Produce the compiled runtime files that the Pi extension manifest loads.
  * Responsibilities: Run TypeScript emit into a staging directory, then atomically swap it
  * into dist/ so a failed TypeScript emit never destroys a previously working dist.
  * Usage: `npm run build`; also invoked by scripts/prepare.mjs during install lifecycles.

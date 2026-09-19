@@ -8,7 +8,7 @@ Use this manual checklist during development and debugging of Cursor provider/ru
 
 ## Inner-loop rule
 
-- Build first: `npm run build` after any `src/` edit validates emit and updates `dist/` for scripts/programmatic consumers. Pi loads the packaged `src/index.ts` graph; restart Pi after source changes. The cloud/steering/local-resume/provider-debug launchers rebuild automatically even when run directly with `node scripts/...`; `smoke:live`/`smoke:visual`/`smoke:isolated` build via their npm scripts. Packed-install gates must exercise the tarball's actual manifest, not a checkout path.
+- Build first: `npm run build` after any `src/` edit — the pi manifest loads compiled `dist/`, so unbuilt runs validate stale code. (the cloud/steering/local-resume/provider-debug launchers rebuild automatically even when run directly with `node scripts/...`; `smoke:live`/`smoke:visual`/`smoke:isolated` build via their npm scripts; direct `pi -e .` invocations do not build.)
 - Run from a clean working tree except for the intended branch diff.
 - Use the local extension under test: `pi --approve -e . --cursor-no-fast --model cursor/grok-4.6`.
 - Use a temporary `--session-dir` for every run.
